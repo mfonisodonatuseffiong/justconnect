@@ -1,0 +1,314 @@
+.profession {
+    padding: 20px;
+    background-color: #f9f9f9;
+    min-height: 100vh; /* Ensure the section takes at least the full viewport height */
+  }
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2rem;
+    color: #673ab7;
+  }
+  
+  p {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    color: #333;
+  }
+  
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 20px; /* Gap between grid items */
+    padding: 10px;
+  }
+  
+  .grid-item {
+    background-color: #fff;
+    border: 2px solid #ddd; /* Slightly smaller border size */
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .plumber-photo {
+    width: 65%;
+    height: 170px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .grid-item h3 {
+    margin-bottom: 6px;
+    font-size: 1.2rem;
+    color: #512da8;
+  }
+  
+  .grid-item p {
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 0.9;
+  }
+  
+  .grid-item a {
+    color: #673ab7;
+    text-decoration: none;
+  }
+  
+  .grid-item a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Styling for the "Book Now" button */
+  .btn.book {
+    background-color: #673ab7;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .btn.book:hover {
+    background-color: #512da8;
+    transform: scale(1.05); /* Slight zoom effect on hover */
+  }
+  
+  /* Rating stars styling */
+  .rating {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .rating .star {
+    font-size: 1.5rem;
+    color: #ddd; /* Default star color */
+    margin: 0 3px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .rating .star.filled {
+    color: #ff6f61; /* Filled star color as specified */
+  }
+  
+  .rating .rating-label {
+    font-size: 0.9rem;
+    margin-left: 8px;
+    color: #666;
+  }
+  
+  /* For mobile responsiveness */
+  @media (max-width: 767px) {
+    .grid-container {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      padding: 10px;
+    }
+  
+    .grid-item {
+      padding: 10px;
+      box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #ddd;
+    }
+  
+    .plumber-photo {
+      width: 100%;
+      height: 180px; /* Adjusted height for smaller screens */
+      margin-bottom: 8px;
+    }
+  
+    .btn.book {
+      width: 100%; /* Full width on mobile for better usability */
+      font-size: 1rem;
+      padding: 10px; /* Larger padding for touch devices */
+    }
+  
+    .btn.book:hover {
+      transform: none; /* Disable hover effects for mobile */
+    }
+  }
+  
+  /* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  /* Modal container */
+  .modal {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .modal h3 {
+    margin-bottom: 15px;
+    color: #673ab7;
+  }
+  
+  .modal p {
+    font-size: 1rem;
+    margin-bottom: 15px;
+  }
+  
+  .booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .booking-form input,
+  .booking-form textarea {
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #fddd;
+    border-radius: 5px;
+  }
+  
+  .booking-form button {
+    padding: 10px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .booking-form .btn.book {
+    background-color: #673ab7;
+    color: #fff;
+  }
+  
+  .booking-form .btn.cancel {
+    background-color: #e0e0e0;
+    color: #333;
+  }
+  
+  /* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  overflow-y: auto; /* Ensure scrolling for the entire overlay if necessary */
+}
+
+/* Modal container */
+.modal {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  overflow-y: auto; /* Enable scrolling within the modal */
+  max-height: 90vh; /* Ensure the modal stays within the viewport */
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .modal {
+    padding: 15px;
+    width: 95%; /* Ensure the modal fits smaller screens */
+    max-width: none;
+  }
+}
+
+/* Grid container for mobile */
+@media (max-width: 767px) {
+  .grid-container {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Full width for grid items on smaller screens */
+    gap: 15px;
+    padding: 10px;
+  }
+
+  .grid-item {
+    padding: 10px;
+    border: 1px solid #ddd;
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .plumber-photo {
+    width: 100%; /* Ensure picture fits the grid item's width */
+    height: auto; /* Maintain aspect ratio */
+    object-fit: contain; /* Prevent cropping of the image */
+    margin-bottom: 10px;
+    border-radius: 8px; /* Keep rounded corners */
+  }
+
+  .grid-item h3 {
+    font-size: 1.1rem; /* Adjust heading size for mobile */
+    margin-bottom: 8px;
+    color: #512da8;
+  }
+
+  .grid-item p {
+    font-size: 0.9rem; /* Adjust text size for better readability on smaller screens */
+    line-height: 1.2;
+    color: #666;
+  }
+}
+
+/* Card Styling */
+.grid-item {
+  background-color: #fff;
+  border: 2px solid #ddd; /* Slightly smaller border size */
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.1);
+  display: flex; /* Use flexbox for centering */
+  flex-direction: column; /* Ensure contents stack vertically */
+  justify-content: center; /* Center contents vertically */
+  align-items: center; /* Center contents horizontally */
+  text-align: center;
+}
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #ff6f61;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: fade-in-out 3s ease-in-out;
+}
+
+@keyframes fade-in-out {
+  0% { opacity: 0; transform: translateY(20px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(20px); }
+}

@@ -1,0 +1,55 @@
+/* src/components/Introduction.css */
+
+/* Introduction Section */
+.introduction {
+  background: #fff;
+  padding: 60px 20px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.introduction h2 {
+  font-size: 2.5em;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
+  animation: swing-h2 2s ease-in-out infinite; /* Add anaimation */
+}
+
+.introduction p {
+  font-size: 1.2em;
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+  animation: swing-p 2s ease-in-out infinite; /* Add animation */
+}
+
+/* Hover effect for the introduction section */
+.introduction:hover {
+  transform: translateY(-10px); /* Move the section up slightly */
+  background-color: #f0f0f0; /* Light gray background color on hover */
+}
+
+/* Keyframes for swinging animations */
+@keyframes swing-h2 {
+  20% { transform: rotate3d(0, 0, 1, 15deg); }
+  40% { transform: rotate3d(0, 0, 1, -10deg); }
+  60% { transform: rotate3d(0, 0, 1, 5deg); }
+  80% { transform: rotate3d(0, 0, 1, -5deg); }
+  100% { transform: rotate3d(0, 0, 1, 0deg); }
+}
+
+@keyframes swing-p {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+  100% { transform: translateX(0); }
+}
+
+/* Push Introduction Section Down on Mobile */
+@media (max-width: 768px) {
+  .introduction {
+    padding-top: -810px; /* Further reduce padding to minimize gap */
+  }
+}

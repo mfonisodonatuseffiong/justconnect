@@ -1,0 +1,471 @@
+/* Reset default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* Ensure full page is scrollable */
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+    scroll-behavior: smooth; /* Smooth scrolling */
+}
+
+/* Header styles with enhanced linear gradient */
+header {
+    width: 100%;
+    background: linear-gradient(to bottom, #ffafbd, #29211c);  /* Attractive gradient */
+    height: 700px;  /* Adjust height */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: background 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    position: relative; /* Added for positioning */
+    z-index: 1; /* Ensure header content is on top */
+}
+
+/* Navbar styling */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    width: 100%; /* Ensure the navbar spans the entire width */
+    background: #ffafbd; /* Matching gradient for the navbar */
+    position: fixed; /* Positioned fixed at the top */
+    top: 0; /* Move to the top of the page */
+    left: 0;
+    right: 0;
+    z-index: 2; /* Ensure navbar is above the header */
+}
+
+/* Logo */
+.logo {
+    font-size: 35px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Navbar links */
+.nav-links {
+    display: flex;
+    list-style: none;
+}
+
+.nav-links li {
+    margin: 0 15px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 18px;
+    border: 1px solid #fff; /* Added border for better visibility */
+    padding: 5px 10px; /* Added padding for better spacing */
+    background-color: #ffafbd; /* Added pink background color */
+    transition: color 0.3s ease, border-color 0.3s ease, background-color 0.3s ease; /* Smooth transition for colors */
+}
+
+.nav-links a:hover {
+    color: #fff; /* Ensure text color remains white on hover */
+    border-color: #fff; /* Keep the border color white */
+    background-color: #f4a261; /* Change background color on hover */
+}
+
+/* Hamburger menu (hidden by default) */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.hamburger span {
+    width: 30px;
+    height: 3px;
+    background: #fff;
+    margin: 5px;
+    transition: 0.4s;
+}
+
+/* Two-tiered Header Content */
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 100px 20px; /* Adjust padding to make space for fixed navbar */
+    max-width: 1200px;
+    margin: auto;
+    width: 100%;
+    height: 100%; /* Ensures full height */
+    z-index: 1; /* Ensure content is on top */
+}
+
+.header-text {
+    flex: 1;
+    max-width: 50%; /* Ensures text stays on the left side */
+}
+
+.header-text h1 {
+    font-size: 46px;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.header-text p {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #f4a261;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #ff6f61;
+}
+
+/* Styling for header image with artistic border radius */
+.header-image {
+    flex: 1;
+    position: absolute;
+    top: 0; /* Align to top */
+    bottom: 0; /* Align to bottom */
+    right: 0; /* Align to right */
+    width: 50%; /* Adjust width as needed */
+    z-index: 0; /* Place behind other content */
+    opacity: 0.8; /* Adjust transparency to be more bold */
+    border-radius: 0% 0% 100% 0%; /* Artistic border radius */
+    overflow: hidden; /* Ensure content inside respects border radius */
+}
+
+.header-image img {
+    width: 100%;
+    height: 100%; /* Ensures image fills height */
+    object-fit: cover; /* Ensure image covers area */
+    border-radius: inherit; /* Apply same border radius to the image */
+}
+
+/* Add curved bottom using ::after pseudo-element in header */
+header::after {
+    content: "";
+    position: absolute;
+    bottom: 0; /* Adjusted to place curve at bottom of header */
+    left: 0;
+    height: 10px;  /* Curve height */
+    background: #ffc3a0;  /* Same color as header */
+    border-radius: 0% 0% 0 0;  /* Bottom curve */
+}
+
+/* Scrollable Content Section */
+.content {
+    min-height: 150vh; /* Ensures enough content to enable scrolling */
+    padding: 60px 20px;
+    background: #fff;
+    text-align: center;
+}
+
+.content h1 {
+    font-size: 36px;
+    color: #333;
+}
+
+.content p {
+    font-size: 18px;
+    color: #666;
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+/* Section Styling */
+section {
+    padding: 60px 20px;
+    background: #f7f7f7;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Introduction Section */
+.introduction {
+    background: #fff;
+}
+
+.introduction h2 {
+    font-size: 36px;
+    color: #333;
+}
+
+.introduction p {
+    font-size: 18px;
+    color: #666;
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+/* Features/Services Section */
+.features {
+    background-color: #f8f9fa;
+    padding: 50px 20px;
+    text-align: center;
+  }
+  
+  .features h2 {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 40px;
+  }
+  
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  
+  .feature-item {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: left;
+    transition: transform 0.3s;
+  }
+  
+  .feature-item:hover {
+    transform: translateY(-10px);
+  }
+  
+  .feature-item h3 {
+    font-size: 1.5em;
+    color: #007bff;
+    margin-bottom: 10px;
+  }
+  
+  .feature-item p {
+    font-size: 1em;
+    color: #666;
+    margin: 0;
+  }
+  
+  .feature-icon {
+    width: 40px;
+    height: 40px;
+    background-size: cover;
+    margin-bottom: 10px;
+  }
+  
+  .feature-icon.plumber-icon {
+    background-image: url('path/to/plumber-icon.png');
+  }
+  
+  .feature-icon.tailor-icon {
+    background-image: url('path/to/tailor-icon.png');
+  }
+  
+  .feature-icon.electrician-icon {
+    background-image: url('path/to/electrician-icon.png');
+  }
+  
+/* About Us Section */
+.about {
+    background: #fff;
+}
+
+.about h2 {
+    font-size: 36px;
+    color: #333;
+}
+
+.about p {
+    font-size: 18px;
+    color: #666;
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+/* Testimonials Section */
+.testimonials {
+    background: #f7f7f7;
+}
+
+.testimonials h2 {
+    font-size: 36px;
+    color: #333;
+}
+
+.testimonials blockquote {
+    font-size: 18px;
+    color: #777;
+    max-width: 600px;
+    margin: 20px auto;
+    border-left: 4px solid #ccc;
+    padding-left: 20px;
+}
+
+.testimonials footer {
+    font-size: 16px;
+    color: #555;
+    margin-top: 10px;
+}
+
+/* Portfolio/Gallery Section */
+.portfolio {
+    background: #fff;
+}
+
+.portfolio h2 {
+    font-size: 36px;
+    color: #333;
+}
+
+.portfolio .portfolio-item {
+    margin: 20px 0;
+}
+
+.portfolio .portfolio-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.portfolio .portfolio-item p {
+    font-size: 16px;
+    color: #777;
+}
+
+/* Call to Action Section */
+.cta {
+    background: #ffafbd;
+}
+
+.cta h2 {
+    font-size: 36px;
+    color: #fff;
+}
+
+.cta .btn {
+    margin-top: 20px;
+}
+
+/* Contact Section */
+.contact {
+    background: #f7f7f7;
+}
+
+.contact h2 {
+    font-size: 36px;
+    color: #333;
+}
+
+.contact form {
+    max-width: 600px;
+    margin: 20px auto;
+    text-align: left;
+}
+
+.contact form label {
+    font-size: 16px;
+    color: #555;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.contact form input,
+.contact form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.contact form button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #f4a261;
+}
+
+.contact form button:hover {
+    background-color: #ff6f61;
+}
+
+/* Footer Section */
+footer {
+    background: #29211c;
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
+    height: 20%;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.footer-links li {
+    display: inline;
+}
+
+.footer-links a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 14px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        background: #ffafbd;
+        text-align: center;
+        padding: 10px 0;
+    }
+
+    .nav-links li {
+        margin: 10px 0;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+
+    /* Toggle Menu Active */
+    .nav-active {
+        display: flex;
+    }
+
+    .header-content {
+        flex-direction: column;
+    }
+
+    .header-image {
+        position: relative;
+        margin-top: 20px;
+    }
+}

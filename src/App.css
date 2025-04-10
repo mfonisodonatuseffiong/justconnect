@@ -1,0 +1,16 @@
+/* src/App.css */
+
+/* Reset default styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* Ensure full page is scrollable */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  scroll-behavior: smooth; /* Smooth scrolling */
+}

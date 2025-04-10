@@ -1,0 +1,194 @@
+/* Header styles with enhanced linear gradient */
+header {
+  width: 100%;
+  background: linear-gradient(to bottom, #673ab7, #512da8);
+  height: 900px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: background 0.5s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Two-tiered Header Content */
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 100px 20px;
+  max-width: 1200px;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.header-text {
+  flex: 1;
+  max-width: 50%;
+}
+
+.header-text h1 {
+  font-size: 48px;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.header-text p {
+  font-size: 1.5em;
+  color: #fff;
+  margin-bottom: 20px;
+  padding: 0 10px;
+}
+
+/* Underline border for JustConnect */
+.highlight {
+  border-bottom: 3px solid #ff6f61;
+  padding-bottom: 2px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.header-buttons .btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 50px;
+  background-color: #ff6f61;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.header-buttons .btn:hover {
+  background-color: #f4a261;
+}
+
+/* Styling for header image with animation */
+.header-image {
+  position: absolute;
+  top: 250px;
+  right: 50px;
+  transform: translateY(0);
+  z-index: 2;
+  animation: float 5s infinite ease-in-out;
+}
+
+.header-image img.floating {
+  width: 70%;
+  max-width: 700px;
+  height: 400px;
+  border-radius: 10px;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Waves Animation */
+.waves {
+  position: absolute;
+  width: 100%;
+  height: 15vh;
+  min-height: 100px;
+  max-height: 150px;
+  bottom: 0;
+  left: 0;
+}
+
+.parallax > use {
+  animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+}
+
+.parallax > use:nth-child(1) {
+  animation-delay: -2s;
+  animation-duration: 7s;
+}
+
+.parallax > use:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 10s;
+}
+
+.parallax > use:nth-child(3) {
+  animation-delay: -4s;
+  animation-duration: 13s;
+}
+
+.parallax > use:nth-child(4) {
+  animation-delay: -5s;
+  animation-duration: 20s;
+}
+
+@keyframes move-forever {
+  0% {
+    transform: translate3d(-90px, 0, 0);
+  }
+  100% {
+    transform: translate3d(85px, 0, 0);
+  }
+}
+
+/* Responsive Styles */
+/* Responsive Styles for Header Section */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+    text-align: center; /* Center align content for mobile view */
+  }
+
+  .header-image {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    transform: none; /* Remove unnecessary transform for simplicity */
+    margin: 20px 0; /* Add spacing above and below the image */
+  }
+
+  .header-image img.floating {
+    width: 100%; /* Make the image fit the entire width of the screen */
+    height: auto; /* Maintain aspect ratio */
+    max-width: none; /* Allow it to scale naturally without restriction */
+    animation: float 5s infinite ease-in-out; /* Retain float animation */
+    border-radius: 0; /* Remove border radius for a cleaner full-width effect */
+  }
+
+  .header-text {
+    max-width: 100%; /* Ensure header text takes full width on mobile */
+    margin-bottom: 20px; /* Add spacing below text */
+  }
+
+  .header-text h1 {
+    font-size: 32px; /* Reduce font size for better readability */
+  }
+
+  .header-text p {
+    font-size: 1.1em;
+    padding: 0 15px; /* Add padding for text */
+  }
+
+  .header-buttons {
+    flex-direction: column; /* Stack buttons vertically for mobile */
+    gap: 10px; /* Add spacing between buttons */
+  }
+
+  .waves {
+    height: 10vh; /* Adjust wave height for mobile view */
+    min-height: 40px;
+  }
+}
+

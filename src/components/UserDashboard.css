@@ -1,0 +1,118 @@
+/* Overall user dashboard styling */
+.user-dashboard {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: #f4f4f4;
+    min-height: 100vh; /* Full viewport height */
+    text-align: center;
+}
+
+.user-dashboard h2 {
+    font-size: 24px;
+    color: #673ab7;
+    margin-bottom: 20px;
+}
+
+.user-dashboard p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+/* Bookings container */
+.bookings-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    justify-items: center;
+}
+
+/* Individual booking card */
+.booking-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    width: 100%;
+    max-width: 350px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.booking-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.booking-card h3 {
+    font-size: 18px;
+    color: #673ab7;
+    margin-bottom: 15px;
+}
+
+.booking-card p {
+    font-size: 14px;
+    margin: 5px 0;
+    color: #555;
+}
+
+/* Status color coding */
+.status.accepted {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.status.pending {
+    color: #ff9800;
+    font-weight: bold;
+}
+
+.status.declined {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* Notification messages inside booking cards */
+.notification-message {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+    max-width: 100%;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Declined message - Purple */
+.notification-message.declined {
+    background: #800080; /* Purple */
+    color: white;
+}
+
+/* Accepted message - Green */
+.notification-message.accepted {
+    background: #4CAF50; /* Green */
+    color: white;
+}
+
+/* Pending message - Orange */
+.notification-message.pending {
+    background: #FF9800; /* Orange */
+    color: white;
+}
+
+/* Buttons */
+button {
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    background: #673ab7;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #5a2ea5;
+}
