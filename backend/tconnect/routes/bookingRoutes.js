@@ -1,7 +1,47 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../../db");
-const protect = require("../../middleware/authMiddleware");
+const { protect } = require("../../middleware/authMiddleware"); // <- destructure protect here
+
+// POST /api/bookings - Guest or User books a professional
+router.post("/", async (req, res) => {
+  const {
+    user,
+    contact,
+    address,
+    jobDetails,
+    professionalId,
+    professional,
+    professionalContact,
+    date,
+    time,
+  } = req.body;
+
+  try {
+    const insertQuery = `
+      INSERT INTO bookings 
+        (user, contact, address, jobDetails, professionalId, professional, professionalContact, date, time)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *;
+    `;
+    const result = await pool.query(insertQuery, [
+      user,
+      contact,
+      address,
+      jobDetails,
+      professionalId,
+      professional,
+      professionalContact,
+      date,
+      time,
+    ]);
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    res.status(500).json({ error: "Failed to create booking" });
+  }
+});
 
 // GET /api/bookings/user - Get bookings for the logged-in user
 router.get("/user", protect, async (req, res) => {
@@ -21,9 +61,13 @@ router.get("/user", protect, async (req, res) => {
 // GET /api/bookings/professional - Get bookings for the logged-in professional
 router.get("/professional", protect, async (req, res) => {
   try {
-    const professionalName = req.user.name; // From JWT payload
+    if (req.user.role !== "professional") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const professionalName = req.user.name; // From JWT
     const result = await pool.query(
-      "SELECT * FROM bookings WHERE professional = $1",
+      "SELECT * FROM bookings WHERE professional = $1 ORDER BY date DESC, time DESC",
       [professionalName]
     );
     res.json(result.rows);
