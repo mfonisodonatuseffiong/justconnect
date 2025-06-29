@@ -1,10 +1,8 @@
 import React, { useState, useContext } from "react";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { professionalsList } from "../data/professionals"; // Your professional users
+import { professionalsList } from "../data/professionals";
 import "./Login.css";
-
-const PROFESSIONAL_PASSWORD = "pro123"; // Password for professionals
 
 const Login = () => {
   const { login, setUser } = useContext(AuthContext);
@@ -20,37 +18,56 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
-    // Find professional in the list by email (case-insensitive)
+    // Check if it's a professional
     const matchedProfessional = professionalsList.find(
       (pro) => pro.email.toLowerCase() === credentials.email.toLowerCase()
     );
 
     if (matchedProfessional) {
-      // Professional found, verify the password
-      if (credentials.password === PROFESSIONAL_PASSWORD) {
-        // Set user context and navigate to professional dashboard
-        setUser({
-          email: matchedProfessional.email,
-          role: "professional",
-          name: matchedProfessional.name,
+      // Professional login via backend
+      try {
+        const response = await fetch("http://localhost:5000/api/auth/professional-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password,
+          }),
         });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Professional login failed");
+        }
+
+        const professionalUser = {
+          token: data.token,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
+        };
+
+        localStorage.setItem("user", JSON.stringify(professionalUser));
+        localStorage.setItem("token", data.token);
+        setUser(professionalUser);
         navigate("/professional-dashboard");
-      } else {
-        setError("Incorrect password for professional login.");
+        return;
+      } catch (error) {
+        console.error("Professional login error:", error);
+        setError("Professional login failed. Please try again.");
+        return;
       }
-      return; // Stop here if professional login attempt
     }
 
-    // Normal user/admin login flow
+    // Fallback to user/admin login
     try {
       const userData = await login(credentials);
-
       if (!userData || !userData.role) {
         setError("Login failed. Please check your credentials.");
         return;
       }
 
-      // Redirect based on user role
       if (userData.role === "admin") {
         navigate("/admin-dashboard");
       } else if (userData.role === "user") {
@@ -66,7 +83,7 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <h2>User Login</h2>
+      <h2>Login here</h2>
       {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleSubmit}>
         <input

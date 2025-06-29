@@ -12,7 +12,7 @@
   .signup-container h2 {
     font-size: 24px;
     margin-bottom: 20px;
-    color: #333;
+    color: #ff6f61;
   }
   
   .signup-container form {
@@ -24,7 +24,7 @@
     width: 100%;
     padding: 10px;
     margin: 8px 0;
-    border: 1px solid #ddd;
+    border: 1px solid #ff6f61;
     border-radius: 5px;
     font-size: 16px;
   }
@@ -32,7 +32,7 @@
   .signup-container button {
     width: 100%;
     padding: 12px;
-    background: #007bff;
+    background: #ff6f61;
     color: #fff;
     font-size: 18px;
     border: none;
@@ -42,7 +42,7 @@
   }
   
   .signup-container button:hover {
-    background: #0056b3;
+    background: #ff6f61;
   }
   
   @media (max-width: 600px) {

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import './Signup.css';
 
 const Signup = () => {
-  const { register } = useContext(AuthContext);
+  const { register, setUser } = useContext(AuthContext);
   const [userData, setUserData] = useState({
     name: "",
     email: "",
@@ -12,6 +12,7 @@ const Signup = () => {
     role: "user" // default role
   });
 
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -20,13 +21,43 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await register(userData);
-    navigate("/dashboard");
+    setError("");
+
+    try {
+      const registeredUser = await register(userData);
+
+      if (!registeredUser || !registeredUser.role) {
+        setError("Registration failed. Please try again.");
+        return;
+      }
+
+      // Save user context and token if available
+      if (registeredUser.token) {
+        setUser(registeredUser);
+        localStorage.setItem("user", JSON.stringify(registeredUser));
+      }
+
+      // Navigate based on role
+      if (registeredUser.role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (registeredUser.role === "user") {
+        navigate("/user-dashboard");
+      } else if (registeredUser.role === "professional") {
+        navigate("/professional-dashboard");
+      } else {
+        navigate("/dashboard"); // fallback
+      }
+
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError("Registration failed. Please try again.");
+    }
   };
 
   return (
     <div className="signup-container">
       <h2>Create an Account</h2>
+      {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -49,10 +80,6 @@ const Signup = () => {
           onChange={handleChange}
           required
         />
-        <select name="role" onChange={handleChange} value={userData.role}>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
         <button type="submit">Sign Up</button>
       </form>
     </div>

@@ -12,7 +12,7 @@
 .login-container h2 {
   font-size: 24px;
   margin-bottom: 20px;
-  color: #333;
+  color: #ff6f61;
 }
 
 .login-container form {
@@ -24,7 +24,7 @@
   width: 100%;
   padding: 10px;
   margin: 8px 0;
-  border: 1px solid #ddd;
+  border: 2px solid #ff6f61;
   border-radius: 5px;
   font-size: 16px;
 }
@@ -48,7 +48,7 @@
 /* Logout Button Style */
 .logout-button {
   padding: 10px 20px;
-  background-color: #ff6f61;  /* Your requested color */
+  background-color: #ff6f61;
   color: #fff;
   font-size: 16px;
   border: none;
