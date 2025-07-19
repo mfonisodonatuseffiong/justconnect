@@ -1,18 +1,21 @@
 import React, { useState, useContext } from "react";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import './Signup.css';
+import "./Signup.css";
 
 const Signup = () => {
-  const { register, setUser } = useContext(AuthContext);
+  const { register } = useContext(AuthContext);
   const [userData, setUserData] = useState({
     name: "",
     email: "",
     password: "",
-    role: "user" // default role
+    confirmPassword: "",
+    role: "user"
   });
 
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -22,42 +25,47 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
+
+    if (userData.password !== userData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
 
     try {
-      const registeredUser = await register(userData);
+      const result = await register(userData);
 
-      if (!registeredUser || !registeredUser.role) {
+      if (!result || !result.role) {
         setError("Registration failed. Please try again.");
         return;
       }
 
-      // Save user context and token if available
-      if (registeredUser.token) {
-        setUser(registeredUser);
-        localStorage.setItem("user", JSON.stringify(registeredUser));
-      }
-
-      // Navigate based on role
-      if (registeredUser.role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (registeredUser.role === "user") {
-        navigate("/user-dashboard");
-      } else if (registeredUser.role === "professional") {
-        navigate("/professional-dashboard");
-      } else {
-        navigate("/dashboard"); // fallback
-      }
+      setSuccess("Registration successful! You'll be redirected shortly...");
+      setTimeout(() => {
+        navigate("/login");
+      }, 3500); // Delay for 3 seconds before redirecting
 
     } catch (err) {
-      console.error("Registration error:", err);
-      setError("Registration failed. Please try again.");
+      console.error("Signup error:", err);
+      setError("Registration failed. User already exists.");
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
     <div className="signup-container">
       <h2>Create an Account</h2>
       {error && <p className="error-message">{error}</p>}
+      {success && (
+        <div className="success-box">
+          <p>{success}</p>
+          <div className="spinner" />
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -73,13 +81,30 @@ const Signup = () => {
           onChange={handleChange}
           required
         />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
-          required
-        />
+
+        <div className="password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Password"
+            onChange={handleChange}
+            required
+          />
+          <span className="eye-icon" onClick={togglePasswordVisibility}>
+            {showPassword ? "👁️" : "🙈"}
+          </span>
+        </div>
+
+        <div className="password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            onChange={handleChange}
+            required
+          />
+        </div>
+
         <button type="submit">Sign Up</button>
       </form>
     </div>

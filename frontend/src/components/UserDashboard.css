@@ -1,34 +1,40 @@
-/* Overall user dashboard styling */
+/* -------------------------- */
+/* USER DASHBOARD PAGE STYLES */
+/* -------------------------- */
 .user-dashboard {
     font-family: Arial, sans-serif;
-    padding: 20px;
+    padding: 80px 20px 20px; /* Top padding for fixed navbar */
     background-color: #f4f4f4;
-    min-height: 100vh; /* Full viewport height */
+    min-height: 100vh;
     text-align: center;
-}
-
-.user-dashboard h2 {
+  }
+  
+  .user-dashboard h2 {
     font-size: 24px;
     color: #673ab7;
     margin-bottom: 20px;
-}
-
-.user-dashboard p {
+  }
+  
+  .user-dashboard p {
     font-size: 16px;
     color: #555;
     margin-bottom: 20px;
-}
-
-/* Bookings container */
-.bookings-container {
+  }
+  
+  /* ---------------------- */
+  /* BOOKINGS CONTAINER AREA */
+  /* ---------------------- */
+  .bookings-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     justify-items: center;
-}
-
-/* Individual booking card */
-.booking-card {
+  }
+  
+  /* ------------------- */
+  /* INDIVIDUAL BOOKING CARD */
+  /* ------------------- */
+  .booking-card {
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -38,72 +44,44 @@
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     text-align: left;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.booking-card:hover {
+  }
+  
+  .booking-card:hover {
     transform: translateY(-5px);
     box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.booking-card h3 {
+  }
+  
+  .booking-card h3 {
     font-size: 18px;
     color: #673ab7;
     margin-bottom: 15px;
-}
-
-.booking-card p {
+  }
+  
+  .booking-card p {
     font-size: 14px;
     margin: 5px 0;
     color: #555;
-}
-
-/* Status color coding */
-.status.accepted {
+  }
+  
+  .status.accepted {
     color: #4caf50;
     font-weight: bold;
-}
-
-.status.pending {
+  }
+  
+  .status.pending {
     color: #ff9800;
     font-weight: bold;
-}
-
-.status.declined {
+  }
+  
+  .status.declined {
     color: #f44336;
     font-weight: bold;
-}
-
-/* Notification messages inside booking cards */
-.notification-message {
-    margin-top: 10px;
-    padding: 12px;
-    border-radius: 5px;
-    font-weight: bold;
-    text-align: center;
-    max-width: 100%;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Declined message - Purple */
-.notification-message.declined {
-    background: #800080; /* Purple */
-    color: white;
-}
-
-/* Accepted message - Green */
-.notification-message.accepted {
-    background: #4CAF50; /* Green */
-    color: white;
-}
-
-/* Pending message - Orange */
-.notification-message.pending {
-    background: #FF9800; /* Orange */
-    color: white;
-}
-
-/* Buttons */
-button {
+  }
+  
+  /* ------------------------ */
+  /* CHAT BUTTON INSIDE CARD */
+  /* ------------------------ */
+  button.btn.chat {
     margin-top: 10px;
     padding: 10px;
     border: none;
@@ -111,8 +89,79 @@ button {
     color: white;
     border-radius: 5px;
     cursor: pointer;
-}
-
-button:hover {
+    width: 100%;
+  }
+  
+  button.btn.chat:hover {
     background: #5a2ea5;
-}
+  }
+  
+  /* --------------------------- */
+  /* GLOBAL NOTIFICATION POPUP  */
+  /* --------------------------- */
+  .notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    max-width: 300px;
+    animation: fade-in-out 5s ease-in-out;
+    background-color: #f44336; /* Default to red */
+  }
+  
+  /* Notification types */
+  .notification.declined {
+    background-color: #f44336; /* Red */
+  }
+  
+  .notification.accepted {
+    background-color: #4caf50; /* Green */
+  }
+  
+  .notification.pending {
+    background-color: #ff9800; /* Orange */
+  }
+  
+  /* Close (X) button inside notification */
+  .notification .close-btn {
+    background: transparent;
+    color: white;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  
+  .notification .close-btn:hover {
+    color: #ddd;
+  }
+  
+  /* Notification animation */
+  @keyframes fade-in-out {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    10% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    90% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+  

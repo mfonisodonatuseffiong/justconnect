@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import './Profession.css'; // Styles for grid, modal, and stars
-import profile from '../assets/profile.jpg'; // Default profile image for John Doe
-import defaultAvatar from '../assets/default-avatar.png'; // Default avatar for missing photos
+import React, { useState, useContext } from 'react';
+import './Profession.css';
+import profile from '../assets/profile.jpg';
+import defaultAvatar from '../assets/default-avatar.png';
+import axios from 'axios';
+import AuthContext from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
-const Plumbers = ({ onBookingRequest }) => {
-  const [plumbers, setPlumbers] = useState([
+const Plumbers = () => {
+  const [plumbers] = useState([
     {
       id: 1,
       name: 'Mfoniso Donatus',
@@ -64,49 +67,54 @@ const Plumbers = ({ onBookingRequest }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlumber, setSelectedPlumber] = useState(null);
   const [notification, setNotification] = useState('');
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  // Handle booking selection
   const handleSelect = (plumber) => {
+    if (!user) {
+      alert('You must be logged in to book a professional.');
+      navigate('/login');
+      return;
+    }
     setSelectedPlumber(plumber);
     setShowModal(true);
   };
 
-  // Handle booking request submission
-  const handleBookingRequest = (event) => {
+  const handleBookingRequest = async (event) => {
     event.preventDefault();
+
     const bookingDetails = {
-      user: event.target.name.value, // User name
-      contact: event.target.phone.value, // User contact
-      address: event.target.address.value, // User address
-      jobDetails: event.target.jobDetails.value, // Job details
-      professionalId: selectedPlumber.id, // Professional ID
-      professional: selectedPlumber.name, // Professional name
-      professionalContact: selectedPlumber.contact, // Professional contact
-      date: new Date().toLocaleDateString(), // Attach current date
-      time: new Date().toLocaleTimeString(), // Current time
-      status: 'Pending', // Initialize status as "Pending"
+      user_id: user.id,
+      user_name: user.name,
+      contact: event.target.phone.value,
+      address: event.target.address.value,
+      jobDetails: event.target.jobDetails.value,
+      professional_id: selectedPlumber.id,
+      professional: selectedPlumber.name,
+      professionalContact: selectedPlumber.contact,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
     };
 
-    onBookingRequest(bookingDetails); // Pass booking details to App.js
-    setShowModal(false);
-
-    // Show notification
-    setNotification(`Booking request sent to ${selectedPlumber.name}!`);
-    setTimeout(() => setNotification(''), 5000);
+    try {
+      await axios.post("http://localhost:5000/api/bookings", bookingDetails, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      setNotification(`Booking request sent to ${selectedPlumber.name}!`);
+      setShowModal(false);
+      setTimeout(() => setNotification(''), 5000);
+    } catch (err) {
+      console.error('Booking error:', err);
+      alert('Failed to send booking. Please try again.');
+    }
   };
 
-  // Handle rating updates
   const handleRating = (plumberId, newRating) => {
-    setPlumbers((prevPlumbers) =>
-      prevPlumbers.map((plumber) =>
-        plumber.id === plumberId
-          ? { ...plumber, rating: newRating, ratingCount: plumber.ratingCount + (newRating > plumber.rating ? 1 : -1) }
-          : plumber
-      )
-    );
+    // Optional: Local rating update logic
   };
 
-  // Render star ratings
   const renderStars = (plumber) => {
     const fullStars = Math.floor(plumber.rating);
     return (
@@ -115,7 +123,7 @@ const Plumbers = ({ onBookingRequest }) => {
           <span
             key={i}
             className={`star ${i < fullStars ? 'filled' : ''}`}
-            onClick={() => handleRating(plumber.id, i + 1)} // Update rating dynamically
+            onClick={() => handleRating(plumber.id, i + 1)}
           >
             ★
           </span>
@@ -146,17 +154,44 @@ const Plumbers = ({ onBookingRequest }) => {
         ))}
       </div>
 
-      {showModal && (
+      {showModal && selectedPlumber && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Booking for {selectedPlumber.name}</h3>
             <form className="booking-form" onSubmit={handleBookingRequest}>
-              <input name="name" type="text" placeholder="Your Name" required />
-              <input name="phone" type="tel" placeholder="Your Phone Number" required />
-              <input name="address" type="text" placeholder="Your Address" required />
-              <textarea name="jobDetails" placeholder="Job Details" rows="3" required></textarea>
-              <button type="submit" className="btn book">Submit Booking</button>
-              <button type="button" className="btn cancel" onClick={() => setShowModal(false)}>
+              <input
+                name="name"
+                type="text"
+                value={user?.name}
+                readOnly
+                required
+              />
+              <input
+                name="phone"
+                type="tel"
+                placeholder="Your Phone Number"
+                required
+              />
+              <input
+                name="address"
+                type="text"
+                placeholder="Your Address"
+                required
+              />
+              <textarea
+                name="jobDetails"
+                placeholder="Job Details"
+                rows="3"
+                required
+              ></textarea>
+              <button type="submit" className="btn book">
+                Submit Booking
+              </button>
+              <button
+                type="button"
+                className="btn cancel"
+                onClick={() => setShowModal(false)}
+              >
                 Cancel
               </button>
             </form>

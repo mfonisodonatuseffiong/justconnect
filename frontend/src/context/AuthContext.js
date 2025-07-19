@@ -13,12 +13,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Register: no token or session saved here
   const register = async (userData) => {
     try {
       const { data } = await axios.post("http://localhost:5000/api/auth/register", userData);
-      localStorage.setItem("user", JSON.stringify(data));
-      setUser(data);
-      return data;
+      return data; // No localStorage or setUser here — wait for real login
     } catch (error) {
       const message = error.response?.data?.message || "Registration failed";
       console.error("Registration failed:", message);
@@ -26,9 +25,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Login logic: set session and persist
   const login = async (credentials) => {
     try {
-      // Use normal login API (for users/admins)
       const { data } = await axios.post("http://localhost:5000/api/auth/login", credentials);
       localStorage.setItem("user", JSON.stringify(data));
       localStorage.setItem("role", data.role);
@@ -41,7 +40,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Optional helper for manual professional login without backend call
+  // Manual professional login helper
   const manualProfessionalLogin = (professional, password) => {
     const PROFESSIONAL_PASSWORD = "pro123";
 
@@ -50,6 +49,7 @@ export const AuthProvider = ({ children }) => {
         email: professional.email,
         name: professional.name,
         role: "professional",
+        token: "manual-auth-token", // Optional mock token for visibility
       };
       setUser(proUser);
       localStorage.setItem("user", JSON.stringify(proUser));
@@ -70,11 +70,11 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        setUser,                // <-- added setUser here so you can use it outside
+        setUser,
         register,
         login,
         logout,
-        manualProfessionalLogin // <-- optionally expose manual login helper
+        manualProfessionalLogin
       }}
     >
       {children}

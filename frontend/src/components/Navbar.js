@@ -1,32 +1,18 @@
 import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import "./Navbar.css";
-import AuthContext from "../context/AuthContext"; // Import authentication context
+import AuthContext from "../context/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { user, logout } = useContext(AuthContext);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+  const closeMenu = () => setIsOpen(false);
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
-  const handleScroll = (event) => {
-    event.preventDefault();
-    const targetId = event.target.getAttribute("href").substring(1);
-    const targetElement = document.getElementById(targetId);
-
-    if (targetElement) {
-      targetElement.scrollIntoView({ behavior: "smooth" });
-    }
-
-    setIsOpen(false); // Close mobile menu after clicking
-  };
+  const isLoggedIn = user && user.token;
 
   return (
     <nav className="navbar">
@@ -36,40 +22,40 @@ const Navbar = () => {
         <span></span>
         <span></span>
       </div>
+
       <ul className={`nav-links ${isOpen ? "open" : ""}`}>
-        <li><a href="#header" onClick={handleScroll}>Home</a></li>
+        <li><Link to="/#header" onClick={closeMenu}>Home</Link></li>
         <li className="services-menu">
-          <a href="#services" onClick={toggleDropdown}>Services</a>
+          <Link to="/#services" onClick={() => { toggleDropdown(); closeMenu(); }}>Services</Link>
           <ul className={`dropdown-menu ${isDropdownOpen ? "show" : ""}`}>
-            <li><a href="#plumbing">Plumbing</a></li>
-            <li><a href="#tailoring">Tailoring</a></li>
-            <li><a href="#electrical">Electrical</a></li>
-            <li><a href="#cleaning">Cleaning</a></li>
-            <li><a href="#gardening">Gardening</a></li>
-            <li><a href="#hvac">Air Conditioning</a></li>
-            <li><a href="#carpenter">Carpentry</a></li>
-            <li><a href="#painting">Painting</a></li>
-            <li><a href="#tech-support">Tech Support</a></li>
-            <li><a href="#tutors">Tutors</a></li>
+            <li><Link to="/plumbers" onClick={closeMenu}>Plumbing</Link></li>
+            <li><Link to="/tailors" onClick={closeMenu}>Tailoring</Link></li>
+            <li><Link to="/electricians" onClick={closeMenu}>Electrical</Link></li>
+            <li><Link to="/cleaning" onClick={closeMenu}>Cleaning</Link></li>
+            <li><Link to="/gardening" onClick={closeMenu}>Gardening</Link></li>
+            <li><Link to="/hvac" onClick={closeMenu}>Air Conditioning</Link></li>
+            <li><Link to="/carpentry" onClick={closeMenu}>Carpentry</Link></li>
+            <li><Link to="/painting" onClick={closeMenu}>Painting</Link></li>
+            <li><Link to="/tech-support" onClick={closeMenu}>Tech Support</Link></li>
+            <li><Link to="/tutors" onClick={closeMenu}>Tutors</Link></li>
           </ul>
         </li>
-        <li><a href="#about">About</a></li>
-        <li><a href="#contact">Contact</a></li>
-        
-        {/* Authentication Links */}
-        {user ? (
+        <li><Link to="/#about" onClick={closeMenu}>About</Link></li>
+        <li><Link to="/#contact" onClick={closeMenu}>Contact</Link></li>
+
+        {isLoggedIn ? (
           <>
             {user.role === "user" ? (
-              <li><Link to="/user-dashboard">User Dashboard</Link></li>
+              <li><Link to="/user-dashboard" onClick={closeMenu}>User Dashboard</Link></li>
             ) : (
-              <li><Link to="/professional-dashboard">Professional Dashboard</Link></li>
+              <li><Link to="/professional-dashboard" onClick={closeMenu}>Professional Dashboard</Link></li>
             )}
             <li><button className="logout-btn" onClick={logout}>Logout</button></li>
           </>
         ) : (
           <>
-            <li><Link to="/login">Login</Link></li>
-            <li><Link to="/signup">Signup</Link></li>
+            <li><Link to="/login" onClick={closeMenu}>Login</Link></li>
+            <li><Link to="/signup" onClick={closeMenu}>Signup</Link></li>
           </>
         )}
       </ul>
@@ -78,27 +64,26 @@ const Navbar = () => {
         <div className="mobile-menu">
           <button className="close-btn" onClick={toggleMenu}>&times;</button>
           <ul className="mobile-nav-links">
-            <li><Link to="/" onClick={toggleMenu}>Home</Link></li>
+            <li><Link to="/#header" onClick={toggleMenu}>Home</Link></li>
             <li className="services-menu">
-              <a href="#services" onClick={toggleDropdown}>Services</a>
+              <Link to="/#services" onClick={toggleMenu}>Services</Link>
               <ul className={`dropdown-menu ${isDropdownOpen ? "show" : ""}`}>
-                <li><a href="#plumbing" onClick={toggleMenu}>Plumbing</a></li>
-                <li><a href="#tailoring" onClick={toggleMenu}>Tailoring</a></li>
-                <li><a href="#electrical" onClick={toggleMenu}>Electrical</a></li>
-                <li><a href="#cleaning" onClick={toggleMenu}>Cleaning</a></li>
-                <li><a href="#gardening" onClick={toggleMenu}>Gardening</a></li>
-                <li><a href="#hvac" onClick={toggleMenu}>Air Conditioning</a></li>
-                <li><a href="#carpenter" onClick={toggleMenu}>Carpentry</a></li>
-                <li><a href="#painting" onClick={toggleMenu}>Painting</a></li>
-                <li><a href="#tech-support" onClick={toggleMenu}>Tech Support</a></li>
-                <li><a href="#tutors" onClick={toggleMenu}>Tutors</a></li>
+                <li><Link to="/plumbers" onClick={toggleMenu}>Plumbing</Link></li>
+                <li><Link to="/tailors" onClick={toggleMenu}>Tailoring</Link></li>
+                <li><Link to="/electricians" onClick={toggleMenu}>Electrical</Link></li>
+                <li><Link to="/cleaning" onClick={toggleMenu}>Cleaning</Link></li>
+                <li><Link to="/gardening" onClick={toggleMenu}>Gardening</Link></li>
+                <li><Link to="/hvac" onClick={toggleMenu}>Air Conditioning</Link></li>
+                <li><Link to="/carpentry" onClick={toggleMenu}>Carpentry</Link></li>
+                <li><Link to="/painting" onClick={toggleMenu}>Painting</Link></li>
+                <li><Link to="/tech-support" onClick={toggleMenu}>Tech Support</Link></li>
+                <li><Link to="/tutors" onClick={toggleMenu}>Tutors</Link></li>
               </ul>
             </li>
-            <li><a href="#about" onClick={toggleMenu}>About</a></li>
-            <li><a href="#contact" onClick={toggleMenu}>Contact</a></li>
-            
-            {/* Mobile Authentication Links */}
-            {user ? (
+            <li><Link to="/#about" onClick={toggleMenu}>About</Link></li>
+            <li><Link to="/#contact" onClick={toggleMenu}>Contact</Link></li>
+
+            {isLoggedIn ? (
               <>
                 {user.role === "user" ? (
                   <li><Link to="/user-dashboard" onClick={toggleMenu}>User Dashboard</Link></li>

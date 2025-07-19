@@ -1,0 +1,112 @@
+/* Chat room container */
+.chat-room {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 1rem;
+  background: #f2f2f2;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+}
+
+/* Chat message box */
+.chat-box {
+  height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  background: #fff;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Chat message style */
+.chat-message {
+  margin: 5px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  max-width: 75%;
+  word-wrap: break-word;
+  display: inline-block;
+}
+
+/* Messages from the sender (current user) */
+.chat-message.own {
+  background-color: #d1f5d3;
+  margin-left: auto;
+  text-align: right;
+}
+
+/* Messages from others */
+.chat-message.other {
+  background-color: #e1e1e1;
+  margin-right: auto;
+  text-align: left;
+}
+
+.chat-sender {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Chat input form */
+.chat-form {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-form input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.chat-form button {
+  padding: 10px 15px;
+  border: none;
+  background-color: #2f80ed;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.chat-form button:hover {
+  background-color: #2565c6;
+}
+
+/* ✅ Toast notification for sent message */
+.chat-toast {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  background-color: #4caf50;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 5px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: fade-in-out 2s ease-in-out;
+  z-index: 1000;
+}
+
+/* Toast fade-in/out animation */
+@keyframes fade-in-out {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}

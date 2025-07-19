@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import "./App.css";
 
 import { AuthProvider } from "./context/AuthContext";
@@ -20,66 +27,68 @@ import BackToTop from "./components/BackToTop";
 import Plumbers from "./components/Plumbers";
 import ProfessionalDashboard from "./components/ProfessionalDashboard";
 import UserDashboard from "./components/UserDashboard";
+import ChatRoom from "./components/ChatRoom";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ProfessionalLogin from "./components/ProfessionalLogin";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 
-function RedirectAuthenticatedUser() {
+
+// 🔁 Scroll to anchor (e.g. #services) if hash is in URL
+const ScrollToHashElement = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 0);
+      }
+    }
+  }, [location]);
+
+  return null;
+};
+
+// 🔁 Redirect logged-in users to dashboard, except when visiting specific public routes or anchors
+const RedirectAuthenticatedUser = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const role = localStorage.getItem("role");
-    if (role === "professional") {
-      navigate("/professional-dashboard");
-    } else if (role === "user") {
-      navigate("/user-dashboard");
+
+    if (location.pathname === "/" && location.hash) return;
+
+    if (location.pathname === "/") {
+      if (role === "professional") {
+        navigate("/professional-dashboard");
+      } else if (role === "user") {
+        navigate("/user-dashboard");
+      }
     }
-  }, [navigate]);
+  }, [navigate, location]);
 
   return null;
-}
+};
 
 function App() {
-  const [bookingRequests, setBookingRequests] = useState([]);
-
-  // Handles new booking requests from the Plumbers component
-  const handleBookingRequest = (bookingDetails) => {
-    setBookingRequests((prevRequests) => [
-      ...prevRequests,
-      { ...bookingDetails, status: "Pending", notification: "" },
-    ]);
-  };
-
-  // Handles status updates in the ProfessionalDashboard
-  const updateBookingStatus = (id, status) => {
-    setBookingRequests((prevRequests) =>
-      prevRequests.map((request) =>
-        request.id === id
-          ? {
-              ...request,
-              status,
-              notification:
-                status === "Accepted"
-                  ? "Your booking request has been accepted by the professional."
-                  : "Unfortunately, the professional is not available at the moment. Your booking request has been declined.",
-            }
-          : request
-      )
-    );
-  };
-
   return (
     <AuthProvider>
       <Router>
+        <ScrollToHashElement />
         <RedirectAuthenticatedUser />
         <div className="App">
           <Navbar />
-          <Header />
           <Routes>
             <Route
               path="/"
               element={
                 <>
+                  <Header />
                   <Introduction />
                   <Features />
                   <About />
@@ -94,16 +103,15 @@ function App() {
             />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/professional-login" element={<ProfessionalLogin />} />
-            <Route path="/plumbers" element={<Plumbers onBookingRequest={handleBookingRequest} />} />
+            <Route path="/plumbers" element={<Plumbers />} />
             <Route
               path="/professional-dashboard"
               element={
                 <PrivateRoute>
-                  <ProfessionalDashboard
-                    bookingRequests={bookingRequests}
-                    updateBookingStatus={updateBookingStatus}
-                  />
+                  <ProfessionalDashboard />
                 </PrivateRoute>
               }
             />
@@ -111,7 +119,15 @@ function App() {
               path="/user-dashboard"
               element={
                 <PrivateRoute>
-                  <UserDashboard bookingRequests={bookingRequests} />
+                  <UserDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/chat/:roomId"
+              element={
+                <PrivateRoute>
+                  <ChatRoom />
                 </PrivateRoute>
               }
             />

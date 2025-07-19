@@ -1,18 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import AuthContext from "../context/AuthContext";
 import "./Login.css";
 
 const ProfessionalLogin = () => {
-  const [professionalData, setProfessionalData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const { login } = useContext(AuthContext); // Use existing login logic
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setProfessionalData({
-      ...professionalData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -20,34 +18,15 @@ const ProfessionalLogin = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/professional-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(professionalData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Backend Error Response:", errorText);
-        throw new Error("Login failed: " + errorText);
+      const result = await login(formData); // Uses /api/auth/login
+      if (result.role !== "professional") {
+        throw new Error("Only professionals are allowed to log in here.");
       }
 
-      const result = await response.json();
-      console.log("Professional Login Response:", result);
-
-      if (!result.token || result.user?.role !== "professional") {
-        throw new Error("Invalid server response: Missing token or incorrect role.");
-      }
-
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("role", result.user.role);
-      localStorage.setItem("name", result.user.name);
-
-      alert("Login successful!");
-      window.location.href = "/professional-dashboard";
-    } catch (error) {
-      console.error("Login Error:", error.message);
-      setError(error.message);
+      alert("Professional login successful!");
+      navigate("/professional-dashboard");
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -60,7 +39,7 @@ const ProfessionalLogin = () => {
           type="email"
           name="email"
           placeholder="Email Address"
-          value={professionalData.email}
+          value={formData.email}
           onChange={handleChange}
           required
         />
@@ -68,7 +47,7 @@ const ProfessionalLogin = () => {
           type="password"
           name="password"
           placeholder="Password"
-          value={professionalData.password}
+          value={formData.password}
           onChange={handleChange}
           required
         />
