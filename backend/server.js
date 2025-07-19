@@ -1,29 +1,64 @@
 const express = require("express");
+const http = require("http");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const pool = require("./db");
 
-// Route imports
-const authRoutes = require("./tconnect/routes/authRoutes");
-const professionalAuthRoutes = require("./tconnect/routes/professionalAuthRoutes");
-const dashboardRoutes = require("./tconnect/routes/dashboardRoutes");
-const bookingRoutes = require("./tconnect/routes/bookingRoutes");
-
-dotenv.config(); // Load environment variables
+dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 
-// Middleware
+// 🔌 Setup Socket.IO
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// 🔁 Socket.IO real-time logic
+io.on("connection", (socket) => {
+  console.log("⚡ User connected:", socket.id);
+
+  socket.on("joinRoom", (roomId) => {
+    socket.join(roomId);
+    console.log(`✅ Socket joined room: ${roomId}`);
+  });
+
+  socket.on("sendMessage", ({ roomId, sender, message }) => {
+    io.to(roomId).emit("receiveMessage", { sender, message });
+  });
+
+  socket.on("bookingDeclined", ({ roomId, message }) => {
+    console.log(`❌ Booking declined in room ${roomId}`);
+    io.to(roomId).emit("declineMessage", { message });
+  });
+
+  socket.on("bookingAccepted", ({ roomId, message }) => {
+    console.log(`✅ Booking accepted in room ${roomId}`);
+    io.to(roomId).emit("acceptedMessage", { message });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Disconnected:", socket.id);
+  });
+});
+
+app.set("io", io);
+
+// ✅ Middleware
 app.use(express.json());
 app.use(cors());
 
-// Optional: Log all incoming requests
+// 🔍 Request Logger
 app.use((req, res, next) => {
   console.log(`➡️  ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// ✅ Setup or update bookings table
+// 🛠️ Ensure bookings table and required columns
 const ensureBookingsTable = async () => {
   try {
     await pool.query(`
@@ -39,7 +74,6 @@ const ensureBookingsTable = async () => {
     `);
     console.log("📦 Bookings table exists or created.");
 
-    // Check for and add missing columns (safe migrations)
     const result = await pool.query(`
       SELECT column_name FROM information_schema.columns
       WHERE table_name = 'bookings';
@@ -51,37 +85,45 @@ const ensureBookingsTable = async () => {
     if (!columns.includes("professional")) {
       alterQueries.push(`ADD COLUMN professional TEXT`);
     }
-    if (!columns.includes("professionalContact")) {
+    if (!columns.includes("professionalcontact")) {
       alterQueries.push(`ADD COLUMN professionalContact TEXT`);
+    }
+    if (!columns.includes("roomid")) {
+      alterQueries.push(`ADD COLUMN roomId TEXT`);
     }
 
     if (alterQueries.length > 0) {
-      const alterSQL = `ALTER TABLE bookings ${alterQueries.join(", ")};`;
-      await pool.query(alterSQL);
+      await pool.query(`ALTER TABLE bookings ${alterQueries.join(", ")};`);
       console.log("🛠️  Bookings table updated with new columns.");
     } else {
       console.log("✅ Bookings table already up to date.");
     }
 
   } catch (err) {
-    console.error("❌ Error setting up bookings table:", err.message);
+    console.error("❌ Error ensuring bookings table:", err.message);
   }
 };
 
 ensureBookingsTable();
 
-// ✅ Mount API routes
-app.use("/api/auth", authRoutes);                  // /login, /register
-app.use("/api/auth", professionalAuthRoutes);      // /professional-login
-app.use("/api/dashboard", dashboardRoutes);        // /dashboard
-app.use("/api/bookings", bookingRoutes);           // /bookings
+// ✅ API Routes
+const authRoutes = require("./tconnect/routes/authRoutes");
+const professionalAuthRoutes = require("./tconnect/routes/professionalAuthRoutes");
+const dashboardRoutes = require("./tconnect/routes/dashboardRoutes");
+const bookingRoutes = require("./tconnect/routes/bookingRoutes");
 
-console.log("✅ Auth routes mounted:");
+app.use("/api/auth", authRoutes);
+app.use("/api/auth", professionalAuthRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/bookings", bookingRoutes);
+
+console.log("✅ API routes mounted:");
 console.log("   - /api/auth/login");
 console.log("   - /api/auth/register");
 console.log("   - /api/auth/professional-login");
 
+// 🚀 Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Server running with Socket.IO on port ${PORT}`);
 });
