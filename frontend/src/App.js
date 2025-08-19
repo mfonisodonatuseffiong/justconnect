@@ -110,9 +110,9 @@ function App() {
             <Route
               path="/professional-dashboard"
               element={
-                <PrivateRoute>
+               
                   <ProfessionalDashboard />
-                </PrivateRoute>
+                
               }
             />
             <Route
