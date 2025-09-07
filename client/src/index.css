@@ -8,6 +8,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Barlow";
   src: url("../fonts/Barlow-Medium.woff2") format("woff2");
@@ -24,32 +25,41 @@
   font-display: swap;
 }
 
+
+/** COLORS */
+:root {
+  --primary: #673ab7;
+  --secondary: #99a1af;
+  --accent: #ff6f61; /** orange 500  */
+}
+
+
+
 /** GLOBAL STYLES **/
 body {
   background-color: #e9d5ff; /* purple-200*/
-  color: #fff; /* Default text color */
+  color: #fff; /* Default text white color */
   font-family: "Barlow", sans-serif;
 }
+
 /**  text highlight orange color */
 .text-highlight {
-  color: #ff6f61; 
+  color: var(--accent); 
 }
+
 /* Secondary text color  on white background */
 .text-secondary {
-    color: #364153;  /** gray 700*/
+    color: var(--secondary);  /** gray 700*/
 }
 
-/** a purple gradient background */
+/** a royal blue gradient background */
 .bg-gradient {
+  background: linear-gradient(to bottom, #673ab7, #512da8);
+}
+
+/** --------- purple background ------------*/
+.bg-new {
   background: linear-gradient(to bottom, #6b21a8, #430e6b);
 }
-/* 
-.oval-shape {
-  clip-path: ellipse(50% 40% at 50% 50%);
-}
-
-.trapezium-shape {
-  clip-path: polygon(20% 0, 80% 0, 100% 100%, 0 100%);
-} */
 
 

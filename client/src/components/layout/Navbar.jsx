@@ -32,7 +32,7 @@ const Navbar = () => {
         <div className="logo-container">
           <Link to="/" aria-label="App logo, clicks and takes you home">
             <h2 className="text-xl font-regular sm:text-2xl md:text-3xl uppercase hover:-translate-y-1.5 transition-all duration-500">
-              <span className="text-[#ff6f61]">J</span>ustConnect
+              <span className="text-[var(--accent)]">J</span>ustConnect
             </h2>
           </Link>
         </div>
@@ -40,14 +40,18 @@ const Navbar = () => {
         {/* Desktop Links */}
         <ul className="hidden md:flex space-x-6 items-center">
           {navlinks.map((list, idx) => (
-            <li key={idx} aria-label={list.label} className="relative font-semibold">
+            <li
+              key={idx}
+              aria-label={list.label}
+              className="relative font-semibol"
+            >
               <Link
                 to={list.link}
-                className="group py-2 hover:text-orange-500 transition-all duration-500"
+                className="group py-2 hover:text-[var(--accent)] transition-all duration-500"
               >
                 {list.title}
                 {/* underline hover effect */}
-                <span className="absolute bottom-[-8px] left-0 h-1 w-0 opacity-0 transition duration-500 bg-[#ff6f61] group-hover:w-full group-hover:opacity-100"></span>
+                <span className="absolute bottom-[-8px] left-0 h-1 w-0 opacity-0 transition duration-500 bg-[var(--accent)] group-hover:w-full group-hover:opacity-100"></span>
               </Link>
             </li>
           ))}
@@ -57,7 +61,7 @@ const Navbar = () => {
         <div className="hidden md:flex">
           <Link
             to="/auth/login"
-            className="px-8 py-3 rounded-full font-semibold shadow hover:bg-white bg-[#ff6f61] hover:text-[#ff6f61] transition duration-500"
+            className="px-8 py-3 rounded-full font-semibold shadow hover:bg-white bg-[var(--accent)] hover:text-[var(--accent)] transition duration-500"
           >
             Sign in
           </Link>
@@ -76,14 +80,14 @@ const Navbar = () => {
 
         {/* Mobile Nav Links */}
         {mobileMenu && (
-          <div className="absolute top-full left-0 w-full pb-15 bg-[#430e6b] backdrop-blur-md md:hidden">
+          <div className="absolute top-full left-0 w-full pb-15 bg-gradient backdrop-blur-md md:hidden">
             <ul className="flex flex-col px-4 space-y-8 py-6">
               {navlinks.map((list, idx) => (
                 <li key={idx} aria-label={list.label}>
                   <Link
                     to={list.link}
                     onClick={() => setMobileMenu(false)}
-                    className="block text-lg hover:bg-[#ff6f61] transition"
+                    className="block text-lg hover:bg-[var(--accent)] transition"
                   >
                     {list.title}
                   </Link>
@@ -93,7 +97,7 @@ const Navbar = () => {
                 <Link
                   to="/auth/login"
                   onClick={() => setMobileMenu(false)}
-                  className="pe-8 ps-2 py-2 rounded-xl border border-gray-300 shadow hover:bg[#fff] hover:text-[#ff6f61] transition duration-500"
+                  className="py-3 text-[var(--accent)] hover:scale-105 transition duration-500"
                 >
                   Sign in
                 </Link>

@@ -2,9 +2,11 @@
  * @desc About section for the landing page
  * @returns About component
  */
+
+
 const About = () => {
   return (
-    <section className="relative py-20 text-secondary">
+    <section className="relative py-20 text-[var(--primary)] overflow-hidden">
       <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-16">
         {/* Title */}
         <div className="text-center space-y-4 mb-12">

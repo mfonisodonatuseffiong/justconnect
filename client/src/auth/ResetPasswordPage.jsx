@@ -9,34 +9,61 @@ import AuthLayout from "./components/authLayout";
 import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
+import { useState } from "react";
 
 const ResetPasswordPage = () => {
+
+  const [formData, setFormData] = useState({
+    password: "",
+    confirmPassword: ""
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Handle form submission logic
+  };
+
+  
   return (
     <AuthLayout>
-      <FormWrapper title="Password Reset">
+      <FormWrapper title="Password Reset" subtitle={"Enter your new password"}>
         {/**-------- form ---------- */}
         <div>
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Password"
               type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange} 
               placeholder="************"
             />
             <Input
               label="Confirm Password"
               type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
               placeholder="retype password"
             />
 
-            <Button type="button"> Reset Password </Button>
+            <Button type="submit"> Reset Password </Button>
           </form>
 
           {/** link to registration page */}
-          <p className="text-center mt-8">
+          <p className="text-center mt-8 text-sm">
             Remember password?{" "}
             <Link
               to="/auth/login"
-              className="text-gray-400 hover:text-orange-500 transition-colors duration-500"
+              className="text-secondary hover:text-[var(--accent)] transition-colors duration-500"
             >
               {" "}
               Sign In
