@@ -10,7 +10,7 @@ const About = () => {
       <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-16">
         {/* Title */}
         <div className="text-center space-y-4 mb-12">
-          <h2 className="text-3xl md:text-5xl font-medium">
+          <h2 className="text-3xl font-medium">
             About <span className="text-highlight"> JustConnect</span>
           </h2>
           <p className="text-base md:text-lg max-w-3xl mx-auto">
@@ -24,7 +24,7 @@ const About = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left - Text */}
           <div className="space-y-6">
-            <h3 className="text-2xl md:text-3xl font-semibold">
+            <h3 className="text-3xl font-semibold">
               Why Choose Us?
             </h3>
             <ul className="space-y-4">

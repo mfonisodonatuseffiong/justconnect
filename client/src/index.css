@@ -28,7 +28,7 @@
 
 /** COLORS */
 :root {
-  --primary: #673ab7;
+  --primary: #1e2939;
   --secondary: #99a1af;
   --accent: #ff6f61; /** orange 500  */
 }
@@ -37,7 +37,7 @@
 
 /** GLOBAL STYLES **/
 body {
-  background-color: #e9d5ff; /* purple-200*/
+  background-color: #f9fafb; /* purple-200*/
   color: #fff; /* Default text white color */
   font-family: "Barlow", sans-serif;
 }
