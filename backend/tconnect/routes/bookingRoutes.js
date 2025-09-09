@@ -3,11 +3,11 @@ const router = express.Router();
 const pool = require("../../db");
 const { protect } = require("../../middleware/authMiddleware");
 
-// POST /api/bookings - Guest or User books a professional
+// 📝 Create a new booking
 router.post("/", async (req, res) => {
   const {
     user_id,
-    user_name, // ✅ Added user_name
+    user_name,
     contact,
     address,
     jobDetails,
@@ -30,7 +30,7 @@ router.post("/", async (req, res) => {
 
     const result = await pool.query(insertQuery, [
       user_id,
-      user_name, // ✅ Value for user_name
+      user_name,
       contact,
       address,
       jobDetails,
@@ -44,12 +44,12 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error("❌ Error creating booking:", error);
+    console.error("❌ Error creating booking:", error.message);
     res.status(500).json({ error: "Failed to create booking" });
   }
 });
 
-// GET /api/bookings/user - Get bookings for the logged-in user
+// 🔍 Get bookings for logged-in user
 router.get("/user", protect, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -59,12 +59,12 @@ router.get("/user", protect, async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error("❌ Error fetching user bookings:", error);
+    console.error("❌ Error fetching user bookings:", error.message);
     res.status(500).json({ error: "Failed to fetch user bookings" });
   }
 });
 
-// GET /api/bookings/professional - Get bookings for the logged-in professional
+// 🔍 Get bookings for logged-in professional
 router.get("/professional", protect, async (req, res) => {
   try {
     if (req.user.role !== "professional") {
@@ -78,12 +78,12 @@ router.get("/professional", protect, async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error("❌ Error fetching professional bookings:", error);
+    console.error("❌ Error fetching professional bookings:", error.message);
     res.status(500).json({ error: "Failed to fetch professional bookings" });
   }
 });
 
-// PUT /api/bookings/:id/status - Update booking status
+// 🔄 Update booking status + emit Socket.IO events if accepted
 router.put("/:id/status", protect, async (req, res) => {
   const bookingId = req.params.id;
   const { status } = req.body;
@@ -96,6 +96,10 @@ router.put("/:id/status", protect, async (req, res) => {
 
     const updatedBooking = updateResult.rows[0];
 
+    if (!updatedBooking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
     if (status.toLowerCase() === "accepted") {
       const io = req.app.get("io");
       const roomId = updatedBooking.roomid;
@@ -107,14 +111,35 @@ router.put("/:id/status", protect, async (req, res) => {
           professional: updatedBooking.professional,
           bookingId: updatedBooking.id,
         });
-        console.log(`📨 chatAllowed emitted to room ${roomId}`);
+        console.log(`📨 'chatAllowed' emitted to room: ${roomId}`);
       }
     }
 
     res.json({ message: "Booking status updated", booking: updatedBooking });
   } catch (error) {
-    console.error("❌ Error updating booking status:", error);
+    console.error("❌ Error updating booking status:", error.message);
     res.status(500).json({ error: "Failed to update booking status" });
+  }
+});
+
+// ❌ Cancel booking route
+router.post("/:id/cancel", protect, async (req, res) => {
+  const bookingId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      "UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *",
+      ["cancelled", bookingId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    res.json({ message: "Booking cancelled successfully", booking: result.rows[0] });
+  } catch (error) {
+    console.error("❌ Error cancelling booking:", error.message);
+    res.status(500).json({ error: "Failed to cancel booking" });
   }
 });
 
