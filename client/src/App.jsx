@@ -1,7 +1,7 @@
 /**
  * @description - This is the main entry of our frontend application
  *    - import the appRoute from the routes folder to access tha routes
- * @returns appRoutes to all pages accessble in the react app
+ * @returns appRoutes to all pages accessible in the react app
  */
 
 import { AppRoutes } from "./routes/AppRoutes";
