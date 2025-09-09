@@ -2,10 +2,8 @@ import React, {
   useContext,
   useEffect,
   useState,
-  useRef,
-  useCallback,
+  useCallback
 } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
 import axios from "axios";
 import AuthContext from "../context/AuthContext";
@@ -21,82 +19,128 @@ const UserDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const servicesRef = useRef(null);
+  const [cancelModal, setCancelModal] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [activeChat, setActiveChat] = useState(null);
+  const [chatRoom, setChatRoom] = useState("");
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
 
   const fetchBookings = useCallback(async () => {
+    if (!user?.token) return;
+
     try {
-      const token = user?.token;
       const response = await axios.get("http://localhost:5000/api/bookings/user", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      console.log("📦 Raw bookings from API:", response.data);
-      setBookings(response.data);
+      const data = response?.data || [];
+      setBookings(data);
 
-      response.data.forEach((booking) => {
-        if (booking.roomid) {
-          console.log("🟢 Joining room:", booking.roomid);
+      data.forEach((booking) => {
+        if (booking.roomid && booking.status === "Accepted") {
           socket.emit("joinRoom", booking.roomid);
         }
       });
     } catch (err) {
-      console.error("❌ Failed to fetch bookings:", err.message);
+      console.error("Failed to fetch bookings:", err.message);
     } finally {
       setLoading(false);
     }
   }, [user?.token]);
 
   useEffect(() => {
-    if (user?.token) {
-      fetchBookings();
-    }
-  }, [fetchBookings, user?.token]);
-
-  useEffect(() => {
-    if (location.hash === "#services" && servicesRef.current) {
-      servicesRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [location]);
-
-  useEffect(() => {
-    const handleMessage = ({ message, type }) => {
-      console.log("📩 Notification:", type, message);
-      setNotification({ message, type });
-      fetchBookings();
-      setTimeout(() => setNotification(null), 5000);
-    };
-
-    socket.on("declineMessage", (payload) =>
-      handleMessage({ ...payload, type: "declined" })
-    );
-    socket.on("acceptedMessage", (payload) =>
-      handleMessage({ ...payload, type: "accepted" })
-    );
-
-    return () => {
-      socket.off("declineMessage");
-      socket.off("acceptedMessage");
-    };
+    fetchBookings();
   }, [fetchBookings]);
 
-  // 🔍 Filter bookings for current logged-in user
-  const userId = user?.id;
-  const userName = user?.name?.toLowerCase();
+  useEffect(() => {
+    socket.on("receiveMessage", (data) => {
+      setMessages((prev) => [...prev, data]);
+    });
 
-  const userBookings = bookings.filter((booking) => {
-    const matchById = booking.user_id === userId;
-    const matchByName = (booking.user || booking.user_name || "")
-      .toLowerCase()
-      .includes(userName);
-    return matchById || matchByName;
-  });
+    socket.on("chatAllowed", ({ roomId }) => {
+      const matched = bookings.find((b) => b.roomid === roomId);
+      if (matched) {
+        setActiveChat(matched);
+        setChatRoom(roomId);
+        setMessages([]);
+        socket.emit("joinRoom", roomId);
+      }
+    });
+
+    socket.on("acceptedMessage", ({ message, roomId }) => {
+      setNotification({ message, type: "accepted" });
+
+      const acceptedBooking = bookings.find((b) => b.roomid === roomId);
+      if (acceptedBooking) {
+        setActiveChat(acceptedBooking);
+        setChatRoom(roomId);
+        setMessages([]);
+        socket.emit("joinRoom", roomId);
+      }
+
+      setTimeout(() => setNotification(null), 5000);
+    });
+
+    socket.on("declineMessage", ({ message }) => {
+      setNotification({ message, type: "declined" });
+      setTimeout(() => setNotification(null), 5000);
+    });
+
+    return () => {
+      socket.off("receiveMessage");
+      socket.off("chatAllowed");
+      socket.off("acceptedMessage");
+      socket.off("declineMessage");
+    };
+  }, [bookings]);
+
+  const handleCancelRequest = async (bookingId) => {
+    if (!cancelReason.trim()) {
+      setNotification({ message: "Please provide a reason before cancelling.", type: "error" });
+      setTimeout(() => setNotification(null), 4000);
+      return;
+    }
+
+    try {
+      await axios.post(
+        `http://localhost:5000/api/bookings/${bookingId}/cancel`,
+        { reason: cancelReason },
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      setBookings((prev) => prev.filter((b) => b.id !== bookingId && b._id !== bookingId));
+      setCancelModal(null);
+      setCancelReason("");
+    } catch (error) {
+      console.error("Error cancelling booking:", error.message);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (message.trim() && chatRoom) {
+      const msg = {
+        roomId: chatRoom,
+        sender: user.name,
+        message,
+      };
+      socket.emit("sendMessage", msg);
+      setMessages((prev) => [...prev, msg]);
+      setMessage("");
+    }
+  };
+
+  const handleOpenChat = (booking) => {
+    setActiveChat(booking);
+    setChatRoom(booking.roomid);
+    setMessages([]);
+    socket.emit("joinRoom", booking.roomid);
+  };
 
   return (
     <div className="user-dashboard">
       <h2>Welcome, {user?.name}!</h2>
-      <p>Here are your bookings:</p>
 
       {notification && (
         <div className={`notification ${notification.type}`}>
@@ -109,38 +153,77 @@ const UserDashboard = () => {
 
       {loading ? (
         <p>Loading...</p>
-      ) : userBookings.length > 0 ? (
+      ) : activeChat ? (
+        <div className="chat-box">
+          <h3>Chat with {activeChat.professional}</h3>
+          <div className="messages">
+            {messages.map((msg, i) => (
+              <p key={i}>
+                <strong>{msg.sender}:</strong> {msg.message}
+              </p>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type your message..."
+          />
+          <button onClick={handleSendMessage}>Send</button>
+        </div>
+      ) : bookings.length > 0 ? (
         <div className="bookings-container">
-          {userBookings.map((booking) => (
+          {bookings.map((booking) => (
             <div className="booking-card" key={booking._id || booking.id}>
               <h3>{booking.jobDetails || "Service"}</h3>
-              <p><strong>Professional:</strong> {booking.professional}</p>
-              <p><strong>Contact:</strong> {booking.professionalContact}</p>
-              <p><strong>Address:</strong> {booking.address}</p>
-              <p>
-                <strong>Status:</strong>{" "}
-                <span className={`status ${booking.status.toLowerCase()}`}>
-                  {booking.status}
-                </span>
-              </p>
-              <p><strong>Date:</strong> {booking.date}</p>
-              <p><strong>Time:</strong> {booking.time}</p>
+              <p><strong>Professional:</strong> {booking.professional || "N/A"}</p>
+              <p><strong>Contact:</strong> {booking.professionalContact || "N/A"}</p>
+              <p><strong>Address:</strong> {booking.address || "N/A"}</p>
+              <p><strong>Status:</strong> {booking.status}</p>
+              <p><strong>Date:</strong> {booking.date || "N/A"}</p>
+              <p><strong>Time:</strong> {booking.time || "N/A"}</p>
 
-              {booking.status === "Accepted" && booking.roomid && (
-                <button
-                  className="btn chat"
-                  onClick={() =>
-                    navigate(`/chat/${booking.roomid}?sender=${user.name}`)
-                  }
-                >
-                  Go to Chat
+              <div className="booking-actions">
+                {booking.status === "Accepted" && booking.roomid && (
+                  <button className="btn chat" onClick={() => handleOpenChat(booking)}>
+                    Start Chat
+                  </button>
+                )}
+                <button className="btn cancel" onClick={() => setCancelModal(booking._id || booking.id)}>
+                  Cancel
                 </button>
-              )}
+              </div>
             </div>
           ))}
         </div>
       ) : (
         <p>No bookings available.</p>
+      )}
+
+      {cancelModal && (
+        <div className="cancel-modal">
+          <div className="modal-content">
+            <h3>Cancel Booking</h3>
+            <p>Please tell us why you’re cancelling this booking?</p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Type your reason..."
+            />
+            <div className="modal-buttons">
+              <button
+                className="btn confirm"
+                onClick={() => handleCancelRequest(cancelModal)}
+                disabled={!cancelReason.trim()}
+              >
+                Confirm Cancel
+              </button>
+              <button className="btn close" onClick={() => setCancelModal(null)}>
+                Keep Booking
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

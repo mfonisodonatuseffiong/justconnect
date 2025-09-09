@@ -7,7 +7,7 @@ import AuthContext from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Plumbers = () => {
-  const [plumbers] = useState([
+  const [plumbers, setPlumbers] = useState([
     {
       id: 1,
       name: 'Mfoniso Donatus',
@@ -104,7 +104,7 @@ const Plumbers = () => {
       });
       setNotification(`Booking request sent to ${selectedPlumber.name}!`);
       setShowModal(false);
-      setTimeout(() => setNotification(''), 5000);
+      setTimeout(() => setNotification(''), 7000);
     } catch (err) {
       console.error('Booking error:', err);
       alert('Failed to send booking. Please try again.');
@@ -112,11 +112,19 @@ const Plumbers = () => {
   };
 
   const handleRating = (plumberId, newRating) => {
-    // Optional: Local rating update logic
+    const updatedPlumbers = plumbers.map((plumber) => {
+      if (plumber.id === plumberId) {
+        const newCount = plumber.ratingCount + 1;
+        const updatedRating = ((plumber.rating * plumber.ratingCount) + newRating) / newCount;
+        return { ...plumber, rating: updatedRating, ratingCount: newCount };
+      }
+      return plumber;
+    });
+    setPlumbers(updatedPlumbers);
   };
 
   const renderStars = (plumber) => {
-    const fullStars = Math.floor(plumber.rating);
+    const fullStars = Math.round(plumber.rating);
     return (
       <div className="stars-container">
         {[...Array(5)].map((_, i) => (
@@ -124,6 +132,7 @@ const Plumbers = () => {
             key={i}
             className={`star ${i < fullStars ? 'filled' : ''}`}
             onClick={() => handleRating(plumber.id, i + 1)}
+            title={`Rate ${i + 1} star${i === 0 ? '' : 's'}`}
           >
             ★
           </span>
