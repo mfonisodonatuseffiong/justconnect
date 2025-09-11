@@ -2,7 +2,7 @@ import React from 'react'
 
 const ContactUsPage = () => {
   return (
-    <div>ContactUsPage</div>
+    <div className='min-h-screen mt-6 bg-gradient text-white'>ContactUsPage</div>
   )
 }
 

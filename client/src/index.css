@@ -24,6 +24,31 @@
   font-style: normal;
   font-display: swap;
 }
+/* Add this to your global CSS or tailwind config */
+.select-dropdown-scrollbar::-webkit-scrollbar {
+  width: 6px;          /* width of the scrollbar */
+}
+
+.select-dropdown-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1); /* track color */
+  border-radius: 10px;
+}
+
+.select-dropdown-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--accent); /* thumb color (use your accent variable) */
+  border-radius: 10px;
+}
+
+.select-dropdown-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* Firefox */
+.select-dropdown-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) rgba(255, 255, 255, 0.1);
+}
+
 
 
 /** COLORS */
@@ -41,6 +66,9 @@ body {
   color: #fff; /* Default text white color */
   font-family: "Barlow", sans-serif;
 }
+button {
+  cursor: pointer;
+}
 
 /**  text highlight orange color */
 .text-highlight {
@@ -55,11 +83,6 @@ body {
 /** a royal blue gradient background */
 .bg-gradient {
   background: linear-gradient(to bottom, #673ab7, #512da8);
-}
-
-/** --------- purple background ------------*/
-.bg-new {
-  background: linear-gradient(to bottom, #6b21a8, #430e6b);
 }
 
 

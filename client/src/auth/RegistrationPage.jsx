@@ -4,21 +4,27 @@
 
 import { useState } from "react";
 import { AnimatePresence, easeOut, motion as Motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "./components/authLayout";
 import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
 import { ChevronsRight, ChevronsLeft } from "lucide-react";
+import toast from "react-hot-toast";
+import { useAuthHook } from "../hooks/authHooks";
 
 const RegistrationPage = () => {
+  const navigate = useNavigate();
+  const { RegisterHook, error } = useAuthHook();
   const [nextScreen, setNextScreen] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "",
     password: "",
     confirmPassword: "",
+    isChecked: false,
   });
 
   /** get values */
@@ -36,9 +42,15 @@ const RegistrationPage = () => {
   };
 
   /** submit form function */
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic
+    try {
+      const response = await RegisterHook(formData);
+      toast.success(response?.message || "Account created Successfully");
+      navigate("/auth/login");
+    } catch (error) {
+      console.error(error.message);
+    }
   };
 
   return (
@@ -46,6 +58,7 @@ const RegistrationPage = () => {
       <FormWrapper
         title="Create New Account"
         subtitle="Get a new account in seconds be it client / professional"
+        error={error}
       >
         {/**-------- form ---------- */}
         <div>
@@ -57,7 +70,7 @@ const RegistrationPage = () => {
                   initial={{ opacity: 0, x: -30 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.5, ease: easeOut }}
+                  transition={{ duration: 0.1, ease: easeOut }}
                   className="space-y-4"
                 >
                   <Input
@@ -66,6 +79,7 @@ const RegistrationPage = () => {
                     value={formData.name}
                     onChange={handleChange}
                     name="name"
+                    autoComplete="username"
                     placeholder="Full Name"
                   />
                   <Input
@@ -74,6 +88,7 @@ const RegistrationPage = () => {
                     value={formData.email}
                     onChange={handleChange}
                     name="email"
+                    autoComplete="username"
                     placeholder="example@gmail.com"
                   />
 
@@ -109,27 +124,56 @@ const RegistrationPage = () => {
                   initial={{ opacity: 0, x: 30 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 30 }}
-                  transition={{ duration: 0.5, ease: easeOut }}
+                  transition={{ duration: 0.1, ease: easeOut }}
                   className="space-y-4"
                 >
                   <Input
                     label="Password"
                     type="password"
-                    placeholder="************"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    placeholder="Create password"
                   />
                   <Input
                     label="Confirm Password"
                     type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    autoComplete="new-password"
                     placeholder="retype password"
                   />
+                  {/** agree to terms and policies */}
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.isChecked}
+                      onChange={(e) => {
+                        setFormData({
+                          ...formData,
+                          isChecked: e.target.checked,
+                        });
+                      }}
+                      className="accent-[var(--accent)]"
+                    />{" "}
+                    <Link
+                      to="/terms-&-policies"
+                      className="hover:underline text-sm text-secondary"
+                    >
+                      {" "}
+                      I agree to terms and policies
+                    </Link>
+                  </div>
 
-                  <Button type="submit"> Reset Password </Button>
+                  <Button type="submit"> Create Account </Button>
 
-                  <p className="text-center mt-8 text-sm">
+                  <p className="text-center mt-4 text-sm">
                     I have an account?{" "}
                     <Link
                       to="/auth/login"
-                      className="text-secondary hover:text-[var(--accent)] transition-colors duration-500"
+                      className="text-[var(--secondary)] hover:text-[var(--accent)] hover:underline transition-colors duration-500"
                     >
                       Login
                     </Link>

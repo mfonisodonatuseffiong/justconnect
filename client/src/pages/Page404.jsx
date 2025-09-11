@@ -5,7 +5,7 @@
 
 const PageNotFound = () => {
   return (
-    <div className="h-screen bg-black">PageNotFound</div>
+    <div className="min-h-screen bg-black text-white">PageNotFound</div>
   )
 }
 

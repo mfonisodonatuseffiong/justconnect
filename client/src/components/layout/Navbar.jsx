@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
@@ -15,7 +15,7 @@ const Navbar = () => {
   const navlinks = [
     { title: "Services", link: "/services", label: "Services page" },
     { title: "About", link: "/about-us", label: "About page" },
-    { title: "FAQ", link: "/faqs", label: "Frequently asked questions page" },
+    { title: "Faq", link: "/faqs", label: "Frequently asked questions page" },
     { title: "Contact", link: "/contact-us", label: "Contact us page" },
   ];
 
@@ -23,12 +23,12 @@ const Navbar = () => {
   const toggleVisibility = () => setMobileMenu((prev) => !prev);
 
   return (
-    <nav
+    <header
       className={`navbar fixed top-0 h-24 w-full bg-gradient font-medium shadow z-50`}
       aria-label="navbar"
     >
-      <div className="relative max-w-7xl h-full mx-auto px-4 flex items-center justify-between">
-        {/* LOGO */}
+      <nav className="relative max-w-7xl h-full mx-auto px-4 flex items-center justify-between">
+        {/* ------ LOGO --------- */}
         <div className="logo-container">
           <Link to="/" aria-label="App logo, clicks and takes you home">
             <h2 className="text-xl font-regular sm:text-2xl md:text-3xl uppercase hover:-translate-y-1.5 transition-all duration-500">
@@ -40,19 +40,30 @@ const Navbar = () => {
         {/* Desktop Links */}
         <ul className="hidden md:flex space-x-6 items-center">
           {navlinks.map((list, idx) => (
-            <li
-              key={idx}
-              aria-label={list.label}
-              className="relative font-semibol"
-            >
-              <Link
+            <li key={idx} aria-label={list.label} className="relative">
+              <NavLink
                 to={list.link}
-                className="group py-2 hover:text-[var(--accent)] transition-all duration-500"
+                className={({ isActive }) => {
+                  return `
+      relative inline-block py-2 transition-all duration-500 group
+      ${isActive ? "text-[var(--accent)]" : "hover:text-[var(--accent)]"}
+    `;
+                }}
               >
-                {list.title}
-                {/* underline hover effect */}
-                <span className="absolute bottom-[-8px] left-0 h-1 w-0 opacity-0 transition duration-500 bg-[var(--accent)] group-hover:w-full group-hover:opacity-100"></span>
-              </Link>
+                {({ isActive }) => (
+                  <>
+                    {list.title}
+                    {/* underline hover effect */}
+                    <span
+                      className={`absolute bottom-0 left-0 h-0.5 bg-[var(--accent)] rounded-full transition-all duration-500 ${
+                        isActive
+                          ? "w-full opacity-100"
+                          : "w-0 opacity-0 group-hover:w-full group-hover:opacity-100"
+                      }`}
+                    />
+                  </>
+                )}
+              </NavLink>
             </li>
           ))}
         </ul>
@@ -61,7 +72,7 @@ const Navbar = () => {
         <div className="hidden md:flex">
           <Link
             to="/auth/login"
-            className="px-8 py-3 rounded-full font-semibold shadow hover:bg-white bg-[var(--accent)] hover:text-[var(--accent)] transition duration-500"
+            className="px-10 py-2 rounded-full font-semibold shadow hover:bg-white bg-[var(--accent)] hover:text-[var(--accent)] transition duration-500"
           >
             Sign in
           </Link>
@@ -84,20 +95,26 @@ const Navbar = () => {
             <ul className="flex flex-col px-4 space-y-8 py-6">
               {navlinks.map((list, idx) => (
                 <li key={idx} aria-label={list.label}>
-                  <Link
+                  <NavLink
                     to={list.link}
                     onClick={() => setMobileMenu(false)}
-                    className="block text-lg hover:bg-[var(--accent)] transition"
+                    className={({ isActive }) =>
+                      `block px-4 py-2 text-lg rounded-md transition ${
+                        isActive
+                          ? "bg-[var(--accent)]"
+                          : "hover:bg-[var(--accent)] hover:text-white"
+                      }`
+                    }
                   >
                     {list.title}
-                  </Link>
+                  </NavLink>
                 </li>
               ))}
               <li>
                 <Link
                   to="/auth/login"
                   onClick={() => setMobileMenu(false)}
-                  className="py-3 text-[var(--accent)] hover:scale-105 transition duration-500"
+                  className="block w-full text-center py-3 rounded-md font-medium text-[var(--accent)] border border-[var(--accent)] hover:bg-[var(--accent)] hover:text-white transition duration-300"
                 >
                   Sign in
                 </Link>
@@ -105,8 +122,8 @@ const Navbar = () => {
             </ul>
           </div>
         )}
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 
