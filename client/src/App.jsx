@@ -16,7 +16,7 @@ import { Toaster } from "react-hot-toast";
 
 const App = () => {
   // to hide navbar and footer on authRoutes
-  const authRoutes = ["/auth/login", "/auth/signup", "/auth/forget-password"];
+  const authRoutes = ["/auth/login", "/auth/signup", "/auth/forget-password", "/page-not-found"];
   const location = useLocation();
   const isAuthRoute = authRoutes.includes(location.pathname);
 

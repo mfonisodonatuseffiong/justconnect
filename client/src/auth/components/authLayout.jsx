@@ -49,7 +49,7 @@ const AuthLayout = ({ children }) => {
           <img
             src={illustrationImg}
             alt="Illustration"
-            className="mt-8 max-w-xs w-full mx-auto drop-shadow-2xl"
+            className="mt-8 max-w-xs w-full mx-auto drop-shadow-2xl animate-pulse"
           />
         </div>
       </div>

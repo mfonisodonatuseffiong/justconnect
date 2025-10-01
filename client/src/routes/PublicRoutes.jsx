@@ -25,7 +25,7 @@ const PublicRoutes = (
     <Route path="/services" element={<ServicesPage />} />
     <Route path="/contact-us" element={<ContactPage />} />
     <Route path="/unauthorized-access" element={<UnauthorizedPage />} />
-    <Route path="*" element={<NotFoundPage />} />
+    <Route path="/page-not-found" element={<NotFoundPage />} />
   </>
 );
 

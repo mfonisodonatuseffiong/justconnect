@@ -3,6 +3,8 @@
  * @returns About component
  */
 
+import aboutImg from "../../assets/hero.png"
+
 
 const About = () => {
   return (
@@ -38,7 +40,7 @@ const About = () => {
           {/* Right - Illustration */}
           <div className="flex justify-center">
             <img
-              src="/about-illustration.png"
+              src={aboutImg}
               alt="About TechIn illustration"
               className="w-[300px] sm:w-[400px] lg:w-[450px] drop-shadow-2xl rounded-lg"
             />
