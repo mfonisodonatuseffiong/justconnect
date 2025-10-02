@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/** FONT FAMILIES **/
+/* FONT FAMILIES **/
 @font-face {
   font-family: "Barlow";
   src: url("../fonts/Barlow-Regular.woff2") format("woff2");
@@ -24,9 +24,47 @@
   font-style: normal;
   font-display: swap;
 }
-/* Add this to your global CSS or tailwind config */
+
+/* COLORS */
+:root {
+  --primary-gray: #1e2939;
+  --secondary: #99a1af;
+  --brand: #3b0d70; /* Purple 900 */
+  --accent: #ff6f61; /* orange 500  */
+  --brand-bg: #ede9fe; /* purple 100 */
+}
+
+@theme {
+  --color-accent: #ff6f61; /* orange 500 */
+  --color-brand: #3b0d70; /* Purple 900 */
+  --color-primary-gray: #1e2939;
+  --color-secondary: #99a1af;
+  --color-brand-bg: #ede9fe; /* purple 100 */
+}
+
+/* GLOBAL STYLES **/
+
+/* a royal blue gradient background */
+.bg-gradient {
+  background: linear-gradient(to bottom, #673ab7, #512da8);
+}
+
+body {
+  background-color: var(--brand-bg); /* purple-200*/
+  color: #fff;
+  font-family: "Barlow", sans-serif;
+}
+button,
+a {
+  cursor: pointer;
+}
+.clip-slant {
+  clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
+}
+
+/* SCROLL BAR COLOR CUSTOMIZATION [EXPLORE SERVICES PAGE] FOR ALL BROWSERS**/
 .select-dropdown-scrollbar::-webkit-scrollbar {
-  width: 6px;          /* width of the scrollbar */
+  width: 6px; /* width of the scrollbar */
 }
 
 .select-dropdown-scrollbar::-webkit-scrollbar-track {
@@ -35,7 +73,7 @@
 }
 
 .select-dropdown-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--accent); /* thumb color (use your accent variable) */
+  background: var(--accent); /* thumb color*/
   border-radius: 10px;
 }
 
@@ -48,41 +86,3 @@
   scrollbar-width: thin;
   scrollbar-color: var(--accent) rgba(255, 255, 255, 0.1);
 }
-
-
-
-/** COLORS */
-:root {
-  --primary: #1e2939;
-  --secondary: #99a1af;
-  --accent: #ff6f61; /** orange 500  */
-}
-
-
-
-/** GLOBAL STYLES **/
-body {
-  background-color: #f9fafb; /* purple-200*/
-  color: #fff; /* Default text white color */
-  font-family: "Barlow", sans-serif;
-}
-button {
-  cursor: pointer;
-}
-
-/**  text highlight orange color */
-.text-highlight {
-  color: var(--accent); 
-}
-
-/* Secondary text color  on white background */
-.text-secondary {
-    color: var(--secondary);  /** gray 700*/
-}
-
-/** a royal blue gradient background */
-.bg-gradient {
-  background: linear-gradient(to bottom, #673ab7, #512da8);
-}
-
-

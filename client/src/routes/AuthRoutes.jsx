@@ -14,7 +14,6 @@ import ProfessionalsRoutes from "./ProfessionalsRoutes";
 
 const AuthRoutes = (
   <Route element={<AuthGuard />}>
-    
     {/** routes to admin pages */}
     <Route element={<RoleGuard allowedRoles={["admin"]} />}>
       {AdminRoutes}

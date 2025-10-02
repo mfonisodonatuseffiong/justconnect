@@ -4,7 +4,6 @@
  *               useEffect will clear the error message on every page reload or page navigation
  */
 
-
 import { useEffect } from "react";
 import { useAuthStore } from "../../store/authStore";
 
@@ -14,7 +13,6 @@ const FormWrapper = ({ children, title, subtitle, error }) => {
   useEffect(() => {
     setError(null);
   }, [setError]);
-
 
   return (
     <div className="w-full max-w-md z-10">

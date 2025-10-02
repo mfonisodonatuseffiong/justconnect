@@ -37,34 +37,38 @@ const FAQ = () => {
   };
 
   return (
-    <section className="faq py-16 text-gray-700">
+    <section className="faq py-16 text-brand">
       <div className="max-w-4xl mx-auto px-6">
-        <h2 className="text-3xl font-bold text-center mb-8">
-          Frequently Asked <span className="text-[var(--accent)]">Questions</span>
+        <h2 className="text-4xl font-bold text-center mb-8" data-aos="zoom">
+          Frequently Asked <span className="text-accent">Questions</span>
         </h2>
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="p-6 rounded-xl shadow-md hover:shadow-lg transition"
+              className={`rounded-xl shadow-md hover:shadow-lg hover:bg-gray-50 transition duration-300`}
+              data-aos="fade-up" // Animate on scroll
+              data-aos-delay={index * 100} // Stagger each FAQ by 100ms
+              data-aos-duration="500" // Animation duration in ms
+              data-aos-easing="ease-in-out" // Easing function
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full flex justify-between items-center text-left"
+                className="w-full p-6 flex justify-between items-center text-left"
               >
-                <span className="text-lg font-medium">
-                  {faq.question}
-                </span>
+                <span className="text-lg font-medium">{faq.question}</span>
                 {openIndex === index ? (
-                  <ChevronUp className="w-5 h-5 text-[var(--accent)]" />
+                  <ChevronUp className="w-5 h-5 text-accent" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-secondary" />
+                  <ChevronDown className="w-5 h-5" />
                 )}
               </button>
 
               {openIndex === index && (
-                <p className="mt-4 text-secondary text-sm">{faq.answer}</p>
+                <p className="mt-4 px-4 pb-4 text-sm md:text-base text-primary-gray">
+                  {faq.answer}
+                </p>
               )}
             </div>
           ))}

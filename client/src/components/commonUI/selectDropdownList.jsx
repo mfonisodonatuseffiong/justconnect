@@ -16,7 +16,6 @@
  * - icon: optional icon component
  */
 
-
 import {
   Listbox,
   ListboxButton,
@@ -91,5 +90,3 @@ const SelectDropdown = ({
 };
 
 export default SelectDropdown;
-
-

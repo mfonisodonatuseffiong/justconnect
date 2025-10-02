@@ -12,17 +12,16 @@ import Button from "../components/commonUI/Button";
 import { useState } from "react";
 
 const ResetPasswordPage = () => {
-
   const [formData, setFormData] = useState({
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -31,7 +30,6 @@ const ResetPasswordPage = () => {
     // Handle form submission logic
   };
 
-  
   return (
     <AuthLayout>
       <FormWrapper title="Password Reset" subtitle={"Enter your new password"}>
@@ -43,7 +41,7 @@ const ResetPasswordPage = () => {
               type="password"
               name="password"
               value={formData.password}
-              onChange={handleChange} 
+              onChange={handleChange}
               placeholder="************"
             />
             <Input

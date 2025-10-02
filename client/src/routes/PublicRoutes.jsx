@@ -9,6 +9,8 @@ import { lazy } from "react";
 import { Route } from "react-router-dom";
 
 import RedirectPage from "./Redirect";
+import PrivacyPolicy from "../pages/Privacy";
+import TermsOfService from "../pages/TermsOfServices";
 
 const FaqPage = lazy(() => import("../pages/FaqPage"));
 const ServicesPage = lazy(() => import("../pages/Service"));
@@ -22,10 +24,12 @@ const PublicRoutes = (
     <Route path="/" element={<RedirectPage />} />
     <Route path="/faqs" element={<FaqPage />} />
     <Route path="/about-us" element={<AboutPage />} />
-    <Route path="/services" element={<ServicesPage />} />
+    <Route path="/explore-services" element={<ServicesPage />} />
     <Route path="/contact-us" element={<ContactPage />} />
+    <Route path="/privacy" element={<PrivacyPolicy />} />
+    <Route path="/terms" element={<TermsOfService />} />
     <Route path="/unauthorized-access" element={<UnauthorizedPage />} />
-    <Route path="/page-not-found" element={<NotFoundPage />} />
+    <Route path="/*" element={<NotFoundPage />} />
   </>
 );
 

@@ -7,7 +7,6 @@
 import { MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 
-
 const Card = ({ img, name, profession, location, ...prop }) => {
   return (
     <div
@@ -41,6 +40,5 @@ const Card = ({ img, name, profession, location, ...prop }) => {
     </div>
   );
 };
-
 
 export default Card;

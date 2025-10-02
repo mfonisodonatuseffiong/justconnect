@@ -3,19 +3,28 @@
  * @returns About component
  */
 
-import aboutImg from "../../assets/hero.png"
+import aboutImg from "../../assets/hero.svg";
 
+import { Link } from "react-router-dom";
+import { Lightbulb } from "lucide-react";
 
 const About = () => {
   return (
-    <section className="relative py-20 text-[var(--primary)] overflow-hidden">
+    <section
+      className="relative py-20 text-brand overflow-hidden"
+      data-aos="fade-up"
+    >
       <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-16">
         {/* Title */}
         <div className="text-center space-y-4 mb-12">
-          <h2 className="text-3xl font-medium">
-            About <span className="text-highlight"> JustConnect</span>
+          <h2 className="text-4xl font-bold" data-aos="zoom">
+            About <span className="text-accent">JustConnect</span>
           </h2>
-          <p className="text-base md:text-lg max-w-3xl mx-auto">
+          <p
+            className="text-base text-primary-gray md:text-lg max-w-3xl mx-auto"
+            data-aos="fade-in"
+            data-aos-delay="500"
+          >
             We connect clients with skilled and verified artisans — making it
             easier, faster, and safer to get trusted professionals for all your
             daily needs.
@@ -23,25 +32,41 @@ const About = () => {
         </div>
 
         {/* Content */}
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid md:grid-cols-2 gap-12 items-center p-10">
           {/* Left - Text */}
           <div className="space-y-6">
-            <h3 className="text-3xl font-semibold">
+            <h3
+              className="text-3xl font-semibold flex items-center gap-2"
+              data-aos="fade-up-right"
+            >
               Why Choose Us?
             </h3>
-            <ul className="space-y-4">
+            <ul className="space-y-4 text-primary-gray" data-aos="fade-right">
               <li>✅ Verified and trusted artisans near you</li>
-              <li>✅ Safe and seamless booking experience</li>
+              <li data-aos-delay="500" data-aos="fade">
+                ✅ Safe and seamless booking experience
+              </li>
               <li>✅ Wide range of services for home & business</li>
-              <li>✅ Save time and get the job done right</li>
+              <li data-aos-delay="1000">
+                ✅ Save time and get the job done right
+              </li>
             </ul>
+            {/* Learn More Button */}
+            <Link
+              to="/about-us"
+              className="inline-flex items-center gap-3 mt-6 px-6 py-3 bg-accent text-white font-semibold rounded-lg  hover:text-brand hover:bg-accent/90 transition "
+            >
+              <Lightbulb className="w-6 h-6" />
+              Learn More
+            </Link>
           </div>
 
           {/* Right - Illustration */}
-          <div className="flex justify-center">
+          <div className="relative flex justify-center" data-aos="zoom-in">
+            <div className="absolute animate-pulse inset-0 rounded-full bg-purple-300 blur-2xl opacity-40"></div>
             <img
               src={aboutImg}
-              alt="About TechIn illustration"
+              alt="About JustConnect illustration"
               className="w-[300px] sm:w-[400px] lg:w-[450px] drop-shadow-2xl rounded-lg"
             />
           </div>

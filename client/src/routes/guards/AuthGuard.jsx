@@ -5,7 +5,6 @@
 
 import { Navigate, Outlet } from "react-router-dom";
 
-
 const AuthGuard = () => {
   const user = null; // Replace with actual authentication logic
   // import isChecking from store
@@ -16,7 +15,7 @@ const AuthGuard = () => {
   if (!user) {
     return <Navigate to="/auth/login" replace />;
   }
-  return <Outlet />
-}
+  return <Outlet />;
+};
 
-export default AuthGuard
+export default AuthGuard;

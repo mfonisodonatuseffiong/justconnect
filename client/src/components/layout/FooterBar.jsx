@@ -1,23 +1,46 @@
-/**
- * @desc Footer component with lucide-react icons
- * @returns Footer bar
- */
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
 const Footer = () => {
+  // Quick Links data
+  const quickLinks = [
+    { name: "Find Artisan", to: "/explore-services" },
+    { name: "Join as Artisan", to: "/auth/register" },
+    { name: "About Us", to: "/about" },
+    { name: "Contact", to: "/contact" },
+  ];
+
+  // Resources data
+  const resources = [
+    { name: "FAQs", to: "/faqs" },
+    { name: "Support", to: "/contact-us" },
+    { name: "Privacy Policy", to: "/privacy" },
+    { name: "Terms of Service", to: "/terms" },
+  ];
+
+  // Social icons data
+  const socialLinks = [
+    { icon: <Facebook size={22} />, href: "#" },
+    { icon: <Twitter size={22} />, href: "#" },
+    { icon: <Linkedin size={22} />, href: "#" },
+    { icon: <Instagram size={22} />, href: "#" },
+  ];
+
   return (
-    <footer className="bg-gradient py-10 px-6 md:px-16">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="relative bg-primary-gray py-16 px-6 md:px-16">
+      <div className="relative max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 py-10 pb-30">
         {/* Logo + About */}
-        <div className="space-y-3">
+        <div className="">
           <Link to="/">
-            <h2 className="text-xl sm:text-2xl md:text-2xl uppercase mb-3 hover:-translate-y-1.5 transition-all duration-500 font-semibold">
-              <span className="text-highlight">J</span>ustConnect
-            </h2>
-            {/* <img src="/logo.png" alt="Techin logo" className="w-28" /> */}
+            <div>
+              <img
+                src="/logo.webp"
+                alt="JustConnect Logo"
+                className="h-20 w-1/2 md:h-24 md:w-2/3 object-cover"
+              />
+            </div>
           </Link>
-          <p className="text-sm leading-relaxed text-gray-300">
+          <p className="text-sm leading-relaxed text-secondary">
             Connecting clients with verified and trusted artisans for all your
             home and business needs.
           </p>
@@ -25,28 +48,15 @@ const Footer = () => {
 
         {/* Quick Links */}
         <div>
-          <h3 className="text-white font-semibold mb-4">Quick Links</h3>
+          <h3 className="font-semibold mb-4">Quick Links</h3>
           <ul className="space-y-2 text-sm">
-            <li>
-              <Link to="/explore" className="hover:text-[#ff6f61]">
-                Find Artisan
-              </Link>
-            </li>
-            <li>
-              <Link to="/auth/register" className="hover:text-[#ff6f61]">
-                Join as Artisan
-              </Link>
-            </li>
-            <li>
-              <Link to="/about" className="hover:text-[#ff6f61]">
-                About Us
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" className="hover:text-[#ff6f61]">
-                Contact
-              </Link>
-            </li>
+            {quickLinks.map((link, idx) => (
+              <li key={idx}>
+                <Link to={link.to} className="hover:text-accent">
+                  {link.name}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -54,26 +64,13 @@ const Footer = () => {
         <div>
           <h3 className="font-semibold mb-4">Resources</h3>
           <ul className="space-y-2 text-sm">
-            <li>
-              <Link to="/faq" className="hover:text-[#ff6f61]">
-                FAQs
-              </Link>
-            </li>
-            <li>
-              <Link to="/support" className="hover:text-[#ff6f61]">
-                Support
-              </Link>
-            </li>
-            <li>
-              <Link to="/privacy" className="hover:text-[#ff6f61]">
-                Privacy Policy
-              </Link>
-            </li>
-            <li>
-              <Link to="/terms" className="hover:text-[#ff6f61]">
-                Terms of Service
-              </Link>
-            </li>
+            {resources.map((res, idx) => (
+              <li key={idx}>
+                <Link to={res.to} className="hover:text-accent">
+                  {res.name}
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -81,25 +78,18 @@ const Footer = () => {
         <div>
           <h3 className="font-semibold mb-4">Follow Us</h3>
           <div className="flex space-x-4 text-xl">
-            <a href="#" className="hover:text-[#ff6f61]">
-              <Facebook size={22} />
-            </a>
-            <a href="#" className="hover:text-[#ff6f61]">
-              <Twitter size={22} />
-            </a>
-            <a href="#" className="hover:text-[#ff6f61]">
-              <Linkedin size={22} />
-            </a>
-            <a href="#" className="hover:text-[#ff6f61]">
-              <Instagram size={22} />
-            </a>
+            {socialLinks.map((social, idx) => (
+              <a key={idx} href={social.href} className="hover:text-accent">
+                {social.icon}
+              </a>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Bottom bar */}
-      <div className="border-t border-gray-400 mt-10 pt-4 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} Techin. All rights reserved.
+        {/* Bottom bar */}
+        <div className="absolute left-0 bottom-0  w-full border-t pt-4 text-center text-sm text-gray-400">
+          © {new Date().getFullYear()} JustConnect. All rights reserved.
+        </div>
       </div>
     </footer>
   );
