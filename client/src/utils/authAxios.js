@@ -7,6 +7,7 @@
 import axios from "axios";
 
 export const authAxios = axios.create({
-    baseURL: import.meta.env.VITE_AUTH_API_URL || "http://localhost:5000/api/v1/auth",
-    withCredentials: true,
+  baseURL:
+    import.meta.env.VITE_AUTH_API_URL || "http://localhost:5000/api/v1/auth",
+  withCredentials: true,
 });

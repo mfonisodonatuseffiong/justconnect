@@ -98,7 +98,7 @@ const RegistrationPage = () => {
                       value={formData.role}
                       name="role"
                       onChange={handleChange}
-                      className="cursor-pointer focus:outline-none w-full bg-gray-200 text-gray-700 py-3 px-4 leading-tight rounded-full"
+                      className="cursor-pointer focus:outline-none w-full bg-gray-200 text-gray-700 p-4 leading-tight rounded-full"
                     >
                       <option value=""> ---- Select a Role ---- </option>
                       <option value="professional"> Professional</option>

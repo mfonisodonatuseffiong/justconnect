@@ -1,8 +1,9 @@
 /**
- * @description: Services component
+ * @description: Services component Display a litle of our services and a button to explore our services
  */
 
 import { Wrench, Paintbrush, Plug, Hammer, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const services = [
   {
@@ -38,12 +39,15 @@ const services = [
 
 const OurServices = () => {
   return (
-    <section className="services py-16 text-[var(--primary)]">
+    <section className="bg-gray-50 text-brand py-30 clip-slant">
       <div className="max-w-6xl mx-auto px-6 text-center">
-        <h2 className="text-3xl font-bold mb-4">
-          Our <span className="text-[var(--accent)]">Services</span>
+        <h2 className="text-4xl font-bold mb-4" data-aos="zoom-out">
+          Our <span className="text-accent">Services</span>
         </h2>
-        <p className="text-secondary mb-12 max-w-2xl mx-auto">
+        <p
+          className="mb-12 max-w-2xl mx-auto text-primary-gray"
+          data-aos="zoom-up"
+        >
           We connect clients with verified professionals for all kinds of
           artisan jobs.
         </p>
@@ -52,15 +56,34 @@ const OurServices = () => {
           {services.map((service, index) => (
             <div
               key={index}
-              className="p-6 rounded-2xl shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-2"
+              data-aos="fade-up"
+              data-aos-delay={index * 100}
+              data-aos-duration="500"
+              data-aos-easing="ease-in-out"
+              className="bg-gray-50 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-500 ease-in-out hover:-translate-y-2"
             >
               <div className="flex justify-center mb-4">{service.icon}</div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              <h3 className="text-lg text-primary-gray font-semibold mb-2">
                 {service.title}
               </h3>
-              <p className="text-secondary text-sm">{service.description}</p>
+              <p className="opacity-75 text-primary-gray text-sm">
+                {service.description}
+              </p>
             </div>
           ))}
+        </div>
+
+        {/* View All Services link */}
+        <div className="mt-8">
+          <Link
+            to="/explore-services"
+            className="text-accent font-semibold hover:underline"
+            data-aos="fade-up"
+            data-aos-delay={services.length * 100}
+            data-aos-duration="500"
+          >
+            View All Services
+          </Link>
         </div>
       </div>
     </section>

@@ -8,6 +8,8 @@ import Hero from "../components/feature/Hero";
 import About from "../components/feature/About";
 import Services from "../components/feature/Services";
 import FAQ from "../components/feature/Faq";
+import Testimonial from "../components/feature/Testimonial";
+import CTA from "../components/feature/Cta";
 
 const HomePage = () => {
   return (
@@ -16,6 +18,8 @@ const HomePage = () => {
       <About />
       <Services />
       <FAQ />
+      <Testimonial />
+      <CTA />
     </div>
   );
 };

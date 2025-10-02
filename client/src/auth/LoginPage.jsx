@@ -70,6 +70,7 @@ const LoginPage = () => {
             />
             <p>
               <Link
+                tabIndex={1}
                 to="/auth/forget-password"
                 className="text-[var(--secondary)] hover:text-orange-500 transition-colors duration-500"
               >

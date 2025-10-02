@@ -16,20 +16,20 @@ const Input = ({ label, type, placeholder, ...props }) => {
 
   return (
     <div className="relative">
-      <label className="block text-sm mb-2" htmlFor={props.name}>
+      <label tabIndex={-1} className="block text-sm mb-2" htmlFor={props.name}>
         {label}
       </label>
 
       {/** icon */}
-      <span className="absolute left-5 top-9 text-gray-500 z-10">
+      <span tabIndex={-1} className="absolute left-5 top-11 text-gray-500 z-10">
         {type === "name" && <User size={20} />}
         {type === "password" && <Lock size={20} />}
         {type === "email" && <MailIcon size={20} />}
       </span>
 
       {/** password visibility */}
-      <span className="absolute right-2 top-10 text-gray-500 z-10">
-        <button type="button" onClick={toggleVisibility}>
+      <span className="absolute right-6 top-11 text-gray-500 z-10">
+        <button tabIndex={-1} type="button" onClick={toggleVisibility}>
           {type === "password" &&
             (showPassword ? (
               <EyeOffIcon size={20} />
@@ -41,10 +41,11 @@ const Input = ({ label, type, placeholder, ...props }) => {
 
       {/**input field */}
       <input
+        tabIndex={1}
         id={props.name}
         type={showPassword ? "text" : type}
         placeholder={placeholder}
-        className={`w-full py-2 px-12 rounded-full focus:outline-none hover:shadow-md bg-white/90 placeholder:text-gray-700 text-gray-900`}
+        className={`w-full py-4 px-12 rounded-full focus:outline-none hover:shadow-md bg-white/90 placeholder:text-gray-700 text-gray-900`}
         {...props}
       />
     </div>

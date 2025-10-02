@@ -6,10 +6,8 @@
 import { create } from "zustand";
 
 export const useAuthStore = create((set) => ({
-        user: null,
-        error: null,
-        setError: (errorMessage) => set({ error: errorMessage }),
-        setUser: (userData) => set({ user: userData }),
-    })
-
-);
+  user: null,
+  error: null,
+  setError: (errorMessage) => set({ error: errorMessage }),
+  setUser: (userData) => set({ user: userData }),
+}));

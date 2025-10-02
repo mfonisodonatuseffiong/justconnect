@@ -4,8 +4,7 @@
  * @returns Auth layout with background and container
  */
 
-
-import {Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import illustrationImg from "../../assets/hero.svg";
 
 const AuthLayout = ({ children }) => {
@@ -14,12 +13,14 @@ const AuthLayout = ({ children }) => {
       {/** left side for form */}
       <div className="relative flex flex-col items-center justify-center overflow-hidden px-4">
         {/** -------------- logo --------------- */}
-        <div className="logo-container absolute top-5 left-4">
+        <div className="logo-container absolute top-5 left-2 md:left-4">
           {" "}
           <Link to="/" aria-label="App logo, clicks and takes you home">
-            <h2 className="text-xl font-regular md:text-2xl uppercase hover:-translate-y-1.5 transition-all duration-500">
-              <span className="text-[var(--accent)]">J</span>ustConnect
-            </h2>
+            <img
+              src="/logo.webp"
+              alt="JustConnect Logo"
+              className="h-30 w-auto object-contain"
+            />
           </Link>
         </div>
         {/** ------------------- background effect -------------- */}
