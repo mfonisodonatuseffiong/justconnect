@@ -59,7 +59,7 @@ exports.loginUser = async (req, res) => {
   try {
     const userResult = await getUserByEmail(email);
     if (userResult.rows.length === 0) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Kindly signup to continue" });
     }
 
     const user = userResult.rows[0];
