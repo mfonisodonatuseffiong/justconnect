@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../../db");
-const { protect } = require("../../middleware/authMiddleware");
+const { protect } = require("../middlewares/authMiddleware");
 
 // 📝 Create a new booking
 router.post("/", async (req, res) => {

@@ -1,33 +1,46 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { addUser, getUserByEmail } = require("../models/User");
+const crypto = require("crypto");
+const {
+  addUser,
+  getUserByEmail,
+  updateUserPassword,
+  saveResetToken,
+  findUserByResetToken,
+  clearResetToken,
+} = require("../models/User");
+
 require("dotenv").config();
 
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "1d" });
+// ✅ Generate JWT including name and email
+const generateToken = (id, name, email, role) => {
+  return jwt.sign({ id, name, email, role }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
 
+/**
+ * @desc    Register a new user
+ * @route   POST /api/auth/register
+ * @access  Public
+ */
 exports.registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role = "user" } = req.body;
 
   try {
     const userExists = await getUserByEmail(email);
     if (userExists.rows.length > 0) {
-      console.log("Registration failed: user already exists:", email);
       return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await addUser(name, email, hashedPassword, role);
-
-    console.log("User registered successfully:", email);
+    const user = newUser.rows[0];
 
     res.status(201).json({
-      id: newUser.rows[0].id,
-      name: newUser.rows[0].name,
-      email: newUser.rows[0].email,
-      role: newUser.rows[0].role,
-      token: generateToken(newUser.rows[0].id, newUser.rows[0].role),
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user.id, user.name, user.email, user.role),
     });
   } catch (error) {
     console.error("Error during registration:", error);
@@ -35,36 +48,110 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Login user
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
 exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
-  console.log("Login attempt received:", { email });
 
   try {
-    const user = await getUserByEmail(email);
-    console.log("User query result:", user.rows);
-
-    if (user.rows.length === 0) {
-      console.log("Login failed: no user with email:", email);
+    const userResult = await getUserByEmail(email);
+    if (userResult.rows.length === 0) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const validPassword = await bcrypt.compare(password, user.rows[0].password);
+    const user = userResult.rows[0];
+    const validPassword = await bcrypt.compare(password, user.password);
+
     if (!validPassword) {
-      console.log("Login failed: invalid password for email:", email);
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
-    console.log("Login successful for user:", email);
 
     res.json({
-      id: user.rows[0].id,
-      name: user.rows[0].name,
-      email: user.rows[0].email,
-      role: user.rows[0].role,
-      token: generateToken(user.rows[0].id, user.rows[0].role),
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user.id, user.name, user.email, user.role),
     });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ error: "Server error during login" });
+  }
+};
+
+/**
+ * @desc    Logout user (client should just delete token)
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+exports.logoutUser = async (req, res) => {
+  try {
+    // Stateless JWT: logout is handled client-side (token removed from storage)
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Error during logout:", error);
+    res.status(500).json({ error: "Server error during logout" });
+  }
+};
+
+/**
+ * @desc    Forgot Password - send reset token
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const userResult = await getUserByEmail(email);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: "No user with that email" });
+    }
+
+    const user = userResult.rows[0];
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 min expiry
+
+    await saveResetToken(user.id, resetToken, expiry);
+
+    // TODO: Send this via email in real app
+    console.log(`Password reset link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
+
+    res.json({ message: "Password reset link sent to email" });
+  } catch (error) {
+    console.error("Error during forgot password:", error);
+    res.status(500).json({ error: "Server error during forgot password" });
+  }
+};
+
+/**
+ * @desc    Reset Password
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ */
+exports.resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const userResult = await findUserByResetToken(token);
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const user = userResult.rows[0];
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await updateUserPassword(user.id, hashedPassword);
+    await clearResetToken(user.id);
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Error during reset password:", error);
+    res.status(500).json({ error: "Server error during reset password" });
   }
 };

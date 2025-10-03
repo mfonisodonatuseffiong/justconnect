@@ -13,9 +13,10 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+    origin: "http://127.0.0.1:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  },
 });
 
 // 🔁 Socket.IO real-time logic
@@ -46,11 +47,18 @@ io.on("connection", (socket) => {
   });
 });
 
+// make io available inside routes
 app.set("io", io);
 
 // ✅ Middleware
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://127.0.0.1:5173", // frontend
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
 // 🔍 Request Logger
 app.use((req, res, next) => {
@@ -58,7 +66,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🛠️ Ensure bookings table and required columns
+// 🛠️ Ensure bookings table and columns
 const ensureBookingsTable = async () => {
   try {
     await pool.query(`
@@ -79,7 +87,7 @@ const ensureBookingsTable = async () => {
       WHERE table_name = 'bookings';
     `);
 
-    const columns = result.rows.map(row => row.column_name);
+    const columns = result.rows.map((row) => row.column_name);
     const alterQueries = [];
 
     if (!columns.includes("professional")) {
@@ -98,7 +106,6 @@ const ensureBookingsTable = async () => {
     } else {
       console.log("✅ Bookings table already up to date.");
     }
-
   } catch (err) {
     console.error("❌ Error ensuring bookings table:", err.message);
   }
@@ -106,21 +113,24 @@ const ensureBookingsTable = async () => {
 
 ensureBookingsTable();
 
-// ✅ API Routes
+// ✅ Routes
 const authRoutes = require("./tconnect/routes/authRoutes");
 const professionalAuthRoutes = require("./tconnect/routes/professionalAuthRoutes");
 const dashboardRoutes = require("./tconnect/routes/dashboardRoutes");
 const bookingRoutes = require("./tconnect/routes/bookingRoutes");
 
-app.use("/api/auth", authRoutes);
-app.use("/api/auth", professionalAuthRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/bookings", bookingRoutes);
+// mount routes
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/auth", professionalAuthRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/bookings", bookingRoutes);
 
 console.log("✅ API routes mounted:");
-console.log("   - /api/auth/login");
-console.log("   - /api/auth/register");
-console.log("   - /api/auth/professional-login");
+console.log("   - /api/v1/auth/register");
+console.log("   - /api/v1/auth/login");
+console.log("   - /api/v1/auth/professional-login");
+console.log("   - /api/v1/dashboard");
+console.log("   - /api/v1/bookings");
 
 // 🚀 Start server
 const PORT = process.env.PORT || 5000;
