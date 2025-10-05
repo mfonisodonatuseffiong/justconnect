@@ -21,7 +21,7 @@ const FormWrapper = ({ children, title, subtitle, error }) => {
 
       {/* Error message at the top */}
       {error && (
-        <div className="mb-4 rounded-lg bg-red-100 border border-red-200 text-red-600 p-3 py-6 shadow-2xs text-base">
+        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-500 p-3 py-6 shadow-2xs text-base">
           {error}
         </div>
       )}

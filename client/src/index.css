@@ -54,10 +54,17 @@ body {
   color: #fff;
   font-family: "Barlow", sans-serif;
 }
-button,
+
+
+button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+button:not(:disabled),
 a {
   cursor: pointer;
 }
+
 .clip-slant {
   clip-path: polygon(0 10%, 100% 0, 100% 100%, 0 100%);
 }

@@ -61,7 +61,7 @@ const ResetPasswordPage = () => {
             Remember password?{" "}
             <Link
               to="/auth/login"
-              className="text-secondary hover:text-[var(--accent)] transition-colors duration-500"
+              className="text-accent hover:underline transition-colors duration-500"
             >
               {" "}
               Sign In

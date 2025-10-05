@@ -12,9 +12,12 @@ import Button from "../components/commonUI/Button";
 import { ChevronsRight, ChevronsLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthHook } from "../hooks/authHooks";
+import { useAuthStore } from "../store/authStore";
+
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
+  const{ setError } = useAuthStore();
   const { RegisterHook, error } = useAuthHook();
   const [nextScreen, setNextScreen] = useState(false);
 
@@ -36,9 +39,23 @@ const RegistrationPage = () => {
     }));
   };
 
+  /** lock next button */
+  const isNextDisabled = !formData.name || !formData.email || !formData.role;
+
   /** function to handle screen switch */
   const switchScreen = () => {
+     if (!formData.name || !formData.email || !formData.role) {
+      setError("Please fill in all fields before continuing");
+       return;
+     }
+
+     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+     if (!emailPattern.test(formData.email)) {
+       setError("Please enter a valid email address");
+       return;
+     }
     setNextScreen((prev) => !prev);
+    setError("");
   };
 
   /** submit form function */
@@ -98,7 +115,7 @@ const RegistrationPage = () => {
                       value={formData.role}
                       name="role"
                       onChange={handleChange}
-                      className="cursor-pointer focus:outline-none w-full bg-gray-200 text-gray-700 p-4 leading-tight rounded-full"
+                      className="cursor-pointer focus:outline-none w-full bg-gray-50 text-primary-gray p-4 leading-tight rounded-full"
                     >
                       <option value=""> ---- Select a Role ---- </option>
                       <option value="professional"> Professional</option>
@@ -109,8 +126,13 @@ const RegistrationPage = () => {
                   <div className="mt-6">
                     <button
                       type="button"
+                      disabled={isNextDisabled}
                       onClick={switchScreen}
-                      className="bg-[var(--accent)] hover:bg-orange-600 p-4 float-right rounded-2xl shadow-2xl cursor-pointer transition-colors duration-300"
+                      className={`p-4 float-right rounded-2xl shadow-2xl transition-colors duration-300 ${
+                        isNextDisabled
+                          ? "bg-gray-300 cursor-not-allowed"
+                          : "bg-brand text-white hover:text-accent cursor-pointer"
+                      }`}
                     >
                       <ChevronsRight className="size-4" />
                     </button>
@@ -156,10 +178,10 @@ const RegistrationPage = () => {
                           isChecked: e.target.checked,
                         });
                       }}
-                      className="accent-[var(--accent)]"
+                      className="accent-brand"
                     />{" "}
                     <Link
-                      to="/terms-&-policies"
+                      to="/terms"
                       className="hover:underline text-sm text-secondary"
                     >
                       {" "}
@@ -173,7 +195,7 @@ const RegistrationPage = () => {
                     I have an account?{" "}
                     <Link
                       to="/auth/login"
-                      className="text-[var(--secondary)] hover:text-[var(--accent)] hover:underline transition-colors duration-500"
+                      className="text-accent hover:underline transition-colors duration-500"
                     >
                       Login
                     </Link>
@@ -183,7 +205,7 @@ const RegistrationPage = () => {
                     <button
                       type="button"
                       onClick={switchScreen}
-                      className="bg-[var(--accent)] hover:bg-orange-600 p-4 float-right rounded-2xl shadow-2xl cursor-pointer transition-colors duration-300"
+                      className="bg-brand text-white hover:text-accent p-4 float-right rounded-2xl shadow-2xl cursor-pointer transition-colors duration-300"
                     >
                       <ChevronsLeft className="size-4" />
                     </button>

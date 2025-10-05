@@ -72,7 +72,7 @@ const LoginPage = () => {
               <Link
                 tabIndex={1}
                 to="/auth/forget-password"
-                className="text-[var(--secondary)] hover:text-orange-500 transition-colors duration-500"
+                className="text-secondary hover:text-brand hover:underline transition-colors duration-500"
               >
                 Forget password?
               </Link>
@@ -85,7 +85,7 @@ const LoginPage = () => {
             Don't have an account?{" "}
             <Link
               to="/auth/signup"
-              className="text-[var(--secondary)] hover:text-[var(--accent)] transition-colors duration-500"
+              className="text-accent hover:underline transition-colors duration-500"
             >
               Create new account
             </Link>
