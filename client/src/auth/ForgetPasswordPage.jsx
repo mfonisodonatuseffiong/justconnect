@@ -30,7 +30,7 @@ const ForgetPasswordPage = () => {
       >
         {/**-------- form ---------- */}
         <div>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-8">
             <Input
               label="Email"
               type="email"
@@ -47,7 +47,7 @@ const ForgetPasswordPage = () => {
             Remember password?{" "}
             <Link
               to="/auth/login"
-              className="text-secondary hover:text-[var(--accent)] transition-colors duration-500"
+              className="text-accent hover:underline transition-colors duration-500"
             >
               {" "}
               Sign In

@@ -8,7 +8,7 @@ const Button = ({ children, type = "button", props }) => {
       tabIndex={1}
       type={type}
       {...props}
-      className="bg-radial cursor-pointer focus:outline-0 from-[#ff6f61] to-[#e7572267] p-4 hover:from-[#ce4c40] border border-gray-400 text-base text-center transition-colors tracking-wider duration-500 rounded-full shadow-2xl w-full"
+      className="bg-gradient-to-b from-brand to-brand/80 hover:opacity-75 cursor-pointer focus:outline-0 p-4 border border-gray-100 text-base text-center transition-colors text-white tracking-wider duration-500 rounded-full shadow-2xl w-full"
     >
       {children}
     </button>

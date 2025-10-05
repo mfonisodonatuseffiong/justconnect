@@ -20,6 +20,7 @@ const App = () => {
     "/auth/login",
     "/auth/signup",
     "/auth/forget-password",
+    "/auth/reset-password/22",
     "/page-not-found",
   ];
   const location = useLocation();
@@ -41,7 +42,7 @@ const App = () => {
       <ScrollToTop />
       <AppRoutes />
       {!isAuthRoute && <FooterBar />}
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster />
     </div>
   );
 };

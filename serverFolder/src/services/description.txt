@@ -1,5 +1,0 @@
-this is just a simple folder to handle all services like email services for:
-successful registration
-forget password token link
-password rest
-etc
