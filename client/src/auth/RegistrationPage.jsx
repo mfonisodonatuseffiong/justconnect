@@ -14,10 +14,9 @@ import toast from "react-hot-toast";
 import { useAuthHook } from "../hooks/authHooks";
 import { useAuthStore } from "../store/authStore";
 
-
 const RegistrationPage = () => {
   const navigate = useNavigate();
-  const{ setError } = useAuthStore();
+  const { setError } = useAuthStore();
   const { RegisterHook, error } = useAuthHook();
   const [nextScreen, setNextScreen] = useState(false);
 
@@ -44,16 +43,16 @@ const RegistrationPage = () => {
 
   /** function to handle screen switch */
   const switchScreen = () => {
-     if (!formData.name || !formData.email || !formData.role) {
+    if (!formData.name || !formData.email || !formData.role) {
       setError("Please fill in all fields before continuing");
-       return;
-     }
+      return;
+    }
 
-     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-     if (!emailPattern.test(formData.email)) {
-       setError("Please enter a valid email address");
-       return;
-     }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(formData.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
     setNextScreen((prev) => !prev);
     setError("");
   };
