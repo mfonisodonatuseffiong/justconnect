@@ -11,10 +11,10 @@ const ClientDashborad = lazy(
 );
 const Home = lazy(() => import("../dashboards/Client/Home"));
 
-const ClientRoutes = () => {
-  <Route path="/client/dashboard" element={<ClientDashborad />}>
+const ClientRoutes = (
+  <Route path="/dashboard/client" element={<ClientDashborad />}>
     <Route index element={<Home />} />
-  </Route>;
-};
+  </Route>
+);
 
 export default ClientRoutes;

@@ -16,15 +16,18 @@ import ScrollToTop from "./components/commonUI/ScrollTop";
 
 const App = () => {
   // to hide navbar and footer on authRoutes
-  const authRoutes = [
+  const hiddenRoutes = [
     "/auth/login",
     "/auth/signup",
     "/auth/forget-password",
-    "/auth/reset-password/22",
+    "/auth/reset-password",
+    "/dashboard",
     "/page-not-found",
   ];
   const location = useLocation();
-  const isAuthRoute = authRoutes.includes(location.pathname);
+  const shouldHideNav = hiddenRoutes.some((path) =>
+    location.pathname.startsWith(path),
+  );
 
   // animate on scroll
   useEffect(() => {
@@ -38,10 +41,10 @@ const App = () => {
 
   return (
     <div className="min-h-screen overflow-hidden">
-      {!isAuthRoute && <Navbar />}
+      {!shouldHideNav && <Navbar />}
       <ScrollToTop />
       <AppRoutes />
-      {!isAuthRoute && <FooterBar />}
+      {!shouldHideNav && <FooterBar />}
       <Toaster />
     </div>
   );
