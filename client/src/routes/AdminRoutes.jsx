@@ -12,7 +12,7 @@ const AdminDashboard = lazy(
 const Home = lazy(() => import("../dashboards/Admin/Home"));
 
 const AdminRoutes = (
-  <Route path="/admin/dashboard" element={<AdminDashboard />}>
+  <Route path="/dashboard/admin" element={<AdminDashboard />}>
     <Route index element={<Home />} />
   </Route>
 );

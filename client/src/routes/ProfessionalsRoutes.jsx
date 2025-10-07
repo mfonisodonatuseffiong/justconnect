@@ -11,10 +11,10 @@ const ProfessionalstDashborad = lazy(
 );
 const Home = lazy(() => import("../dashboards/Professional/Home"));
 
-const ProfessionalsRoutes = () => {
-  <Route path="/client/dashboard" element={<ProfessionalstDashborad />}>
+const ProfessionalsRoutes = (
+  <Route path="/dashboard/professionals" element={<ProfessionalstDashborad />}>
     <Route index element={<Home />} />
-  </Route>;
-};
+  </Route>
+);
 
 export default ProfessionalsRoutes;

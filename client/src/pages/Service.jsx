@@ -75,18 +75,15 @@ export default function Service() {
   });
 
   return (
-    <div className="min-h-screen mt-[6rem] bg-gradient p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Page Header */}
-        <div className="mb-8 bg-black/20 backdrop-blur-sm p-6 rounded-2xl shadow-lg z-30">
-          <h1 className="text-2xl md:text-3xl font-bold text-center mb-6">
-            Find & Hire Skilled{" "}
-            <span className="text-[var(--accent)]">Professionals</span>
-          </h1>
-        </div>
+    <div className="min-h-screen mt-[6rem] p-4">
+      {/* Page Header */}
+      <div className="mb-8 bg-gradient-to-tl from-brand via-primary-gray to-brand backdrop-blur-sm p-2 pt-16 md:py-20 rounded-2xl shadow-lg z-30">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center">
+          Find & Hire Skilled <span className="text-accent">Professionals</span>
+        </h1>
 
         {/* Filters */}
-        <div className="grid md:grid-cols-3 gap-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl shadow-lg mb-10 z-30">
+        <div className="max-w-7xl mx-auto mt-4 md:mt-16 grid sm:grid-cols-3 gap-4 backdrop-blur-sm p-4 rounded-2xl shadow-lg mb-10 z-30">
           {/* Location Dropdown */}
           <SelectDropdown
             value={filters.location}
@@ -107,7 +104,7 @@ export default function Service() {
 
           {/* Search Input */}
           <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg">
-            <Search className="w-5 h-5 text-[var(--accent)]" />
+            <Search className="w-5 h-5 text-accent" />
             <input
               type="text"
               placeholder="Search by name..."
@@ -118,7 +115,9 @@ export default function Service() {
             />
           </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto">
         {/* Professionals Grid Card */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredPros.length > 0 ? (
@@ -132,7 +131,7 @@ export default function Service() {
               />
             ))
           ) : (
-            <p className="text-center col-span-full opacity-80">
+            <p className="text-center text-primary-gray col-span-full opacity-80">
               No professionals match your filters.
             </p>
           )}

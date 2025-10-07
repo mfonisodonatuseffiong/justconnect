@@ -5,17 +5,17 @@
 
 import { Navigate, Outlet } from "react-router-dom";
 
-const RoleGuard = ({ allowedRoles }) => {
+const RoleGuard = () => {
   // fetch user from store
   // fetch isChecking from store
-  const user = null;
+  // const user = null;
 
-  if (!user || !user.role) {
-    return <Navigate to="/auth/login" replace />;
-  }
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized-access" replace />;
-  }
+  // if (!user || !user.role) {
+  //   return <Navigate to="/auth/login" replace />;
+  // }
+  // if (!allowedRoles.includes(user.role)) {
+  //   return <Navigate to="/unauthorized-access" replace />;
+  // }
   return <Outlet />;
 };
 

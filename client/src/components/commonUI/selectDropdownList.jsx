@@ -54,7 +54,7 @@ const SelectDropdown = ({
           className="flex items-center justify-between w-full bg-white/5 px-3 py-2 rounded-lg text-left cursor-pointer focus:outline-0"
         >
           <div className="flex items-center gap-2">
-            {Icon && <Icon className="w-5 h-5 text-[var(--accent)]" />}
+            {Icon && <Icon className="w-5 h-5 text-accent" />}
             <span className={value ? "text-white text-sm" : "text-gray-300"}>
               {value || placeholder}
             </span>
@@ -67,7 +67,7 @@ const SelectDropdown = ({
           <ListboxOptions
             ref={refs.setFloating}
             style={floatingStyles}
-            className="max-h-60 w-[var(--button-width)] overflow-auto rounded-lg bg-[#673ab7] text-white focus:outline-0 shadow-lg z-[9999] select-dropdown-scrollbar"
+            className="max-h-60 w-[var(--button-width)] overflow-auto rounded-lg bg-primary-gray text-white focus:outline-0 shadow-lg z-[9999] select-dropdown-scrollbar"
           >
             {options.map((option) => (
               <ListboxOption key={option || "all"} value={option}>

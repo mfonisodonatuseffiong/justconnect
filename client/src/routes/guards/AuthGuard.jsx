@@ -6,7 +6,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 
 const AuthGuard = () => {
-  const user = null; // Replace with actual authentication logic
+  const user = "null"; // Replace with actual authentication logic
   // import isChecking from store
   // if (isChecking) {
   //   return <div>Loading...</div>; // or a spinner

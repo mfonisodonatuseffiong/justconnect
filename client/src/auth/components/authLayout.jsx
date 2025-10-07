@@ -27,7 +27,7 @@ const AuthLayout = ({ children }) => {
         {children}
       </div>
       {/** -------- right side for illustration ---------------- */}
-      <div className="relative hidden md:flex items-center justify-center overflow-hidden text-white my-3 bg-gradient-to-tl from-[#7e57c2]/80 to-[#512da8]/90 rounded-l-full xl:mr-8">
+      <div className="relative hidden md:flex items-center justify-center overflow-hidden text-white my-3 bg-gradient-to-tl from-brand to-[#512da8]/90 rounded-l-full xl:mr-8">
         {/* abstract blur shapes */}
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-[#9575cd]/20 rounded-full blur-3xl animate-pulse"></div>

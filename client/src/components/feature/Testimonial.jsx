@@ -25,7 +25,7 @@ const testimonials = [
 
 const TestimonialPage = () => {
   return (
-    <div className="relative bg-gradient my-10 py-16 pb-30 px-4 md:px-20">
+    <div className="relative bg-brand my-10 py-16 pb-30 px-4 md:px-20">
       {/* Decorative shapes */}
       <div className="absolute top-0 left-0 w-40 h-40 bg-gradient rounded-full -translate-x-20 -translate-y-20"></div>
       <div className="absolute bottom-0 left-1/2 w-1/2 md:w-2xl h-15 bg-brand-bg -translate-x-1/2 translate-y-5"></div>

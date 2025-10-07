@@ -4,7 +4,11 @@
  */
 
 const PageNotFound = () => {
-  return <div className="min-h-screen bg-black text-white">PageNotFound</div>;
+  return (
+    <div className="min-h-screen mt-[6rem] bg-black text-white">
+      PageNotFound
+    </div>
+  );
 };
 
 export default PageNotFound;
