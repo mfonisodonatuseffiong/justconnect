@@ -20,6 +20,7 @@ export const loginSchema = Joi.object({
   }),
 });
 
+// register validation
 export const registerSchema = Joi.object({
   name: Joi.string().min(6).required().messages({
     "string.empty": "Please enter your full name",
@@ -49,5 +50,28 @@ export const registerSchema = Joi.object({
   isChecked: Joi.boolean().valid(true).required().messages({
     "any.only": "Please agree terms and policies to continue",
     "any.required": "You must agree to terms and policies to continue",
+  }),
+});
+
+// forget password validation
+export const forgetPasswordSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    "string.empty": "Email cannot be empty",
+    "string.email": "Please enter a valid email address",
+    "any.required": "Email is required",
+  }),
+});
+
+// Reset password validation
+export const resetPasswordSchema = Joi.object({
+  password: Joi.string().min(8).required().messages({
+    "string.empty": "Password is required",
+    "string.min": "Password must be minimum of 8 characters",
+    "any.required": "Password is required",
+  }),
+  confirmPassword: Joi.string().valid(Joi.ref("password")).required().messages({
+    "string.empty": "confirm password cannot be empty",
+    "any.only": "Passwords do not match",
+    "any.required": "Confirm Password is required",
   }),
 });

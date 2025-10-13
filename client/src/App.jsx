@@ -11,10 +11,17 @@ import "aos/dist/aos.css";
 import { Toaster } from "react-hot-toast";
 import Navbar from "./components/layout/Navbar";
 import FooterBar from "./components/layout/FooterBar";
+import AppLoader from "./components/commonUI/AppLoader";
 import { AppRoutes } from "./routes/AppRoutes";
 import ScrollToTop from "./components/commonUI/ScrollTop";
+import { useAuthHook } from "./hooks/authHooks";
+import { useAuthStore } from "./store/authStore";
 
 const App = () => {
+  useAuthHook(); //  this runs a checkme from the hook effect, triggers on every app refresh or page mount
+  const { isCheckingMe } = useAuthStore();
+  const location = useLocation();
+
   // to hide navbar and footer on authRoutes
   const hiddenRoutes = [
     "/auth/login",
@@ -24,7 +31,7 @@ const App = () => {
     "/dashboard",
     "/page-not-found",
   ];
-  const location = useLocation();
+
   const shouldHideNav = hiddenRoutes.some((path) =>
     location.pathname.startsWith(path),
   );
@@ -39,11 +46,13 @@ const App = () => {
     });
   }, []);
 
+  if (isCheckingMe) return <AppLoader />;
+
   return (
     <div className="min-h-screen overflow-hidden">
       {!shouldHideNav && <Navbar />}
       <ScrollToTop />
-      <AppRoutes />
+      <AppRoutes /> {/** where all app routes are defined */}
       {!shouldHideNav && <FooterBar />}
       <Toaster />
     </div>

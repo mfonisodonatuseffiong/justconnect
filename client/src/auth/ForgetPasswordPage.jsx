@@ -4,22 +4,39 @@
  */
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "./components/authLayout";
 import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
+import ButtonLoader from "../components/commonUI/ButtonLoader";
+import { useAuthHook } from "../hooks/authHooks";
+import toast from "react-hot-toast";
+import { useAuthStore } from "../store/authStore";
 
 const ForgetPasswordPage = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { ForgetPasswordHook, error } = useAuthHook();
+  const { setError } = useAuthStore();
 
-  const handleChange = (e) => {
-    setEmail(e.target.value);
-  };
-
-  const handleSubmit = (e) => {
+  // Handle form submission logic
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic
+    setIsLoading(true);
+    // Gets direct backend message
+    try {
+      const responseMessage = await ForgetPasswordHook({ email });
+      toast.success(
+        responseMessage || "Reset mail successfully sent to your email.",
+      );
+      navigate("/");
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -27,6 +44,7 @@ const ForgetPasswordPage = () => {
       <FormWrapper
         title="Account Recovery"
         subtitle="Let's have your registered email"
+        error={error}
       >
         {/**-------- form ---------- */}
         <div>
@@ -36,15 +54,25 @@ const ForgetPasswordPage = () => {
               type="email"
               value={email}
               name="email"
-              onChange={handleChange}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
               placeholder="example@gmail.com"
             />
-            <Button type="submit"> Recover Account </Button>
+            {/** submit button */}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <ButtonLoader text="Verifying ..." />
+              ) : (
+                "Recover Account"
+              )}
+            </Button>
           </form>
 
           {/** link to registration page */}
           <p className="text-center mt-8 text-sm">
-            Remember password?{" "}
+            Remember password?
             <Link
               to="/auth/login"
               className="text-accent hover:underline transition-colors duration-500"

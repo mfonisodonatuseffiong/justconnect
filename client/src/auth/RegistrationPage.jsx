@@ -9,6 +9,7 @@ import AuthLayout from "./components/authLayout";
 import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
+import ButtonLoader from "../components/commonUI/ButtonLoader";
 import { ChevronsRight, ChevronsLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthHook } from "../hooks/authHooks";
@@ -20,6 +21,7 @@ const RegistrationPage = () => {
   const { RegisterHook, error } = useAuthHook();
   const [nextScreen, setNextScreen] = useState(false);
 
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -60,12 +62,15 @@ const RegistrationPage = () => {
   /** submit form function */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsCreatingAccount(true); // loading state
     try {
-      const response = await RegisterHook(formData);
-      toast.success(response?.message || "Account created Successfully");
+      const responseMessage = await RegisterHook(formData);
+      toast.success(responseMessage);
       navigate("/auth/login");
     } catch (error) {
       console.error(error.message);
+    } finally {
+      setIsCreatingAccount(false);
     }
   };
 
@@ -187,8 +192,15 @@ const RegistrationPage = () => {
                       I agree to terms and policies
                     </Link>
                   </div>
-
-                  <Button type="submit"> Create Account </Button>
+                  {/** Sign up Button */}
+                  <Button type="submit" disabled={isCreatingAccount}>
+                    {" "}
+                    {isCreatingAccount ? (
+                      <ButtonLoader text="Creating Account..." />
+                    ) : (
+                      "Create Account"
+                    )}{" "}
+                  </Button>
 
                   <p className="text-center mt-4 text-sm">
                     I have an account?{" "}
