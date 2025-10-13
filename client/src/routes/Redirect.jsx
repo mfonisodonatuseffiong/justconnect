@@ -1,34 +1,44 @@
 /**
- * @description:   This serves as the main index of our app,think of it as the landing page but its renders dynamically
- * @example:       If a user hits the app landing page, it uses the auth to conditionally check if user is authenticated
- *                 If user is null from auth store, it renders the landing page,
- *                 If user is signed in, it then navigates to dashboard base on user role.
- * @roles           admin, clients, professionals
- * @returns        Home component and Dashboards
+ * @description:
+ *   This serves as the main index (root route) of the app.
+ *   - If a user is not authenticated, render the HomePage.
+ *   - If authenticated, redirect to their respective dashboard.
+ *
+ * @example:
+ *   - Guests see the landing page.
+ *   - Logged-in users are redirected based on their role.
+ *
+ * @roles: admin, client, professional
  */
 
 import { lazy } from "react";
-// import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import AppLoader from "../components/commonUI/AppLoader";
 
 const HomePage = lazy(() => import("../pages/HomePage"));
 
 const Redirect = () => {
-  // fetch user from the store
-  // fetch isChecking from the store and display a loader
+  const { user, isCheckingMe } = useAuthStore();
 
-  //renders the home component if user is not logged in
+  // show loader while checking authentication
+  if (isCheckingMe) return <AppLoader />;
 
-  return <HomePage />;
+  // if user is not logged in, render landing page
+  if (!user) return <HomePage />;
 
-  // checks for role using the array mapping, returns appropriate route
+  // define dashboard routes based on roles
+  const roleRoute = {
+    admin: "/admin/dashboard",
+    professional: "/professional/dashboard",
+    client: "/client/dashboard",
+  };
 
-  // const roleRoute = {
-  // admin: "/admin/dashboard",
-  // professionals: "/professional/dashboard",
-  // client: "/client/dashboard"
-  // }
+  // fallback in case user.role is unexpected
+  const redirectPath = roleRoute[user?.role];
 
-  // return <Navigate to={roleRoute[user.role]} replace />
+  // redirect authenticated users
+  return <Navigate to={redirectPath} replace />;
 };
 
 export default Redirect;

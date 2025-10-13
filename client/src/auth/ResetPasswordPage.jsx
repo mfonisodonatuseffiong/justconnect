@@ -4,35 +4,50 @@
  * @returns reset password page
  */
 
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import AuthLayout from "./components/authLayout";
 import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
-import { useState } from "react";
+import { useAuthHook } from "../hooks/authHooks";
+import toast from "react-hot-toast";
+import { useAuthStore } from "../store/authStore";
+import ButtonLoader from "../components/commonUI/ButtonLoader";
 
 const ResetPasswordPage = () => {
-  const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
-  });
+  const navigate = useNavigate();
+  const { token } = useParams(); // get the reset token from the url
+  const { ResetPasswordHook, error } = useAuthHook();
+  const { setError } = useAuthStore();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const payload = { token, password, confirmPassword };
 
-  const handleSubmit = (e) => {
+  // submit data to backend
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic
+    setIsSubmitting(true);
+    try {
+      const responseMessage = await ResetPasswordHook(payload);
+      toast.success(responseMessage || "Password Reset Successful");
+      navigate("/auth/login");
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AuthLayout>
-      <FormWrapper title="Password Reset" subtitle={"Enter your new password"}>
+      <FormWrapper
+        title="Password Reset"
+        subtitle={"Enter your new password"}
+        error={error}
+      >
         {/**-------- form ---------- */}
         <div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -40,20 +55,33 @@ const ResetPasswordPage = () => {
               label="Password"
               type="password"
               name="password"
-              value={formData.password}
-              onChange={handleChange}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError(null);
+              }}
               placeholder="************"
             />
             <Input
               label="Confirm Password"
               type="password"
               name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (error) setError(null);
+              }}
               placeholder="retype password"
             />
 
-            <Button type="submit"> Reset Password </Button>
+            {/** Submitting Button */}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <ButtonLoader text="Submitting..." />
+              ) : (
+                "Reset Password"
+              )}
+            </Button>
           </form>
 
           {/** link to registration page */}

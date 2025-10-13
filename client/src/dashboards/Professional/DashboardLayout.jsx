@@ -8,15 +8,14 @@ import Navbar from "./components/Navbar";
 
 const DashboardLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col text-accent">
-      {/** Navbar  */}
-      <Navbar />
+    <div className="min-h-screen flex text-accent">
+      <AsideBar />
 
       {/** aside + main content */}
-      <div className="flex flex-1">
-        <AsideBar />
-
-        <main className="flex-1 overflow-y-auto p-6 rounded-tl-2xl">
+      <div className="flex flex-col flex-1">
+        {/** Navbar  */}
+        <Navbar />
+        <main className="flex-1 overflow-y-auto  rounded-tl-2xl">
           <Outlet />
         </main>
       </div>

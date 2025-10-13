@@ -1,7 +1,9 @@
-import React from "react";
-
 const AboutPage = () => {
-  return <div className="min-h-screen mt-6 bg-gradient">AboutPage</div>;
+  return (
+    <div className="min-h-screen mt-[6rem] text-brand flex justify-center items-center">
+      About Page
+    </div>
+  );
 };
 
 export default AboutPage;

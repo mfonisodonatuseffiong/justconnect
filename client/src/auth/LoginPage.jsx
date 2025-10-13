@@ -11,6 +11,7 @@ import AuthLayout from "./components/authLayout";
 import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
+import ButtonLoader from "../components/commonUI/ButtonLoader";
 
 import { useAuthHook } from "../hooks/authHooks";
 import toast from "react-hot-toast";
@@ -18,6 +19,7 @@ import toast from "react-hot-toast";
 const LoginPage = () => {
   const navigate = useNavigate();
   const { LoginHook, error } = useAuthHook();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,14 +31,17 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoggingIn(true);
     // Handle form submission logic
     try {
-      const user = await LoginHook(formData);
-      console.log("Logged in user:", user);
-      toast.success(user?.message || "Login successful");
+      const response = await LoginHook(formData);
+      console.log("Logged in user:", response?.user);
+      toast.success(response?.message || "Login successful");
       navigate("/");
     } catch (error) {
       console.error(error.message);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -77,7 +82,11 @@ const LoginPage = () => {
                 Forget password?
               </Link>
             </p>
-            <Button type="submit"> Login </Button>
+
+            {/** sign in button */}
+            <Button type="submit" disabled={isLoggingIn}>
+              {isLoggingIn ? <ButtonLoader text="Logging in..." /> : "Login"}
+            </Button>
           </form>
 
           {/** link to registration page */}

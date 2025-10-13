@@ -6,11 +6,44 @@
  */
 
 import { useAuthStore } from "../store/authStore";
-import { loginSchema, registerSchema } from "../validation/authValidation";
-import { loginService, registerService } from "../service/authService";
+import {
+  loginSchema,
+  registerSchema,
+  forgetPasswordSchema,
+  resetPasswordSchema,
+} from "../validation/authValidation";
+import {
+  loginService,
+  registerService,
+  forgetPasswordService,
+  resetPasswordService,
+  CheckMeService,
+} from "../service/authService";
+import { useEffect } from "react";
 
 export const useAuthHook = () => {
-  const { setUser, error, setError } = useAuthStore();
+  const { setUser, user, setIsCheckingMe, clearUser, error, setError } =
+    useAuthStore();
+
+  // check me
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (user) return; // avoids multiple check
+
+      setIsCheckingMe(true);
+      try {
+        const data = await CheckMeService();
+        setUser(data.user);
+      } catch (error) {
+        console.error("user:", user);
+        console.error("CheckMeService failed:", error.message);
+        clearUser();
+      } finally {
+        setIsCheckingMe(false);
+      }
+    };
+    fetchUser();
+  }, [setUser, clearUser, setIsCheckingMe, user]);
 
   // handle login
   const LoginHook = async (formData) => {
@@ -24,10 +57,10 @@ export const useAuthHook = () => {
     // call the login service
     setError(null); // Clear previous errors
     try {
-      const response = await loginService(formData);
-      setUser(response.user);
+      const data = await loginService(formData);
+      setUser(data.user);
       setError(null);
-      return response.user;
+      return data;
     } catch (error) {
       console.error("Error in login hook", error.message);
       setError(error.message);
@@ -49,8 +82,8 @@ export const useAuthHook = () => {
     const { name, email, role, password } = formData;
     const payload = { name, email, role, password };
     try {
-      const response = await registerService(payload);
-      return response?.message || "Account created successfully";
+      const data = await registerService(payload);
+      return data?.message || "Account created successfully";
     } catch (error) {
       setError(error.message);
       console.error("Error in register hook", error.message);
@@ -58,5 +91,55 @@ export const useAuthHook = () => {
     }
   };
 
-  return { error, LoginHook, RegisterHook };
+  // forget password logic
+  const ForgetPasswordHook = async ({ email }) => {
+    const { error: validationError } = forgetPasswordSchema.validate({ email });
+    if (validationError) {
+      const errMsg = validationError.details[0].message;
+      setError(errMsg);
+      throw new Error(errMsg);
+    }
+    // clear previous error
+    setError(null);
+    try {
+      const data = await forgetPasswordService({ email });
+      return data.message;
+    } catch (error) {
+      setError(error.message);
+      console.error("Error in register hook", error.message);
+      throw error;
+    }
+  };
+
+  // Reset password logic
+  const ResetPasswordHook = async ({ password, confirmPassword, token }) => {
+    const { error: validationError } = resetPasswordSchema.validate({
+      password,
+      confirmPassword,
+    });
+    if (validationError) {
+      const errMsg = validationError.details[0].message;
+      setError(errMsg);
+      throw new Error(errMsg);
+    }
+    // clear previous error
+    setError(null);
+    const payload = { password, token };
+    try {
+      const data = await resetPasswordService(payload);
+      return data.message;
+    } catch (error) {
+      setError(error.message);
+      console.error("Error in register hook", error.message);
+      throw error;
+    }
+  };
+
+  return {
+    error,
+    LoginHook,
+    RegisterHook,
+    ForgetPasswordHook,
+    ResetPasswordHook,
+  };
 };
