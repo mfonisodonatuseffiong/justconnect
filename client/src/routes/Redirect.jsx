@@ -38,7 +38,7 @@ const Redirect = () => {
   const redirectPath = roleRoute[user?.role];
 
   // redirect authenticated users
-  return <Navigate to={redirectPath} replace />;
+  return <Navigate to={redirectPath || "/"} replace />;
 };
 
 export default Redirect;

@@ -6,7 +6,7 @@
 import aboutImg from "../../assets/hero.svg";
 
 import { Link } from "react-router-dom";
-import { Lightbulb } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 const About = () => {
   return (
@@ -54,10 +54,10 @@ const About = () => {
             {/* Learn More Button */}
             <Link
               to="/about-us"
-              className="inline-flex items-center gap-3 mt-6 px-6 py-3 bg-accent text-white font-semibold rounded-lg  hover:text-brand hover:bg-accent/90 transition "
+              className="group inline-flex items-center gap-1 mt-6 px-6 py-3 text-brand hover:text-accent font-semibold rounded-lg hover:underline transition "
             >
-              <Lightbulb className="w-6 h-6" />
               Learn More
+              <ChevronRight className="w-6 h-6 group-hover:translate-x-2" />
             </Link>
           </div>
 

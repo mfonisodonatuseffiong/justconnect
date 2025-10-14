@@ -5,6 +5,7 @@
  *
  */
 
+import { useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
 import {
   loginSchema,
@@ -19,31 +20,25 @@ import {
   resetPasswordService,
   CheckMeService,
 } from "../service/authService";
-import { useEffect } from "react";
 
 export const useAuthHook = () => {
-  const { setUser, user, setIsCheckingMe, clearUser, error, setError } =
+  const { setUser, setIsCheckingMe, clearUser, error, setError } =
     useAuthStore();
 
-  // check me
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (user) return; // avoids multiple check
-
-      setIsCheckingMe(true);
-      try {
-        const data = await CheckMeService();
-        setUser(data.user);
-      } catch (error) {
-        console.error("user:", user);
-        console.error("CheckMeService failed:", error.message);
-        clearUser();
-      } finally {
-        setIsCheckingMe(false);
-      }
-    };
-    fetchUser();
-  }, [setUser, clearUser, setIsCheckingMe, user]);
+  // check user authentication status
+  const checkMeHook = useCallback(async () => {
+    setIsCheckingMe(true);
+    try {
+      const data = await CheckMeService();
+      setUser(data.user);
+      console.log("current user:", data.user);
+    } catch (error) {
+      console.error("checkMe Error:", error.message);
+      clearUser();
+    } finally {
+      setIsCheckingMe(false);
+    }
+  }, [clearUser, setIsCheckingMe, setUser]);
 
   // handle login
   const LoginHook = async (formData) => {
@@ -141,5 +136,6 @@ export const useAuthHook = () => {
     RegisterHook,
     ForgetPasswordHook,
     ResetPasswordHook,
+    checkMeHook,
   };
 };
