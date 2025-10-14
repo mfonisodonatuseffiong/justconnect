@@ -10,6 +10,7 @@ import Services from "../components/feature/Services";
 import FAQ from "../components/feature/Faq";
 import Testimonial from "../components/feature/Testimonial";
 import CTA from "../components/feature/Cta";
+import { faqs } from "../utils/landingPageFaqs";
 
 const HomePage = () => {
   return (
@@ -17,7 +18,7 @@ const HomePage = () => {
       <Hero />
       <About />
       <Services />
-      <FAQ />
+      <FAQ faqs={faqs} />
       <Testimonial />
       <CTA />
     </div>

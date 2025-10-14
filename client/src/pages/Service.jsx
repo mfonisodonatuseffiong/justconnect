@@ -75,15 +75,24 @@ export default function Service() {
   });
 
   return (
-    <div className="min-h-screen mt-[6rem] p-4">
+    <div className="min-h-screen mt-[6rem] p-2">
       {/* Page Header */}
       <div className="mb-8 bg-gradient-to-tl from-brand via-primary-gray to-brand backdrop-blur-sm p-2 pt-16 md:py-20 rounded-2xl shadow-lg z-30">
-        <h1 className="text-2xl sm:text-3xl font-bold text-center">
-          Find & Hire Skilled <span className="text-accent">Professionals</span>
+        <h1
+          className="text-2xl sm:text-3xl font-bold text-center"
+          data-aos="fade-in"
+        >
+          Find & Hire Skilled{" "}
+          <span className="text-accent" data-aos="fade-in">
+            Professionals
+          </span>
         </h1>
 
         {/* Filters */}
-        <div className="max-w-7xl mx-auto mt-4 md:mt-16 grid sm:grid-cols-3 gap-4 backdrop-blur-sm p-4 rounded-2xl shadow-lg mb-10 z-30">
+        <div
+          className="max-w-7xl mx-auto mt-4 md:mt-16 grid sm:grid-cols-3 gap-4 backdrop-blur-sm p-4 rounded-2xl shadow-lg mb-10 z-30"
+          data-aos="zoom-in"
+        >
           {/* Location Dropdown */}
           <SelectDropdown
             value={filters.location}

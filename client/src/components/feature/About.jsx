@@ -1,14 +1,13 @@
 /**
- * @desc About section for the landing page
- * @returns About component
+ * @desc About section - can be used on both Landing Page and About Page
+ * @param {boolean} showButton - whether to show the "Learn More" link
  */
 
 import aboutImg from "../../assets/hero.svg";
-
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 
-const About = () => {
+const About = ({ showButton = true, showTitle = true }) => {
   return (
     <section
       className="relative py-20 text-brand overflow-hidden"
@@ -17,9 +16,11 @@ const About = () => {
       <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-16">
         {/* Title */}
         <div className="text-center space-y-4 mb-12">
-          <h2 className="text-4xl font-bold" data-aos="zoom">
-            About <span className="text-accent">JustConnect</span>
-          </h2>
+          {showTitle && (
+            <h2 className="text-4xl font-bold" data-aos="zoom">
+              About <span className="text-accent">JustConnect</span>
+            </h2>
+          )}
           <p
             className="text-base text-primary-gray md:text-lg max-w-3xl mx-auto"
             data-aos="fade-in"
@@ -51,14 +52,17 @@ const About = () => {
                 ✅ Save time and get the job done right
               </li>
             </ul>
-            {/* Learn More Button */}
-            <Link
-              to="/about-us"
-              className="group inline-flex items-center gap-1 mt-6 px-6 py-3 text-brand hover:text-accent font-semibold rounded-lg hover:underline transition "
-            >
-              Learn More
-              <ChevronRight className="w-6 h-6 group-hover:translate-x-2" />
-            </Link>
+
+            {/* Conditionally show "Learn More" */}
+            {showButton && (
+              <Link
+                to="/about-us"
+                className="group inline-flex items-center gap-1 mt-6 px-6 py-3 text-brand hover:text-accent font-semibold rounded-lg hover:underline transition"
+              >
+                Learn More
+                <ChevronRight className="w-6 h-6 group-hover:translate-x-2" />
+              </Link>
+            )}
           </div>
 
           {/* Right - Illustration */}
