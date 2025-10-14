@@ -66,7 +66,7 @@ const ContactUsPage = () => {
       />
 
       {/* ======= Contact Section ======= */}
-      <section className="max-w-6xl mx-auto px-6 lg:px-12 mt-16 grid md:grid-cols-2 gap-10">
+      <section className="max-w-6xl mx-auto px-2 lg:px-12 mt-16 grid md:grid-cols-2 gap-10">
         {/* === Left Form === */}
         <div
           className="bg-white shadow-xl rounded-2xl p-8 md:p-10 border border-gray-100"

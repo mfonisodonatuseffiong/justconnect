@@ -13,7 +13,7 @@ const About = ({ showButton = true, showTitle = true }) => {
       className="relative py-20 text-brand overflow-hidden"
       data-aos="fade-up"
     >
-      <div className="max-w-6xl mx-auto px-6 md:px-12 lg:px-16">
+      <div className="max-w-6xl mx-auto px-2 md:px-12 lg:px-16">
         {/* Title */}
         <div className="text-center space-y-4 mb-12">
           {showTitle && (
@@ -33,7 +33,7 @@ const About = ({ showButton = true, showTitle = true }) => {
         </div>
 
         {/* Content */}
-        <div className="grid md:grid-cols-2 gap-12 items-center p-10">
+        <div className="grid md:grid-cols-2 gap-12 items-center md:p-10">
           {/* Left - Text */}
           <div className="space-y-6">
             <h3

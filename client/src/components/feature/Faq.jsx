@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const FAQ = ({ faqs = [], showTitle = true }) => {
   const [openIndex, setOpenIndex] = useState(null);
@@ -14,7 +15,7 @@ const FAQ = ({ faqs = [], showTitle = true }) => {
 
   return (
     <section className="faq py-16 text-brand">
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-4xl mx-auto px-2 md:px-6">
         {showTitle && (
           <h2 className="text-4xl font-bold text-center mb-8" data-aos="zoom">
             Frequently Asked <span className="text-accent">Questions</span>
@@ -51,6 +52,16 @@ const FAQ = ({ faqs = [], showTitle = true }) => {
             </div>
           ))}
         </div>
+      </div>
+      {/* navigate to faq page */}
+      <div className="mt-8 text-center">
+        <Link
+          to="/faqs"
+          className="text-accent font-semibold hover:underline"
+          data-aos="fade-up"
+        >
+          View All FAQS
+        </Link>
       </div>
     </section>
   );
