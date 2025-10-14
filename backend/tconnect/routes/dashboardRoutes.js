@@ -2,6 +2,27 @@ const express = require("express");
 const router = express.Router();
 const { protect } = require("../middlewares/authMiddleware");
 const pool = require("../../db"); // PostgreSQL pool connection
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
+
+// ================== CLOUDINARY CONFIG ==================
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "justconnect/profiles",
+    allowed_formats: ["jpg", "jpeg", "png"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
+  },
+});
+
+const upload = multer({ storage });
 
 // ================== GET DASHBOARD (USER & ADMIN) ==================
 router.get("/", protect, async (req, res) => {
@@ -21,7 +42,11 @@ router.get("/", protect, async (req, res) => {
       SELECT r.*, 
              u.name AS user_name,
              p.name AS professional_name,
-             p.category AS professional_field
+             p.category AS professional_field,
+             p.rating,
+             p.bio,
+             p.years_of_experience,
+             p.profile_photo
       FROM requests r
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN professionals p ON r.professional_id = p.id
@@ -150,7 +175,7 @@ router.get("/professional", protect, async (req, res) => {
     }
 
     const professionalQuery = `
-      SELECT id, name, category, rating, bio, years_of_experience
+      SELECT id, name, category, rating, bio, years_of_experience, profile_photo
       FROM professionals
       WHERE id = $1
     `;
@@ -185,6 +210,32 @@ router.get("/professional", protect, async (req, res) => {
   } catch (error) {
     console.error("Professional dashboard error:", error);
     res.status(500).json({ error: "Server error fetching professional dashboard" });
+  }
+});
+
+// ================== UPLOAD PROFILE PHOTO ==================
+router.post("/upload/profile-photo", protect, upload.single("photo"), async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (user.role !== "professional") {
+      return res.status(403).json({ message: "Only professionals can upload profile photos" });
+    }
+
+    const imageUrl = req.file.path;
+
+    await pool.query(
+      "UPDATE professionals SET profile_photo = $1 WHERE id = $2",
+      [imageUrl, user.id]
+    );
+
+    res.json({
+      message: "Profile photo uploaded successfully!",
+      photoUrl: imageUrl,
+    });
+  } catch (error) {
+    console.error("Error uploading profile photo:", error);
+    res.status(500).json({ message: "Server error while uploading photo" });
   }
 });
 

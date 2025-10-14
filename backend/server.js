@@ -3,6 +3,7 @@ const http = require("http");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const pool = require("./db");
+const cloudinary = require("./config/cloudinary"); // ✅ Import Cloudinary config
 
 dotenv.config();
 
@@ -118,12 +119,14 @@ const authRoutes = require("./tconnect/routes/authRoutes");
 const professionalAuthRoutes = require("./tconnect/routes/professionalAuthRoutes");
 const dashboardRoutes = require("./tconnect/routes/dashboardRoutes");
 const bookingRoutes = require("./tconnect/routes/bookingRoutes");
+const uploadRoutes = require("./tconnect/routes/uploadRoutes");
 
 // mount routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/auth", professionalAuthRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
+app.use("/api/v1", uploadRoutes);
 
 console.log("✅ API routes mounted:");
 console.log("   - /api/v1/auth/register");
