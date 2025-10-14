@@ -4,17 +4,21 @@
  */
 
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
+import AppLoader from "../../components/commonUI/AppLoader";
 
 const AuthGuard = () => {
-  const user = "null"; // Replace with actual authentication logic
-  // import isChecking from store
-  // if (isChecking) {
-  //   return <div>Loading...</div>; // or a spinner
-  // }
+  const { user, isCheckingMe } = useAuthStore();
 
+  // display loader while verifying user
+  if (isCheckingMe) return <AppLoader />;
+
+  // redirect the user to login if not signed in
   if (!user) {
     return <Navigate to="/auth/login" replace />;
   }
+
+  // allow the user into the page
   return <Outlet />;
 };
 

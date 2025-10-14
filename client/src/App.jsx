@@ -18,7 +18,7 @@ import { useAuthHook } from "./hooks/authHooks";
 import { useAuthStore } from "./store/authStore";
 
 const App = () => {
-  useAuthHook(); //  this runs a checkme from the hook effect, triggers on every app refresh or page mount
+  const { checkMeHook } = useAuthHook();
   const { isCheckingMe } = useAuthStore();
   const location = useLocation();
 
@@ -36,6 +36,11 @@ const App = () => {
     location.pathname.startsWith(path),
   );
 
+  // check current user
+  useEffect(() => {
+    checkMeHook();
+  }, [checkMeHook]);
+
   // animate on scroll
   useEffect(() => {
     AOS.init({
@@ -46,6 +51,7 @@ const App = () => {
     });
   }, []);
 
+  // loader while checking current user
   if (isCheckingMe) return <AppLoader />;
 
   return (
