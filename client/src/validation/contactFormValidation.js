@@ -1,5 +1,5 @@
 /**
- * @description Schema to validate fcontact form field
+ * @description Schema to validate contact form field
  */
 
 import Joi from "joi";

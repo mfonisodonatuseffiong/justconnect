@@ -29,9 +29,9 @@ const Redirect = () => {
 
   // define dashboard routes based on roles
   const roleRoute = {
-    admin: "/admin/dashboard",
-    professional: "/professional/dashboard",
-    client: "/client/dashboard",
+    admin: "/dashboard/admin",
+    professional: "/dashboard/professional",
+    client: "/dashboard/client",
   };
 
   // fallback in case user.role is unexpected

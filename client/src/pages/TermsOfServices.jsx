@@ -1,5 +1,5 @@
 /**
- * @description Things you should know well to use our servies
+ * @description Things you should know well to use our services
  * @returns Terms page
  */
 

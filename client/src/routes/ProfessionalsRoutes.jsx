@@ -6,7 +6,7 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
-const ProfessionalstDashborad = lazy(
+const ProfessionalsDashboard = lazy(
   () => import("../dashboards/Professional/DashboardLayout"),
 );
 const Home = lazy(() => import("../dashboards/Professional/Home"));
@@ -17,7 +17,7 @@ const Settings = lazy(() => import("../dashboards/Professional/Settings"));
 const Reviews = lazy(() => import("../dashboards/Professional/Reviews"));
 
 const ProfessionalsRoutes = (
-  <Route path="/dashboard/professionals" element={<ProfessionalstDashborad />}>
+  <Route path="/dashboard/professional" element={<ProfessionalsDashboard />}>
     <Route index element={<Home />} />
     <Route path="services" element={<Services />} />
     <Route path="messages" element={<Messages />} />
