@@ -1,11 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const { createBooking, getBookingsByUser } = require("../controllers/bookingController");
+const {
+  createNewBooking,
+  getAll,
+  getUserBookings,
+  getProfessionalBookings,
+  updateStatus,
+  deleteBookingRecord,
+} = require("../controllers/bookingController");
 
-// ✅ Create a new booking
-router.post("/", createBooking);
+/**
+ * ==============================================
+ * BOOKING ROUTES
+ * Handles all booking operations
+ * Base URL: /api/v1/bookings
+ * ==============================================
+ */
 
-// ✅ Get bookings for a user (optional, e.g., dashboard)
-router.get("/:userId", getBookingsByUser);
+// 🟢 Create a new booking (“Hire Me”)
+router.post("/", createNewBooking);
+
+// 🔵 Get all bookings (admin or internal use)
+router.get("/", getAll);
+
+// 🟣 Get all bookings by user ID
+router.get("/user/:userId", getUserBookings);
+
+// 🟠 Get all bookings by professional ID
+router.get("/pro/:professionalId", getProfessionalBookings);
+
+// 🟡 Update booking status (accept/reject/complete)
+router.put("/:id/status", updateStatus);
+
+// 🔴 Delete a booking
+router.delete("/:id", deleteBookingRecord);
 
 module.exports = router;
