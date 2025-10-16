@@ -2,19 +2,17 @@ const pool = require("../../db");
 
 /**
  * ============================================
- * USER MODEL
+ * USER MODEL (UPDATED)
  * Handles all database queries related to users
  * ============================================
  */
 
 // ✅ Create new user (auto-validates role)
 const addUser = async (name, email, password, role = "user") => {
-  // Validate email and name
   if (!email || !name || !password) {
     throw new Error("Missing required user fields: name, email, or password");
   }
 
-  // Validate role
   const validRoles = ["user", "professional"];
   const finalRole = validRoles.includes(role) ? role : "user";
 
@@ -80,6 +78,43 @@ const clearResetToken = async (userId) => {
   );
 };
 
+/**
+ * ============================================
+ * 🔄 REFRESH TOKEN MANAGEMENT
+ * ============================================
+ */
+
+// ✅ Save a new refresh token
+const saveRefreshToken = async (userId, refreshToken) => {
+  return pool.query(
+    `UPDATE users
+     SET refresh_token = $1,
+         updated_at = NOW()
+     WHERE id = $2`,
+    [refreshToken, userId]
+  );
+};
+
+// ✅ Get user by refresh token
+const getUserByRefreshToken = async (token) => {
+  return pool.query(
+    `SELECT * FROM users
+     WHERE refresh_token = $1`,
+    [token]
+  );
+};
+
+// ✅ Clear refresh token (on logout or rotation)
+const clearRefreshToken = async (userId) => {
+  return pool.query(
+    `UPDATE users
+     SET refresh_token = NULL,
+         updated_at = NOW()
+     WHERE id = $1`,
+    [userId]
+  );
+};
+
 module.exports = {
   addUser,
   getUserByEmail,
@@ -88,4 +123,7 @@ module.exports = {
   saveResetToken,
   findUserByResetToken,
   clearResetToken,
+  saveRefreshToken,
+  getUserByRefreshToken,
+  clearRefreshToken,
 };

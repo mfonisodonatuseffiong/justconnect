@@ -120,6 +120,10 @@ const professionalAuthRoutes = require("./tconnect/routes/professionalAuthRoutes
 const dashboardRoutes = require("./tconnect/routes/dashboardRoutes");
 const bookingRoutes = require("./tconnect/routes/bookingRoutes");
 const uploadRoutes = require("./tconnect/routes/uploadRoutes");
+const serviceRoutes = require("./tconnect/routes/serviceRoutes");
+const professionalRoutes = require("./tconnect/routes/professionalRoutes");
+
+
 
 // mount routes
 app.use("/api/v1/auth", authRoutes);
@@ -127,6 +131,10 @@ app.use("/api/v1/auth", professionalAuthRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1", uploadRoutes);
+app.use("/api/v1/services", serviceRoutes);
+app.use("/api/v1/professionals", professionalRoutes);
+
+
 
 console.log("✅ API routes mounted:");
 console.log("   - /api/v1/auth/register");
@@ -134,7 +142,8 @@ console.log("   - /api/v1/auth/login");
 console.log("   - /api/v1/auth/professional-login");
 console.log("   - /api/v1/dashboard");
 console.log("   - /api/v1/bookings");
-
+console.log("   - /api/v1/serices");
+console.log("   - /api/v1/professionals");
 // 🚀 Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
