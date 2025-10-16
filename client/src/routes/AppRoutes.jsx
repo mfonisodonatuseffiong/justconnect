@@ -19,7 +19,7 @@ export const AppRoutes = () => {
       <Routes>
         {PublicRoutes}
         {GuestRoutes}
-        {AuthRoutes} {/** Routes that requires log in before visting */}
+        {AuthRoutes} {/** Routes that requires log in before visiting */}
       </Routes>
     </Suspense>
   );
