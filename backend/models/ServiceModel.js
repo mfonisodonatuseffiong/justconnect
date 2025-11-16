@@ -1,6 +1,6 @@
-const pool = require("../../db");
+// models/serviceModel.js
+const pool = require("../config/db");
 
-// Default service list
 const defaultServices = [
   "Electrician",
   "Plumber",

@@ -1,40 +1,45 @@
-const pool = require("../../db");
+const pool = require("../config/db");
 
 /**
  * ============================================
- * USER MODEL (UPDATED)
- * Handles all database queries related to users
+ * USER MODEL (FINAL PRODUCTION VERSION)
+ * Handles all database operations for users
  * ============================================
  */
 
-// ✅ Create new user (auto-validates role)
+// ✅ Create a new user (supports user, professional, admin)
 const addUser = async (name, email, password, role = "user") => {
   if (!email || !name || !password) {
-    throw new Error("Missing required user fields: name, email, or password");
+    throw new Error("Missing required fields: name, email, or password");
   }
 
-  const validRoles = ["user", "professional"];
-  const finalRole = validRoles.includes(role) ? role : "user";
+  const validRoles = ["user", "professional", "admin"];
+  const finalRole = validRoles.includes(role.toLowerCase())
+    ? role.toLowerCase()
+    : "user";
 
   return pool.query(
     `INSERT INTO users (name, email, password, role, created_at, updated_at)
      VALUES ($1, $2, $3, $4, NOW(), NOW())
      RETURNING id, name, email, role`,
-    [name, email, password, finalRole]
+    [name.trim(), email.toLowerCase(), password, finalRole]
   );
 };
 
-// ✅ Fetch user by email (case insensitive)
+// ✅ Fetch user by email (case-insensitive)
 const getUserByEmail = async (email) => {
-  return pool.query("SELECT * FROM users WHERE LOWER(email) = LOWER($1)", [email]);
+  return pool.query(
+    `SELECT * FROM users WHERE LOWER(email) = LOWER($1)`,
+    [email]
+  );
 };
 
 // ✅ Fetch user by ID
 const getUserById = async (id) => {
-  return pool.query("SELECT * FROM users WHERE id = $1", [id]);
+  return pool.query(`SELECT * FROM users WHERE id = $1`, [id]);
 };
 
-// ✅ Update user password (also refresh updated_at)
+// ✅ Update user password (after reset)
 const updateUserPassword = async (userId, newPassword) => {
   return pool.query(
     `UPDATE users
@@ -44,7 +49,7 @@ const updateUserPassword = async (userId, newPassword) => {
   );
 };
 
-// ✅ Save password reset token + expiry
+// ✅ Save password reset token and expiry
 const saveResetToken = async (userId, token, expiry) => {
   return pool.query(
     `UPDATE users
@@ -56,7 +61,7 @@ const saveResetToken = async (userId, token, expiry) => {
   );
 };
 
-// ✅ Find user by active reset token (not expired)
+// ✅ Find user by valid reset token (not expired)
 const findUserByResetToken = async (token) => {
   return pool.query(
     `SELECT * FROM users
@@ -66,7 +71,7 @@ const findUserByResetToken = async (token) => {
   );
 };
 
-// ✅ Clear token after successful reset
+// ✅ Clear password reset token after reset
 const clearResetToken = async (userId) => {
   return pool.query(
     `UPDATE users
@@ -84,7 +89,7 @@ const clearResetToken = async (userId) => {
  * ============================================
  */
 
-// ✅ Save a new refresh token
+// ✅ Save refresh token for session renewal
 const saveRefreshToken = async (userId, refreshToken) => {
   return pool.query(
     `UPDATE users
@@ -95,16 +100,15 @@ const saveRefreshToken = async (userId, refreshToken) => {
   );
 };
 
-// ✅ Get user by refresh token
+// ✅ Fetch user by refresh token
 const getUserByRefreshToken = async (token) => {
   return pool.query(
-    `SELECT * FROM users
-     WHERE refresh_token = $1`,
+    `SELECT * FROM users WHERE refresh_token = $1`,
     [token]
   );
 };
 
-// ✅ Clear refresh token (on logout or rotation)
+// ✅ Clear refresh token (on logout)
 const clearRefreshToken = async (userId) => {
   return pool.query(
     `UPDATE users
