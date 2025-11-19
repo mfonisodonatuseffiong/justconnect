@@ -7,33 +7,32 @@ const jwt = require("jsonwebtoken");
  * ==========================================================
  */
 
-// ✅ Verify and authenticate JWT
 const authenticateToken = (req, res, next) => {
   try {
+    // Check token in headers or cookies
     const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : req.cookies?.accessToken;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!token) {
       return res.status(401).json({
         success: false,
         message: "Access denied. No token provided.",
       });
     }
 
-    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Verify JWT with claims
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      issuer: "justconnect.app",
-      audience: "justconnect-users",
-    });
-
-    // Attach decoded data (id, email, role, etc.)
+    // Always populate req.user with correct info
     req.user = {
       id: decoded.id,
-      name: decoded.name,
-      email: decoded.email,
-      role: decoded.role,
+      name: decoded.name || null,
+      email: decoded.email || null,
+      role: decoded.role || "user",
     };
+
+    console.log("✅ Authenticated user:", req.user); // debug role
 
     next();
   } catch (err) {
@@ -46,45 +45,41 @@ const authenticateToken = (req, res, next) => {
       });
     }
 
-    if (err.name === "JsonWebTokenError") {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid authentication token.",
-      });
-    }
-
-    return res.status(500).json({
+    return res.status(401).json({
       success: false,
-      message: "Internal server error during authentication.",
+      message: "Invalid authentication token.",
     });
   }
 };
 
 /**
- * ✅ Role-based authorization middleware
- * Example usage: authorizeRoles("admin", "professional")
+ * ==========================================================
+ * ROLE-BASED AUTHORIZATION
+ * Example usage: roleAuthorization("admin", "professional")
+ * ==========================================================
  */
-const authorizeRoles = (...allowedRoles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized. No user data found.",
-      });
-    }
+const authorizeRoles = (...allowedRoles) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized. No user data found.",
+    });
+  }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden. You do not have permission to perform this action.",
-      });
-    }
+  if (!allowedRoles.includes(req.user.role)) {
+    console.warn(
+      `⚠️ Forbidden: role ${req.user.role} not in allowed roles [${allowedRoles.join(", ")}]`
+    );
+    return res.status(403).json({
+      success: false,
+      message: "Forbidden. Insufficient permissions.",
+    });
+  }
 
-    next();
-  };
+  next();
 };
 
-// ✅ Alias for backward compatibility
+// Alias for legacy code
 const roleAuthorization = (role) => authorizeRoles(role);
 
 module.exports = {

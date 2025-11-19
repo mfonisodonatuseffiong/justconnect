@@ -1,65 +1,206 @@
-const pool = require("../config/db");
+const { Professional } = require("../models/professionalModel");
+const { authenticateToken } = require("../middlewares/authMiddleware");
 
-const createProfessional = async (req, res) => {
-  try {
-    const { name, email, password, category, location, experience } = req.body;
-    const result = await pool.query(
-      "INSERT INTO professionals(name,email,password,category,location,experience) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",
-      [name, email, password, category, location, experience]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+const professionalController = {
+
+  /** --------------------------------------------------------
+   * GET ALL PROFESSIONALS
+   * -------------------------------------------------------- */
+  getAllProfessionals: async (req, res) => {
+    try {
+      const professionals = await Professional.getAll();
+      res.status(200).json({
+        success: true,
+        total: professionals.length,
+        professionals,
+      });
+    } catch (error) {
+      console.error("❌ Error fetching professionals:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Server error while fetching professionals",
+      });
+    }
+  },
+
+  /** --------------------------------------------------------
+   * GET ONE PROFESSIONAL BY ID
+   * -------------------------------------------------------- */
+  getProfessionalById: async (req, res) => {
+    try {
+      const professional = await Professional.getById(req.params.id);
+
+      if (!professional) {
+        return res.status(404).json({
+          success: false,
+          message: "Professional not found",
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        professional,
+      });
+
+    } catch (error) {
+      console.error("❌ Error fetching professional:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Server error while fetching professional",
+      });
+    }
+  },
+
+  /** --------------------------------------------------------
+   * CREATE PROFESSIONAL (admin or signup auto-create)
+   * -------------------------------------------------------- */
+  createProfessional: async (req, res) => {
+    try {
+      const {
+        name,
+        email,
+        profile_pic,
+        contact,
+        category,
+        experience,
+        location,
+        bio,
+        sex,
+      } = req.body;
+
+      // check if email already exists
+      const existing = await Professional.getByEmail(email);
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: "Professional with this email already exists",
+        });
+      }
+
+      const professional = await Professional.create({
+        name,
+        email,
+        profile_pic,
+        contact,
+        category,
+        experience,
+        location,
+        bio,
+        sex
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Professional profile created successfully",
+        professional,
+      });
+
+    } catch (error) {
+      console.error("❌ Error creating professional:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Server error while creating professional",
+      });
+    }
+  },
+
+  /** --------------------------------------------------------
+   * UPDATE PROFESSIONAL PROFILE
+   * Admin or the professional themself
+   * -------------------------------------------------------- */
+  updateProfessional: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const {
+        contact,
+        category,
+        experience,
+        location,
+        bio,
+        profile_pic,
+        sex
+      } = req.body;
+
+      const { role, email: loggedEmail } = req.user;
+
+      const professional = await Professional.getById(id);
+      if (!professional) {
+        return res.status(404).json({
+          success: false,
+          message: "Professional not found",
+        });
+      }
+
+      // Auth check
+      if (role !== "admin" && loggedEmail !== professional.email) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied",
+        });
+      }
+
+      const updated = await Professional.update(id, {
+        contact,
+        category,
+        experience,
+        location,
+        bio,
+        profile_pic,
+        sex
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Professional updated successfully",
+        professional: updated,
+      });
+
+    } catch (error) {
+      console.error("❌ Error updating professional:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Server error while updating professional",
+      });
+    }
+  },
+
+  /** --------------------------------------------------------
+   * DELETE PROFESSIONAL (admin only)
+   * -------------------------------------------------------- */
+  deleteProfessional: async (req, res) => {
+    try {
+      const { role } = req.user;
+      const { id } = req.params;
+
+      if (role !== "admin") {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied: admin only",
+        });
+      }
+
+      const deleted = await Professional.delete(id);
+      if (!deleted) {
+        return res.status(404).json({
+          success: false,
+          message: "Professional not found",
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Professional deleted successfully",
+      });
+
+    } catch (error) {
+      console.error("❌ Error deleting professional:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Server error while deleting professional",
+      });
+    }
+  },
+
 };
 
-const getAllProfessionals = async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM professionals");
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-const getProfessionalById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query("SELECT * FROM professionals WHERE id=$1", [id]);
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-const updateProfessional = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, email, category, location, experience } = req.body;
-    const result = await pool.query(
-      "UPDATE professionals SET name=$1,email=$2,category=$3,location=$4,experience=$5 WHERE id=$6 RETURNING *",
-      [name, email, category, location, experience, id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-const deleteProfessional = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.query("DELETE FROM professionals WHERE id=$1", [id]);
-    res.json({ message: "Professional deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-module.exports = {
-  createProfessional,
-  getAllProfessionals,
-  getProfessionalById,
-  updateProfessional,
-  deleteProfessional,
-};
+module.exports = professionalController;

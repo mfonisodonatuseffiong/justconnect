@@ -1,3 +1,4 @@
+// controllers/authController.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
@@ -5,250 +6,245 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const pool = require("../config/db");
-const cloudinary = require("../config/cloudinary");
 const {
   addUser,
   getUserByEmail,
+  getUserById,
   updateUserPassword,
   saveResetToken,
   findUserByResetToken,
   clearResetToken,
+  saveRefreshToken,
+  getUserByRefreshToken,
+  clearRefreshToken,
+  updateRefreshToken,
 } = require("../models/User");
 
-/**
- * ==========================================================
- * TOKEN GENERATION UTILITY
- * ==========================================================
- */
-const generateToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: "1d",
+// ---------------------
+// Token generators
+// ---------------------
+const generateAccessToken = (user) => {
+  if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET not set");
+  return jwt.sign(
+    { id: user.id, name: user.name, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m", issuer: "justconnect.app", audience: "justconnect-users" }
+  );
+};
+
+const generateRefreshToken = (user) => {
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_REFRESH_SECRET not set");
+  return jwt.sign({ id: user.id }, secret, {
+    expiresIn: "7d",
     issuer: "justconnect.app",
     audience: "justconnect-users",
   });
 };
 
-/**
- * ==========================================================
- * AUTH CONTROLLER
- * ==========================================================
- */
-const authController = {
-  /**
-   * ==========================================================
-   * REGISTER USER / PROFESSIONAL
-   * ==========================================================
-   */
-  register: async (req, res) => {
-    const { name, email, password, role, category, location, contact } = req.body;
+// ---------------------
+// Helper
+// ---------------------
+const safeUserPayload = (userRow) => {
+  if (!userRow) return null;
+  return {
+    id: userRow.id,
+    name: userRow.name,
+    email: userRow.email,
+    role: userRow.role,
+    profile_pic: userRow.profile_pic || null,
+    sex: userRow.sex || null,
+    category: userRow.category || null,
+    location: userRow.location || null,
+    contact: userRow.contact || null,
+  };
+};
 
+// ---------------------
+// Controller
+// ---------------------
+const authController = {
+  // Register
+  register: async (req, res) => {
     try {
-      const validRoles = ["user", "professional", "admin"];
-      if (role && !validRoles.includes(role)) {
-        return res.status(400).json({ message: "Invalid role specified." });
-      }
+      const { name, email, password, role = "user", profile_pic = null, sex = null, category = null, location = null, contact = null } = req.body;
+
+      if (!name || !email || !password) return res.status(400).json({ message: "name, email and password are required" });
+
+      const allowedRoles = ["user", "professional", "admin"];
+      const finalRole = allowedRoles.includes(role) ? role : "user";
 
       const existing = await getUserByEmail(email);
-      if (existing.rows.length > 0) {
-        return res.status(400).json({ message: "User already exists." });
-      }
+      if (existing) return res.status(400).json({ message: "User already exists." });
 
       const hashedPassword = await bcrypt.hash(password, 12);
-      const newUser = await addUser(name, email, hashedPassword, role || "user");
-      const user = newUser.rows[0];
+      const created = await addUser(name, email, hashedPassword, finalRole, profile_pic, sex);
 
-      // 🧰 Automatically insert professionals into the professionals table
-      if ((role || "user") === "professional") {
+      // Ensure professional table entry
+      if (finalRole === "professional") {
         await pool.query(
           `INSERT INTO professionals (name, email, category, location, contact)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (email) DO NOTHING`,
+           VALUES ($1,$2,$3,$4,$5)
+           ON CONFLICT (email) DO UPDATE
+           SET category = COALESCE(EXCLUDED.category, professionals.category),
+               location = COALESCE(EXCLUDED.location, professionals.location),
+               contact = COALESCE(EXCLUDED.contact, professionals.contact)`,
           [name, email, category || "General Service", location || "Unknown", contact || null]
         );
       }
 
-      // 🪪 Create JWT token (include name and role)
-      const payload = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      };
-      const token = generateToken(payload);
+      const userRow = await getUserByEmail(email);
+      const accessToken = generateAccessToken(userRow);
+      const refreshToken = generateRefreshToken(userRow);
+      await saveRefreshToken(userRow.id, refreshToken);
 
-      // 🍪 Set secure cookie and respond
       res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 24 * 60 * 60 * 1000,
-        })
+        .cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "Strict", maxAge: 15 * 60 * 1000 })
+        .cookie("refreshToken", refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "Strict", maxAge: 7 * 24 * 60 * 60 * 1000 })
         .status(201)
-        .json({
-          message: "Registration successful",
-          user: { id: user.id, name: user.name, email: user.email, role: user.role },
-          token,
-        });
-    } catch (error) {
-      console.error("❌ Registration error:", error);
+        .json({ message: "Registration successful", user: safeUserPayload(userRow), accessToken, refreshToken });
+    } catch (err) {
+      console.error("❌ Registration error:", err);
       res.status(500).json({ error: "Server error during registration." });
     }
   },
 
-  /**
-   * ==========================================================
-   * LOGIN USER / PROFESSIONAL
-   * ==========================================================
-   */
+  // Login
   login: async (req, res) => {
-    const { email, password } = req.body;
-
     try {
-      const userResult = await getUserByEmail(email);
-      if (userResult.rows.length === 0) {
-        return res.status(401).json({ message: "No account found. Please sign up." });
-      }
+      const { email, password } = req.body;
+      if (!email || !password) return res.status(400).json({ message: "email and password required" });
 
-      const user = userResult.rows[0];
-      const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) {
-        return res.status(401).json({ message: "Invalid email or password." });
-      }
+      const userRow = await getUserByEmail(email);
+      if (!userRow) return res.status(401).json({ message: "Invalid email or password." });
 
-      // 🧰 Ensure professional info exists in professionals table
-      if (user.role === "professional") {
+      const validPassword = await bcrypt.compare(password, userRow.password);
+      if (!validPassword) return res.status(401).json({ message: "Invalid email or password." });
+
+      if (userRow.role === "professional") {
         await pool.query(
-          `INSERT INTO professionals (name, email, category, location, contact)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (email) DO NOTHING`,
-          [user.name, user.email, "General Service", "Unknown", null]
+          `INSERT INTO professionals (name,email,category,location,contact) VALUES ($1,$2,$3,$4,$5) ON CONFLICT(email) DO NOTHING`,
+          [userRow.name, userRow.email, userRow.category || "General Service", userRow.location || "Unknown", userRow.contact || null]
         );
       }
 
-      const payload = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      };
-      const token = generateToken(payload);
+      const accessToken = generateAccessToken(userRow);
+      const refreshToken = generateRefreshToken(userRow);
+      await saveRefreshToken(userRow.id, refreshToken);
 
       res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 24 * 60 * 60 * 1000,
-        })
+        .cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "Strict", maxAge: 15 * 60 * 1000 })
+        .cookie("refreshToken", refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "Strict", maxAge: 7 * 24 * 60 * 60 * 1000 })
         .status(200)
-        .json({
-          message: "Login successful",
-          user: { id: user.id, name: user.name, email: user.email, role: user.role },
-          token,
-        });
-    } catch (error) {
-      console.error("❌ Login error:", error);
+        .json({ message: "Login successful", user: safeUserPayload(userRow), accessToken, refreshToken });
+    } catch (err) {
+      console.error("❌ Login error:", err);
       res.status(500).json({ error: "Server error during login." });
     }
   },
 
-  /**
-   * ==========================================================
-   * LOGOUT USER
-   * ==========================================================
-   */
+  // Logout
   logout: async (req, res) => {
     try {
-      res.clearCookie("token");
-      res.json({ message: "Logged out successfully." });
-    } catch (error) {
-      console.error("❌ Logout error:", error);
+      const refreshToken = req.cookies?.refreshToken;
+      if (refreshToken) {
+        const user = await getUserByRefreshToken(refreshToken);
+        if (user) await clearRefreshToken(user.id);
+      }
+      res.clearCookie("accessToken").clearCookie("refreshToken").json({ message: "Logged out successfully." });
+    } catch (err) {
+      console.error("❌ Logout error:", err);
       res.status(500).json({ error: "Server error during logout." });
     }
   },
 
-  /**
-   * ==========================================================
-   * FORGOT PASSWORD
-   * ==========================================================
-   */
-  forgotPassword: async (req, res) => {
-    const { email } = req.body;
-
+  // Refresh token
+  refreshToken: async (req, res) => {
     try {
-      const userResult = await getUserByEmail(email);
-      if (userResult.rows.length === 0) {
-        return res.status(404).json({ message: "No user found with that email." });
+      const refreshToken = req.cookies?.refreshToken;
+      if (!refreshToken) return res.status(401).json({ message: "No refresh token provided." });
+
+      const storedUser = await getUserByRefreshToken(refreshToken);
+      if (!storedUser) return res.status(403).json({ message: "Invalid refresh token." });
+
+      const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+      try {
+        jwt.verify(refreshToken, secret);
+      } catch {
+        await clearRefreshToken(storedUser.id).catch(() => {});
+        return res.status(403).json({ message: "Invalid refresh token." });
       }
 
-      const user = userResult.rows[0];
+      const accessToken = generateAccessToken(storedUser);
+
+      res.cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "Strict", maxAge: 15 * 60 * 1000 }).json({ message: "Access token refreshed", accessToken });
+    } catch (err) {
+      console.error("❌ Refresh token error:", err);
+      res.status(500).json({ error: "Server error during token refresh." });
+    }
+  },
+
+  // Forgot password
+  forgotPassword: async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: "email is required" });
+
+      const user = await getUserByEmail(email);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
       const resetToken = crypto.randomBytes(32).toString("hex");
-      const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+      const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+      const expiry = new Date(Date.now() + 10 * 60 * 1000);
 
-      await saveResetToken(user.id, resetToken, expiry);
+      await saveResetToken(user.id, hashedToken, expiry);
+      const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+      console.log("🔗 Password reset:", resetUrl);
 
-      console.log(`🔗 Password Reset Link: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
-
-      res.json({
-        message: "Password reset link sent to your email (check console for now).",
-      });
-    } catch (error) {
-      console.error("❌ Forgot password error:", error);
+      res.json({ message: "Password reset link generated", resetUrl });
+    } catch (err) {
+      console.error("❌ Forgot password error:", err);
       res.status(500).json({ error: "Server error during forgot password." });
     }
   },
 
-  /**
-   * ==========================================================
-   * RESET PASSWORD
-   * ==========================================================
-   */
+  // Reset password
   resetPassword: async (req, res) => {
-    const { token, newPassword } = req.body;
-
     try {
-      const userResult = await findUserByResetToken(token);
-      if (userResult.rows.length === 0) {
-        return res.status(400).json({ message: "Invalid or expired reset token." });
-      }
+      const { token, password } = req.body;
+      if (!token || !password) return res.status(400).json({ message: "token and password required" });
 
-      const user = userResult.rows[0];
-      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+      const user = await findUserByResetToken(hashedToken);
+      if (!user) return res.status(400).json({ message: "Invalid or expired token" });
 
+      const hashedPassword = await bcrypt.hash(password, 12);
       await updateUserPassword(user.id, hashedPassword);
       await clearResetToken(user.id);
 
-      res.json({ message: "Password reset successful." });
-    } catch (error) {
-      console.error("❌ Reset password error:", error);
+      res.json({ message: "Password reset successful" });
+    } catch (err) {
+      console.error("❌ Reset password error:", err);
       res.status(500).json({ error: "Server error during password reset." });
     }
   },
 
-  /**
-   * ==========================================================
-   * GET PROFILE (Authenticated User)
-   * ==========================================================
-   */
+  // Get profile
   getProfile: async (req, res) => {
     try {
-      const userResult = await getUserByEmail(req.user.email);
-      if (userResult.rows.length === 0) {
-        return res.status(404).json({ message: "User not found." });
+      const userRow = await getUserById(req.user.id);
+      if (!userRow) return res.status(404).json({ message: "User not found" });
+
+      let profData = null;
+      if (userRow.role === "professional") {
+        const proRes = await pool.query("SELECT category, location, contact FROM professionals WHERE LOWER(email) = LOWER($1) LIMIT 1", [userRow.email]);
+        if (proRes.rows.length > 0) profData = proRes.rows[0];
       }
 
-      const user = userResult.rows[0];
-      res.json({
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      });
-    } catch (error) {
-      console.error("❌ Get profile error:", error);
+      const payload = safeUserPayload({ ...userRow, category: profData?.category, location: profData?.location, contact: profData?.contact });
+      res.json(payload);
+    } catch (err) {
+      console.error("❌ Get profile error:", err);
       res.status(500).json({ error: "Server error while fetching profile." });
     }
   },

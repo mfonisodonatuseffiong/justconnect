@@ -1,4 +1,3 @@
-// models/serviceModel.js
 const pool = require("../config/db");
 
 const defaultServices = [
@@ -18,7 +17,9 @@ const defaultServices = [
   "Teacher",
 ];
 
-// Ensure table exists and seed default data
+/**
+ * Ensure the services table exists and seed default services
+ */
 const ensureServiceTable = async () => {
   try {
     await pool.query(`
@@ -29,8 +30,8 @@ const ensureServiceTable = async () => {
     `);
     console.log("📦 Services table ready.");
 
-    const result = await pool.query("SELECT COUNT(*) FROM services");
-    const count = parseInt(result.rows[0].count, 10);
+    const { rows } = await pool.query("SELECT COUNT(*) FROM services");
+    const count = parseInt(rows[0].count, 10);
 
     if (count === 0) {
       for (const name of defaultServices) {
@@ -45,37 +46,83 @@ const ensureServiceTable = async () => {
   }
 };
 
-// CRUD operations
+/**
+ * Service Model
+ */
 const Service = {
-  getAll: async () => {
-    const { rows } = await pool.query("SELECT * FROM services ORDER BY id ASC");
-    return rows;
+  // Get all services with optional pagination
+  getAll: async (limit = 20, offset = 0) => {
+    try {
+      const { rows } = await pool.query(
+        "SELECT * FROM services ORDER BY id ASC LIMIT $1 OFFSET $2",
+        [limit, offset]
+      );
+      return rows;
+    } catch (err) {
+      console.error("❌ Error fetching services:", err.message);
+      throw err;
+    }
   },
 
+  // Count total services
+  countAll: async () => {
+    try {
+      const { rows } = await pool.query("SELECT COUNT(*) FROM services");
+      return parseInt(rows[0].count, 10);
+    } catch (err) {
+      console.error("❌ Error counting services:", err.message);
+      throw err;
+    }
+  },
+
+  // Get a service by ID
   getById: async (id) => {
-    const { rows } = await pool.query("SELECT * FROM services WHERE id = $1", [id]);
-    return rows[0];
+    try {
+      const { rows } = await pool.query("SELECT * FROM services WHERE id = $1", [id]);
+      return rows[0];
+    } catch (err) {
+      console.error("❌ Error fetching service by ID:", err.message);
+      throw err;
+    }
   },
 
+  // Create a new service
   create: async (name) => {
-    const { rows } = await pool.query(
-      "INSERT INTO services (name) VALUES ($1) RETURNING *",
-      [name]
-    );
-    return rows[0];
+    try {
+      const { rows } = await pool.query(
+        "INSERT INTO services (name) VALUES ($1) RETURNING *",
+        [name]
+      );
+      return rows[0];
+    } catch (err) {
+      console.error("❌ Error creating service:", err.message);
+      throw err;
+    }
   },
 
+  // Update existing service
   update: async (id, name) => {
-    const { rows } = await pool.query(
-      "UPDATE services SET name = $1 WHERE id = $2 RETURNING *",
-      [name, id]
-    );
-    return rows[0];
+    try {
+      const { rows } = await pool.query(
+        "UPDATE services SET name = $1 WHERE id = $2 RETURNING *",
+        [name, id]
+      );
+      return rows[0];
+    } catch (err) {
+      console.error("❌ Error updating service:", err.message);
+      throw err;
+    }
   },
 
+  // Delete a service
   delete: async (id) => {
-    const { rowCount } = await pool.query("DELETE FROM services WHERE id = $1", [id]);
-    return rowCount > 0;
+    try {
+      const { rowCount } = await pool.query("DELETE FROM services WHERE id = $1", [id]);
+      return rowCount > 0;
+    } catch (err) {
+      console.error("❌ Error deleting service:", err.message);
+      throw err;
+    }
   },
 };
 

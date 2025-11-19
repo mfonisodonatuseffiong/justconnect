@@ -1,46 +1,20 @@
-// routes/authRoutes.js
 const express = require("express");
 const router = express.Router();
 
 // Controllers & Middlewares
 const authController = require("../controllers/authController");
-const {
-  authenticateToken,
-  roleAuthorization,
-} = require("../middlewares/authMiddleware");
+const { authenticateToken, roleAuthorization } = require("../middlewares/authMiddleware");
 
-/**
- * ============================================
- * 🔐 AUTH ROUTES
- * Handles all authentication-related actions
- * ============================================
- */
-
-// ✅ Register new user or professional
+// --- AUTH ROUTES ---
 router.post("/register", authController.register);
-
-// ✅ Login user or professional
 router.post("/login", authController.login);
-
-// ✅ Logout (requires authentication)
 router.post("/logout", authenticateToken, authController.logout);
-
-// ✅ Forgot password (generate reset link)
+router.post("/refresh-token", authController.refreshToken);
 router.post("/forgot-password", authController.forgotPassword);
-
-// ✅ Reset password using valid token
 router.post("/reset-password", authController.resetPassword);
-
-// ✅ Get current logged-in user profile
 router.get("/me", authenticateToken, authController.getProfile);
 
-/**
- * ============================================
- * 🛡️ ROLE-BASED DASHBOARDS
- * ============================================
- */
-
-// ✅ Admin dashboard (only for admin)
+// --- DASHBOARD ROUTES ---
 router.get(
   "/admin-dashboard",
   authenticateToken,
@@ -53,7 +27,6 @@ router.get(
   }
 );
 
-// ✅ Professional dashboard (only for professionals)
 router.get(
   "/professional-dashboard",
   authenticateToken,
@@ -67,3 +40,8 @@ router.get(
 );
 
 module.exports = router;
+
+// --- DEBUG CHECK ---
+if (!authController.refreshToken) {
+  console.error("❌ authController.refreshToken is undefined!");
+}
