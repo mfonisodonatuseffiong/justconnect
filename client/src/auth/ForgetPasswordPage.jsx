@@ -12,14 +12,13 @@ import Button from "../components/commonUI/Button";
 import ButtonLoader from "../components/commonUI/ButtonLoader";
 import { useAuthHook } from "../hooks/authHooks";
 import toast from "react-hot-toast";
-import { useAuthStore } from "../store/authStore";
 
 const ForgetPasswordPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { ForgetPasswordHook, error } = useAuthHook();
-  const { setError } = useAuthStore();
+  const [error, setError] = useState(null);
+  const { forgetPassword } = useAuthHook();
 
   // Handle form submission logic
   const handleSubmit = async (e) => {
@@ -27,13 +26,13 @@ const ForgetPasswordPage = () => {
     setIsLoading(true);
     // Gets direct backend message
     try {
-      const responseMessage = await ForgetPasswordHook({ email });
+      const response = await forgetPassword({ email });
       toast.success(
-        responseMessage || "Reset mail successfully sent to your email.",
+        response.message || "Reset mail successfully sent to your email.",
       );
       navigate("/");
-    } catch (error) {
-      console.error(error.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }

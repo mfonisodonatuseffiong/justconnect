@@ -3,24 +3,19 @@
  */
 
 import { useState } from "react";
-import { AnimatePresence, easeOut, motion as Motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "./components/authLayout";
 import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
 import ButtonLoader from "../components/commonUI/ButtonLoader";
-import { ChevronsRight, ChevronsLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthHook } from "../hooks/authHooks";
-import { useAuthStore } from "../store/authStore";
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
-  const { setError } = useAuthStore();
-  const { RegisterHook, error } = useAuthHook();
-  const [nextScreen, setNextScreen] = useState(false);
-
+  const { register } = useAuthHook();
+  const [error, setError] = useState(null);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -38,24 +33,6 @@ const RegistrationPage = () => {
       ...prevData,
       [name]: value,
     }));
-  };
-
-  /** lock next button */
-  const isNextDisabled = !formData.name || !formData.email || !formData.role;
-
-  /** function to handle screen switch */
-  const switchScreen = () => {
-    if (!formData.name || !formData.email || !formData.role) {
-      setError("Please fill in all fields before continuing");
-      return;
-    }
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(formData.email)) {
-      setError("Please enter a valid email address");
-      return;
-    }
-    setNextScreen((prev) => !prev);
     setError("");
   };
 
@@ -64,11 +41,11 @@ const RegistrationPage = () => {
     e.preventDefault();
     setIsCreatingAccount(true); // loading state
     try {
-      const responseMessage = await RegisterHook(formData);
-      toast.success(responseMessage);
-      navigate("/auth/login");
-    } catch (error) {
-      console.error(error.message);
+      const response = await register(formData);
+      toast.success(response.message || "Account created successfully.");
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsCreatingAccount(false);
     }
@@ -76,156 +53,111 @@ const RegistrationPage = () => {
 
   return (
     <AuthLayout>
+      {/* <p className="bg-black w-full text-white"> professional</p> */}
       <FormWrapper
         title="Create New Account"
-        subtitle="Get a new account in seconds be it client / professional"
+        subtitle="Get a new account in seconds. "
         error={error}
       >
         {/**-------- form ---------- */}
-        <div>
+        <>
           <form onSubmit={handleSubmit}>
-            <AnimatePresence mode="wait">
-              {!nextScreen && (
-                <Motion.div
-                  key="first" // 🔑 unique key
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -30 }}
-                  transition={{ duration: 0.1, ease: easeOut }}
-                  className="space-y-4"
+            <div className="space-y-5">
+              <Input
+                label="Name"
+                type="name"
+                value={formData.name}
+                onChange={handleChange}
+                name="name"
+                autoComplete="username"
+                placeholder="Full Name"
+              />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Input
+                  label="Email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  name="email"
+                  autoComplete="username"
+                  placeholder="example@gmail.com"
+                />
+                <div className="w-full">
+                  <p className="text-sm mb-2"> Role:</p>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="bg-gray-50 focus:outline-none rounded-md text-primary-gray text-sm md:text-md p-3 w-full"
+                  >
+                    <option value=""> -- select role --</option>
+                    <option value="profesional">Professional</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+              </div>
+              {/** ======== password =============== */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Input
+                  label="Password"
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  placeholder="Create password"
+                />
+                <Input
+                  label="Confirm Password"
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  placeholder="Retype password"
+                />
+              </div>
+              {/** ====== Agree to terms and policies ======= */}
+              <div className="flex gap-2 items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.isChecked}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      isChecked: e.target.checked,
+                    });
+                  }}
+                  className="accent-brand"
+                />{" "}
+                <Link
+                  to="/terms"
+                  className="hover:underline text-sm text-secondary"
                 >
-                  <Input
-                    label="Name"
-                    type="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    name="name"
-                    autoComplete="username"
-                    placeholder="Full Name"
-                  />
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    name="email"
-                    autoComplete="username"
-                    placeholder="example@gmail.com"
-                  />
+                  I agree to terms and policies
+                </Link>
+              </div>
+              {/** Sign up Button */}
+              <Button type="submit" disabled={isCreatingAccount}>
+                {isCreatingAccount ? (
+                  <ButtonLoader text="Creating Account..." />
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
 
-                  <div className="block space-y-1">
-                    <p className="text-sm">Role</p>
-                    <select
-                      value={formData.role}
-                      name="role"
-                      onChange={handleChange}
-                      className="cursor-pointer focus:outline-none w-full bg-gray-50 text-primary-gray p-4 leading-tight rounded-full"
-                    >
-                      <option value=""> ---- Select a Role ---- </option>
-                      <option value="professional"> Professional</option>
-                      <option value="client"> Client</option>
-                    </select>
-                  </div>
-                  {/** next page button */}
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      disabled={isNextDisabled}
-                      onClick={switchScreen}
-                      className={`p-4 float-right rounded-2xl shadow-2xl transition-colors duration-300 ${
-                        isNextDisabled
-                          ? "bg-gray-300 cursor-not-allowed"
-                          : "bg-brand text-white hover:text-accent cursor-pointer"
-                      }`}
-                    >
-                      <ChevronsRight className="size-4" />
-                    </button>
-                  </div>
-                </Motion.div>
-              )}
-
-              {nextScreen && (
-                <Motion.div
-                  key="second" // 🔑 unique key
-                  initial={{ opacity: 0, x: 30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 30 }}
-                  transition={{ duration: 0.1, ease: easeOut }}
-                  className="space-y-4"
+              <p className="text-center mt-4 text-sm">
+                I have an account?{" "}
+                <Link
+                  to="/auth/login"
+                  className="text-accent hover:underline transition-colors duration-500"
                 >
-                  <Input
-                    label="Password"
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    autoComplete="new-password"
-                    placeholder="Create password"
-                  />
-                  <Input
-                    label="Confirm Password"
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    autoComplete="new-password"
-                    placeholder="retype password"
-                  />
-                  {/** agree to terms and policies */}
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.isChecked}
-                      onChange={(e) => {
-                        setFormData({
-                          ...formData,
-                          isChecked: e.target.checked,
-                        });
-                      }}
-                      className="accent-brand"
-                    />{" "}
-                    <Link
-                      to="/terms"
-                      className="hover:underline text-sm text-secondary"
-                    >
-                      {" "}
-                      I agree to terms and policies
-                    </Link>
-                  </div>
-                  {/** Sign up Button */}
-                  <Button type="submit" disabled={isCreatingAccount}>
-                    {" "}
-                    {isCreatingAccount ? (
-                      <ButtonLoader text="Creating Account..." />
-                    ) : (
-                      "Create Account"
-                    )}{" "}
-                  </Button>
-
-                  <p className="text-center mt-4 text-sm">
-                    I have an account?{" "}
-                    <Link
-                      to="/auth/login"
-                      className="text-accent hover:underline transition-colors duration-500"
-                    >
-                      Login
-                    </Link>
-                  </p>
-
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      onClick={switchScreen}
-                      className="bg-brand text-white hover:text-accent p-4 float-right rounded-2xl shadow-2xl cursor-pointer transition-colors duration-300"
-                    >
-                      <ChevronsLeft className="size-4" />
-                    </button>
-                  </div>
-                </Motion.div>
-              )}
-            </AnimatePresence>
+                  Login
+                </Link>
+              </p>
+            </div>
           </form>
-        </div>
+        </>
       </FormWrapper>
     </AuthLayout>
   );

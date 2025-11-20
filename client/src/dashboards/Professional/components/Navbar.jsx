@@ -4,10 +4,29 @@
  * @returns @ Dashboard Nav Bar
  */
 
+import { useNavigate } from "react-router-dom";
+import { useAuthHook } from "../../../hooks/authHooks";
 import { LogOutIcon } from "lucide-react";
 import MobileMenu from "./MobileMenu";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
+  const { auth } = useAuthHook();
+  // Function to log out of dashboard
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      const result = await auth.logout();
+      toast.success(result.message || "Log out successful.");
+      navigate("/");
+    } catch (error) {
+      toast.error(
+        error.message ||
+          "Something went wrong while logging out, Please try again.",
+      );
+    }
+  };
+
   return (
     <header className="h-18 shadow-md mb-4">
       <nav className="relative flex justify-between items-center px-4 md:px-10 h-full">
@@ -44,6 +63,7 @@ const Navbar = () => {
             type="button"
             title="logout"
             aria-label="logout"
+            onClick={handleLogout}
             className="flex items-center gap-4 hover:bg-accent bg-gray-50 text-accent p-4 md:py-2 md:px-8 rounded-full md:rounded-2xl hover:text-white transition-all duration-500"
           >
             <LogOutIcon /> <span className="hidden md:flex"> Logout</span>
