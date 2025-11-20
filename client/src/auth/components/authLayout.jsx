@@ -10,11 +10,10 @@ import illustrationImg from "../../assets/hero.svg";
 const AuthLayout = ({ children }) => {
   return (
     <div className="min-h-screen grid md:grid-cols-2 text-brand">
-      {/** left side for form */}
-      <div className="relative flex flex-col items-center justify-center overflow-hidden px-4">
+      {/** ============ Left Side ========================= */}
+      <div className="relative flex flex-col items-center justify-center overflow-hidden p-4">
         {/** -------------- logo --------------- */}
-        <div className="logo-container absolute top-5 left-2 md:left-4">
-          {" "}
+        <div className="logo-container absolute top-0 left-2 md:left-4">
           <Link to="/" aria-label="App logo, clicks and takes you home">
             <img
               src="/logo-white-bg.webp"
@@ -23,7 +22,7 @@ const AuthLayout = ({ children }) => {
             />
           </Link>
         </div>
-
+        {/** ============== Form ======================= */}
         {children}
       </div>
       {/** -------- right side for illustration ---------------- */}

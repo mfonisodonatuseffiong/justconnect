@@ -21,20 +21,23 @@ const Input = ({ label, type, placeholder, ...props }) => {
       </label>
 
       {/** icon */}
-      <span tabIndex={-1} className="absolute left-5 top-11 text-gray-500 z-10">
-        {type === "name" && <User size={20} />}
-        {type === "password" && <Lock size={20} />}
-        {type === "email" && <MailIcon size={20} />}
+      <span
+        tabIndex={-1}
+        className="absolute bottom-3.5 left-3 text-gray-400 z-10"
+      >
+        {type === "name" && <User size={18} />}
+        {type === "password" && <Lock size={18} />}
+        {type === "email" && <MailIcon size={18} />}
       </span>
 
       {/** password visibility */}
-      <span className="absolute right-6 top-11 text-gray-500 z-10">
+      <span className="absolute right-2 top-11 text-gray-400 z-10">
         <button tabIndex={-1} type="button" onClick={toggleVisibility}>
           {type === "password" &&
             (showPassword ? (
-              <EyeOffIcon size={20} />
+              <EyeOffIcon size={16} />
             ) : (
-              <EyeClosedIcon size={20} />
+              <EyeClosedIcon size={16} />
             ))}
         </button>
       </span>
@@ -45,7 +48,7 @@ const Input = ({ label, type, placeholder, ...props }) => {
         id={props.name}
         type={showPassword ? "text" : type}
         placeholder={placeholder}
-        className={`w-full py-4 px-12 rounded-full focus:outline-none hover:shadow-md bg-white/90 placeholder:text-gray-700 text-gray-900`}
+        className={`w-full py-3 pl-9 pr-4 rounded-md focus:outline-none hover:shadow-md bg-white/90 placeholder:text-gray-400 text-sm md:text-md text-gray-900`}
         {...props}
       />
     </div>

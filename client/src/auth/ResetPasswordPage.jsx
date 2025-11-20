@@ -12,14 +12,13 @@ import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
 import { useAuthHook } from "../hooks/authHooks";
 import toast from "react-hot-toast";
-import { useAuthStore } from "../store/authStore";
 import ButtonLoader from "../components/commonUI/ButtonLoader";
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const { token } = useParams(); // get the reset token from the url
-  const { ResetPasswordHook, error } = useAuthHook();
-  const { setError } = useAuthStore();
+  const { resetPassword } = useAuthHook();
+  const [error, setError] = useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState("");
@@ -31,11 +30,11 @@ const ResetPasswordPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const responseMessage = await ResetPasswordHook(payload);
-      toast.success(responseMessage || "Password Reset Successful");
+      const response = await resetPassword(payload);
+      toast.success(response.message || "Password Reset Successful");
       navigate("/auth/login");
-    } catch (error) {
-      console.error(error.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsSubmitting(false);
     }

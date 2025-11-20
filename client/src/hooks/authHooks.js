@@ -1,141 +1,65 @@
 /**
- * @description Custom hook for authentication state management using Zustand.
- * This hook provides access to the authentication store defined in authStore.js.
- * It allows components to easily access and manipulate authentication state.
- *
+ * @description This handles all auth hooks
+ *              auth is an object from the store that holds auth.login, auth.logout, auth.register e.t.c
  */
 
 import { useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
 import {
+  forgetPasswordSchema,
   loginSchema,
   registerSchema,
-  forgetPasswordSchema,
   resetPasswordSchema,
 } from "../validation/authValidation";
-import {
-  loginService,
-  registerService,
-  forgetPasswordService,
-  resetPasswordService,
-  CheckMeService,
-} from "../service/authService";
 
 export const useAuthHook = () => {
-  const { setUser, setIsCheckingMe, clearUser, error, setError } =
-    useAuthStore();
+  const { auth, user, error } = useAuthStore();
 
-  // check user authentication status
-  const checkMeHook = useCallback(async () => {
-    setIsCheckingMe(true);
-    try {
-      const data = await CheckMeService();
-      setUser(data.user);
-      console.log("current user:", data.user);
-    } catch (error) {
-      console.error("checkMe Error:", error.message);
-      clearUser();
-    } finally {
-      setIsCheckingMe(false);
-    }
-  }, [clearUser, setIsCheckingMe, setUser]);
-
-  // handle login
-  const LoginHook = async (formData) => {
-    // validate formData and perform login logic here
-    const { error: validationError } = loginSchema.validate(formData);
-    if (validationError) {
-      const msg = validationError.details[0].message;
-      setError(msg);
-      throw new Error(msg);
-    }
-    // call the login service
-    setError(null); // Clear previous errors
-    try {
-      const data = await loginService(formData);
-      setUser(data.user);
-      setError(null);
-      return data;
-    } catch (error) {
-      console.error("Error in login hook", error.message);
-      setError(error.message);
-      throw error;
+  // A validation function + validate user input
+  const validate = (schema, payload) => {
+    const { error: validateError } = schema.validate(payload);
+    if (validateError) {
+      throw new Error(validateError.details[0].message);
     }
   };
 
-  // registration logic
-  const RegisterHook = async (formData) => {
-    // validate form data
-    const { error: validationError } = registerSchema.validate(formData);
-    if (validationError) {
-      const errorMsg = validationError.details[0].message;
-      setError(errorMsg);
-      throw new Error(errorMsg);
-    }
-    // if form is valid, send it to backend
-    setError(null); // Clear previous errors
-    const { name, email, role, password } = formData;
-    const payload = { name, email, role, password };
+  // Callback to memorize data
+  const checkMe = useCallback(async () => {
     try {
-      const data = await registerService(payload);
-      return data?.message || "Account created successfully";
-    } catch (error) {
-      setError(error.message);
-      console.error("Error in register hook", error.message);
-      throw error;
+      await auth.checkMe();
+    } catch (err) {
+      console.error(err.message);
     }
-  };
-
-  // forget password logic
-  const ForgetPasswordHook = async ({ email }) => {
-    const { error: validationError } = forgetPasswordSchema.validate({ email });
-    if (validationError) {
-      const errMsg = validationError.details[0].message;
-      setError(errMsg);
-      throw new Error(errMsg);
-    }
-    // clear previous error
-    setError(null);
-    try {
-      const data = await forgetPasswordService({ email });
-      return data.message;
-    } catch (error) {
-      setError(error.message);
-      console.error("Error in register hook", error.message);
-      throw error;
-    }
-  };
-
-  // Reset password logic
-  const ResetPasswordHook = async ({ password, confirmPassword, token }) => {
-    const { error: validationError } = resetPasswordSchema.validate({
-      password,
-      confirmPassword,
-    });
-    if (validationError) {
-      const errMsg = validationError.details[0].message;
-      setError(errMsg);
-      throw new Error(errMsg);
-    }
-    // clear previous error
-    setError(null);
-    const payload = { password, token };
-    try {
-      const data = await resetPasswordService(payload);
-      return data.message;
-    } catch (error) {
-      setError(error.message);
-      console.error("Error in register hook", error.message);
-      throw error;
-    }
-  };
+  }, [auth]);
 
   return {
+    user,
     error,
-    LoginHook,
-    RegisterHook,
-    ForgetPasswordHook,
-    ResetPasswordHook,
-    checkMeHook,
+    auth,
+    isAuthenticated: !!user,
+
+    // Check user
+    checkMe,
+
+    // Validate input when user calls function
+    login: async (payload) => {
+      validate(loginSchema, payload);
+      return await auth.login(payload);
+    },
+
+    register: async (payload) => {
+      validate(registerSchema, payload);
+      return await auth.register(payload);
+    },
+
+    forgetPassword: async (payload) => {
+      validate(forgetPasswordSchema, payload);
+      return await auth.forgetPassword(payload);
+    },
+
+    resetPassword: async (payload) => {
+      validate(resetPasswordSchema, payload);
+      return await auth.resetPassword(payload);
+    },
   };
 };

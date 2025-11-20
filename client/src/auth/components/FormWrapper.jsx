@@ -15,7 +15,7 @@ const FormWrapper = ({ children, title, subtitle, error }) => {
   }, [setError]);
 
   return (
-    <div className="w-full max-w-md z-10">
+    <div className="w-full max-w-md mt-20 z-10" data-aos="fade-up">
       <h2 className="font-bold text-2xl mb-2">{title}</h2>
       <p className="text-base mb-6 text-gray-400">{subtitle}</p>
 

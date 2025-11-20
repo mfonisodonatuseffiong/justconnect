@@ -12,14 +12,14 @@ import FormWrapper from "./components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
 import ButtonLoader from "../components/commonUI/ButtonLoader";
-
 import { useAuthHook } from "../hooks/authHooks";
 import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { LoginHook, error } = useAuthHook();
+  const { login } = useAuthHook();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -27,6 +27,7 @@ const LoginPage = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -34,12 +35,13 @@ const LoginPage = () => {
     setIsLoggingIn(true);
     // Handle form submission logic
     try {
-      const response = await LoginHook(formData);
+      const response = await login(formData);
       console.log("Logged in user:", response?.user);
       toast.success(response?.message || "Login successful");
       navigate("/");
-    } catch (error) {
-      console.error(error.message);
+    } catch (err) {
+      setError(err.message);
+      console.error(err.message);
     } finally {
       setIsLoggingIn(false);
     }

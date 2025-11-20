@@ -18,7 +18,7 @@ import { useAuthHook } from "./hooks/authHooks";
 import { useAuthStore } from "./store/authStore";
 
 const App = () => {
-  const { checkMeHook } = useAuthHook();
+  const { checkMe } = useAuthHook();
   const { isCheckingMe } = useAuthStore();
   const location = useLocation();
 
@@ -36,10 +36,10 @@ const App = () => {
     location.pathname.startsWith(path),
   );
 
-  // check current user
+  // Check user is logged in on every page load
   useEffect(() => {
-    checkMeHook();
-  }, [checkMeHook]);
+    checkMe();
+  }, [checkMe]);
 
   // animate on scroll
   useEffect(() => {

@@ -31,7 +31,7 @@ const Redirect = () => {
   const roleRoute = {
     admin: "/dashboard/admin",
     professional: "/dashboard/professional",
-    client: "/dashboard/client",
+    user: "/dashboard/",
   };
 
   // fallback in case user.role is unexpected
