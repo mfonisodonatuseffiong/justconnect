@@ -62,7 +62,7 @@ export const useAuthStore = create((set) => ({
       set({ error: null });
       try {
         const data = await registerService(payload);
-        set({ user: data.user , error: null});
+        set({ user: data.user, error: null });
         return data;
       } catch (err) {
         console.error("REGISTER STORE ERROR:", err.message);
