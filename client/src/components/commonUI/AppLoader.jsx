@@ -8,9 +8,9 @@ const AppLoader = () => {
     <div className="fixed inset-0 flex flex-col items-center bg-brand-bg justify-center backdrop-blur-3xl z-50">
       {/* Logo */}
       <img
-        src="/logo-white-bg.webp"
+        src="/logo-white-bg.png"
         alt="App logo"
-        className="w-36 h-36 md:h-58 md:w-58 mb-4 animate-pulse drop-shadow-2xl"
+        className="h-auto w-36 md:w-58 mb-4 animate-pulse drop-shadow-2xl"
       />
 
       {/* Loading text */}

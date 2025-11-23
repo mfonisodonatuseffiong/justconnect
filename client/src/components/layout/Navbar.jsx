@@ -6,9 +6,14 @@
 
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronRight, LogInIcon } from "lucide-react";
+import toast from "react-hot-toast";
+import { useAuthStore } from "../../store/authStore";
+import { useAuthHook } from "../../hooks/authHooks";
 
 const Navbar = () => {
+  const isAuthenticated = useAuthStore((state) => !!state.user);
+  const { auth } = useAuthHook();
   const [mobileMenu, setMobileMenu] = useState(false);
 
   /** Nav links list */
@@ -21,6 +26,20 @@ const Navbar = () => {
 
   /** Toggle mobile menu visibility */
   const toggleVisibility = () => setMobileMenu((prev) => !prev);
+
+  // Log out function
+  const handleLogout = async () => {
+    setMobileMenu(false);
+    try {
+      const res = await auth.logout();
+      toast.success(res.message || "Logout successful.");
+    } catch (err) {
+      toast.error(
+        err.message ||
+          "Something went wrong while logging out, Please try again.",
+      );
+    }
+  };
 
   return (
     <header
@@ -37,9 +56,9 @@ const Navbar = () => {
           >
             <img
               title="Home"
-              src="/logo-white-bg.webp"
+              src="/logo-white-bg.png"
               alt="JustConnect Logo"
-              className="h-34 w-30 md:w-40 drop-shadow-accent object-cover hover:-translate-y-1 duration-300"
+              className="h-auto w-35 drop-shadow-accent object-cover focus:outline-none focus:ring-white hover:-translate-y-1 duration-300"
             />
           </Link>
         </div>
@@ -50,10 +69,7 @@ const Navbar = () => {
               <NavLink
                 to={list.link}
                 className={({ isActive }) => {
-                  return `
-      relative inline-block py-2 transition-all duration-500 group
-      ${isActive ? "text-accent" : "hover:text-accent"}
-    `;
+                  return `relative inline-block py-2 transition-all duration-500 group ${isActive ? "text-accent" : "hover:text-accent"}`;
                 }}
               >
                 {({ isActive }) => (
@@ -74,18 +90,30 @@ const Navbar = () => {
           ))}
         </ul>
 
-        {/* Sign-in Button */}
+        {/* ======= Sign-in Button ========*/}
         <div className="hidden md:flex">
-          <Link
-            to="/auth/login"
-            className="inline-flex gap-3 items-center px-8 py-2 rounded-full font-semibold shadow text-white hover:bg-white bg-accent hover:text-accent transition duration-500"
-          >
-            Sign in
-            <ChevronRight />
-          </Link>
+          {isAuthenticated ? (
+            <button
+              aria-label="log out button"
+              role="button"
+              onClick={handleLogout}
+              className="inline-flex gap-3 items-center px-8 py-2 rounded-full font-semibold shadow text-white hover:bg-white bg-accent hover:text-accent transition duration-500"
+            >
+              Log out
+              <LogInIcon size={14} />
+            </button>
+          ) : (
+            <Link
+              to="/auth/login"
+              className="inline-flex gap-3 items-center px-8 py-2 rounded-full font-semibold shadow text-white hover:bg-white bg-accent hover:text-accent transition duration-500"
+            >
+              Sign in
+              <ChevronRight />
+            </Link>
+          )}
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* ============= Mobile Menu Button ====================*/}
         <div className="md:hidden">
           <button
             type="button"
@@ -118,13 +146,24 @@ const Navbar = () => {
                 </li>
               ))}
               <li>
-                <Link
-                  to="/auth/login"
-                  onClick={() => setMobileMenu(false)}
-                  className="block w-full text-center py-3 rounded-md font-medium text-accent border border-accent hover:bg-accent hover:text-white transition duration-300"
-                >
-                  Sign in
-                </Link>
+                {isAuthenticated ? (
+                  <button
+                    aria-label="log out button"
+                    role="button"
+                    onClick={handleLogout}
+                    className="block w-full text-center py-3 rounded-md font-medium text-accent border border-accent hover:bg-accent hover:text-white transition duration-300"
+                  >
+                    Log out
+                  </button>
+                ) : (
+                  <Link
+                    to="/auth/login"
+                    onClick={() => setMobileMenu(false)}
+                    className="block w-full text-center py-3 rounded-md font-medium text-accent border border-accent hover:bg-accent hover:text-white transition duration-300"
+                  >
+                    Sign in
+                  </Link>
+                )}
               </li>
             </ul>
           </div>

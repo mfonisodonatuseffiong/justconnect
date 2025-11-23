@@ -13,8 +13,7 @@ import UserRoutes from "./UserRoutes";
 import ProfessionalsRoutes from "./ProfessionalsRoutes";
 
 const AuthRoutes = (
-  // <Route element={<AuthGuard />}> TODO: FIX
-  <Route>
+  <Route element={<AuthGuard />}>
     {/** routes to admin pages */}
     <Route element={<RoleGuard allowedRoles={["admin"]} />}>
       {AdminRoutes}
@@ -24,7 +23,9 @@ const AuthRoutes = (
     <Route element={<RoleGuard allowedRoles={["user"]} />}>{UserRoutes}</Route>
 
     {/** routes to professional pages */}
-    <Route>{ProfessionalsRoutes}</Route>
+    <Route element={<RoleGuard allowedRoles={["professional"]} />}>
+      {ProfessionalsRoutes}
+    </Route>
   </Route>
 );
 

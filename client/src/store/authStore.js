@@ -54,6 +54,7 @@ export const useAuthStore = create((set) => ({
         return data;
       } catch (err) {
         console.error("LOGOUT STORE ERROR:", err.message);
+        throw err;
       }
     },
 
@@ -84,7 +85,7 @@ export const useAuthStore = create((set) => ({
       }
     },
 
-    // Forget password
+    // Reset password
     resetPassword: async (payload) => {
       set({ error: null });
       try {

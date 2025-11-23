@@ -13,12 +13,12 @@ const AuthLayout = ({ children }) => {
       {/** ============ Left Side ========================= */}
       <div className="relative flex flex-col items-center justify-center overflow-hidden p-4">
         {/** -------------- logo --------------- */}
-        <div className="logo-container absolute top-0 left-2 md:left-4">
+        <div className="logo-container absolute top-5 md:top-10 left-2 md:left-4">
           <Link to="/" aria-label="App logo, clicks and takes you home">
             <img
-              src="/logo-white-bg.webp"
+              src="/logo-white-bg.png"
               alt="JustConnect Logo"
-              className="h-30 w-auto object-contain"
+              className="h-auto w-30 object-contain"
             />
           </Link>
         </div>

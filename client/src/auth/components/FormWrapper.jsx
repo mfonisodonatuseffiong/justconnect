@@ -4,18 +4,9 @@
  *               useEffect will clear the error message on every page reload or page navigation
  */
 
-import { useEffect } from "react";
-import { useAuthStore } from "../../store/authStore";
-
 const FormWrapper = ({ children, title, subtitle, error }) => {
-  const { setError } = useAuthStore();
-  // clear all previous error messages
-  useEffect(() => {
-    setError(null);
-  }, [setError]);
-
   return (
-    <div className="w-full max-w-md mt-20 z-10" data-aos="fade-up">
+    <div className="w-full max-w-lg mt-20 z-10" data-aos="fade-up">
       <h2 className="font-bold text-2xl mb-2">{title}</h2>
       <p className="text-base mb-6 text-gray-400">{subtitle}</p>
 

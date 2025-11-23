@@ -1,5 +1,5 @@
 /**
- * @description This is a reuseable helper function, reusable across all auth services api call
+ * @description This is a reusable helper function, reusable across all auth services api call
  */
 
 export const handleApiError = (error) => {
