@@ -61,7 +61,7 @@ export const logoutService = async () => {
     const response = await authAxios.post("/logout");
     return response.data;
   } catch (error) {
-    console.error("LOGIN SERVICE ERROR:", error.message);
+    console.error("LOGOUT SERVICE ERROR:", error.message);
     handleApiError(error);
   }
 };

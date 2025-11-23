@@ -22,7 +22,7 @@ const About = ({ showButton = true, showTitle = true }) => {
             </h2>
           )}
           <p
-            className="text-base text-primary-gray md:text-lg max-w-3xl mx-auto"
+            className="text-base text-primary-gray md:text-lg w-1/2 max-w-3xl mx-auto"
             data-aos="fade-in"
             data-aos-delay="500"
           >
@@ -35,7 +35,7 @@ const About = ({ showButton = true, showTitle = true }) => {
         {/* Content */}
         <div className="grid md:grid-cols-2 gap-12 items-center md:p-10">
           {/* Left - Text */}
-          <div className="space-y-6">
+          <div className="space-y-6 place-items-center md:place-items-start">
             <h3
               className="text-3xl font-semibold flex items-center gap-2"
               data-aos="fade-up-right"
@@ -57,7 +57,7 @@ const About = ({ showButton = true, showTitle = true }) => {
             {showButton && (
               <Link
                 to="/about-us"
-                className="group inline-flex items-center gap-1 mt-6 px-6 py-3 text-brand hover:text-accent font-semibold rounded-lg hover:underline transition"
+                className="group w-full inline-flex items-center justify-center md:justify-start gap-1 mt-6 text-brand hover:text-accent font-semibold rounded-lg hover:underline transition-all"
               >
                 Learn More
                 <ChevronRight className="w-6 h-6 group-hover:translate-x-2" />

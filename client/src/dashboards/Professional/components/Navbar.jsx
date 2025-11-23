@@ -4,14 +4,27 @@
  * @returns @ Dashboard Nav Bar
  */
 
-import { useNavigate } from "react-router-dom";
-import { useAuthHook } from "../../../hooks/authHooks";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogOutIcon } from "lucide-react";
 import MobileMenu from "./MobileMenu";
 import toast from "react-hot-toast";
+import { getInitials } from "../../../utils/getInitials";
+import { useAuthHook } from "../../../hooks/authHooks";
+import { useAuthStore } from "../../../store/authStore";
 
 const Navbar = () => {
   const { auth } = useAuthHook();
+  const { user } = useAuthStore();
+
+  const defaultPic = getInitials(user?.name);
+
+  // Get page name
+  const location = useLocation();
+  let pageName = location.pathname.split("/").filter(Boolean).pop();
+  if (pageName === "professional") {
+    pageName = "Professional Dashboard";
+  }
+
   // Function to log out of dashboard
   const navigate = useNavigate();
   const handleLogout = async () => {
@@ -29,44 +42,57 @@ const Navbar = () => {
 
   return (
     <header className="h-18 shadow-md mb-4">
-      <nav className="relative flex justify-between items-center px-4 md:px-10 h-full">
-        {/**left side  app Logo */}
+      <nav className="relative flex justify-between items-center px-4 md:px-8 h-full">
+        {/** Left side page name */}
         <div className="flex items-center gap-3">
-          <img
-            src="/logo-white-bg.webp"
-            alt="app logo"
-            className="size-34 hidden md:flex"
-          />
-
+          <h2 className="hidden md:flex text-lg lg:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-accent to-black uppercase">
+            {pageName}
+          </h2>
           {/** Mobile Menu for medium screens below */}
-          <MobileMenu />
-        </div>
-        {/** middle for mobile logo display */}
-        <div>
-          <img
-            src="/logo-white-bg.webp"
-            alt="app logo"
-            className="size-34 flex md:hidden"
-          />
+          <div className="md:hidden">
+            <MobileMenu />
+          </div>
         </div>
 
-        {/** Right side */}
-        <div className="flex items-center gap-2 md:gap-8">
+        {/** ==== Middle for mobile logo display ==================*/}
+        <div>
+          <Link to="/">
+            <img
+              src="/logo-white-bg.png"
+              alt="app logo"
+              className="h-8 w-auto flex md:hidden"
+            />
+          </Link>
+        </div>
+
+        {/** ========= Right side ================*/}
+        <div className="flex items-center gap-4 translate durarion-500">
+          <span className="hidden md:flex text-sm drop-shadow-secondary">
+            {user.name}
+          </span>
           {/** avatar */}
-          <img
-            src="/hero.webp"
-            alt="profile avatar"
-            className="size-9 rounded-full ring-2 ring-accent object-center"
-          />
+          <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary-gray text-white text-sm">
+            {user.profile_picture ? (
+              <img
+                src={user.profile_picture}
+                alt="user.name"
+                className="w-full h-full rounded-full object-center"
+              />
+            ) : (
+              <span>{defaultPic}</span>
+            )}
+          </div>
+
           {/** Logout button */}
           <button
             type="button"
             title="logout"
             aria-label="logout"
             onClick={handleLogout}
-            className="flex items-center gap-4 hover:bg-accent bg-gray-50 text-accent p-4 md:py-2 md:px-8 rounded-full md:rounded-2xl hover:text-white transition-all duration-500"
+            className="flex items-center gap-2 text-accent text-sm rounded-full md:rounded-2xl hover:text-gray-700 transition-all duration-500"
           >
-            <LogOutIcon /> <span className="hidden md:flex"> Logout</span>
+            <LogOutIcon size={14} />{" "}
+            <span className="hidden md:flex"> Logout</span>
           </button>
         </div>
       </nav>

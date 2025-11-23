@@ -8,10 +8,9 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
-import RedirectPage from "./Redirect";
 import PrivacyPolicy from "../pages/Privacy";
 import TermsOfService from "../pages/TermsOfServices";
-
+const HomePage = lazy(() => import("../pages/HomePage"));
 const FaqPage = lazy(() => import("../pages/FaqPage"));
 const ServicesPage = lazy(() => import("../pages/Service"));
 const AboutPage = lazy(() => import("../pages/AboutPage"));
@@ -21,7 +20,7 @@ const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage"));
 
 const PublicRoutes = (
   <>
-    <Route path="/" element={<RedirectPage />} />
+    <Route path="/" element={<HomePage />} />
     <Route path="/faqs" element={<FaqPage />} />
     <Route path="/about-us" element={<AboutPage />} />
     <Route path="/explore-services" element={<ServicesPage />} />

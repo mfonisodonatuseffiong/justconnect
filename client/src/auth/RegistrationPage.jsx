@@ -53,7 +53,6 @@ const RegistrationPage = () => {
 
   return (
     <AuthLayout>
-      {/* <p className="bg-black w-full text-white"> professional</p> */}
       <FormWrapper
         title="Create New Account"
         subtitle="Get a new account in seconds. "
@@ -91,7 +90,7 @@ const RegistrationPage = () => {
                     className="bg-gray-50 focus:outline-none rounded-md text-primary-gray text-sm md:text-md p-3 w-full"
                   >
                     <option value=""> -- select role --</option>
-                    <option value="profesional">Professional</option>
+                    <option value="professional">Professional</option>
                     <option value="user">User</option>
                   </select>
                 </div>

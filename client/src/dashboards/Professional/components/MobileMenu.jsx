@@ -6,8 +6,8 @@
 import {
   User,
   Briefcase,
-  Clipboard,
-  MessageCircle,
+  BarChart3,
+  CalendarCheck,
   Star,
   Settings,
   MenuIcon,
@@ -20,9 +20,9 @@ const MobileMenu = () => {
   const [display, setDisplay] = useState(false);
 
   const navLinks = [
-    { title: "Jobs", icon: <Clipboard />, link: "." },
-    { title: "Services", icon: <Briefcase />, link: "services" },
-    { title: "Messages", icon: <MessageCircle />, link: "messages" },
+    { title: "Overview", icon: <BarChart3 />, link: "." },
+    { title: "Services & Offers", icon: <Briefcase />, link: "services" },
+    { title: "Bookings", icon: <CalendarCheck />, link: "bookings" },
     { title: "Reviews", icon: <Star />, link: "reviews" },
     { title: "Profile", icon: <User />, link: "profile" },
     { title: "Settings", icon: <Settings />, link: "settings" },
@@ -41,13 +41,16 @@ const MobileMenu = () => {
 
       {/** display mobile menu on mobile screen  */}
       {display && (
-        <div className="absolute w-full top-0 left-0 py-10 px-4 bg-primary-gray">
+        <div
+          className="absolute w-full top-0 left-0 py-10 px-4 bg-primary-gray"
+          data-aos="fade-down"
+        >
           {/** button to close menu */}
           <button
             type="button"
             aria-label="close menu display"
             onClick={() => setDisplay(false)}
-            className="block mb-16 ml-auto hover:bg-gray-500 rounded-full"
+            className="block mb-16 ml-auto text-white hover:bg-gray-500 rounded-full"
           >
             <X size={36} />
           </button>

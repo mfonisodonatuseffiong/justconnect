@@ -1,3 +1,7 @@
+/**
+ * @description Footer component for all unauthenticated pages.
+ */
+
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
@@ -27,20 +31,20 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="relative bg-primary-gray py-16 px-6 md:px-16">
-      <div className="relative max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 py-10 pb-30">
-        {/* Logo + About */}
-        <div className="">
+    <footer className="relative bg-primary-gray py-16 px-4 md:px-16">
+      <div className="relative grid grid-cols-1 md:grid-cols-4 gap-8 py-10 pb-30">
+        {/* ======= Logo + About ============ */}
+        <div>
           <Link to="/">
             <div>
               <img
-                src="/logo.webp"
+                src="/logo.png"
                 alt="JustConnect Logo"
-                className="h-20 w-1/2 md:h-24 md:w-2/3 object-cover"
+                className="h-auto w-40 object-cover"
               />
             </div>
           </Link>
-          <p className="text-sm leading-relaxed text-secondary">
+          <p className="text-sm w-1/4 md:w-1/2 mt-6 leading-relaxed">
             Connecting clients with verified and trusted artisans for all your
             home and business needs.
           </p>
@@ -48,7 +52,7 @@ const Footer = () => {
 
         {/* Quick Links */}
         <div>
-          <h3 className="font-semibold mb-4">Quick Links</h3>
+          <h3 className="font-semibold mb-4 text-accent">Quick Links</h3>
           <ul className="space-y-2 text-sm">
             {quickLinks.map((link, idx) => (
               <li key={idx}>
@@ -62,7 +66,7 @@ const Footer = () => {
 
         {/* Resources */}
         <div>
-          <h3 className="font-semibold mb-4">Resources</h3>
+          <h3 className="font-semibold mb-4 text-accent">Resources</h3>
           <ul className="space-y-2 text-sm">
             {resources.map((res, idx) => (
               <li key={idx}>
@@ -76,7 +80,7 @@ const Footer = () => {
 
         {/* Social Media */}
         <div>
-          <h3 className="font-semibold mb-4">Follow Us</h3>
+          <h3 className="font-semibold mb-4 text-accent">Follow Us</h3>
           <div className="flex space-x-4 text-xl">
             {socialLinks.map((social, idx) => (
               <a key={idx} href={social.href} className="hover:text-accent">

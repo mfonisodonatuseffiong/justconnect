@@ -6,27 +6,27 @@
 import {
   User,
   Briefcase,
-  Clipboard,
-  MessageCircle,
+  CalendarCheck,
   Star,
   Settings,
+  BarChart3,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 const AsideBar = () => {
   const navLinks = [
-    { title: "Jobs", icon: <Clipboard />, link: ".", name: "Jobs" },
+    { title: "Overview", icon: <BarChart3 />, link: ".", name: "Overview" },
     {
-      title: "Services",
+      title: "Services & Offers",
       icon: <Briefcase />,
       link: "services",
       name: "Services",
     },
     {
-      title: "Messages",
-      icon: <MessageCircle />,
-      link: "messages",
-      name: "Messages",
+      title: "Bookings",
+      icon: <CalendarCheck />,
+      link: "bookings",
+      name: "Bookings",
     },
     { title: "Reviews", icon: <Star />, link: "reviews", name: "Reviews" },
     { title: "Profile", icon: <User />, link: "profile", name: "Profile" },
@@ -39,7 +39,7 @@ const AsideBar = () => {
   ];
 
   return (
-    <aside className="hidden md:block w-46 lg:w-64 bg-primary-gray rounded-b-2xl pl-3 transition-all duration-500">
+    <aside className="relative hidden md:block w-46 lg:w-64 bg-primary-gray rounded-2xl shadow-2xl shadow-black/50 pl-3 transition-all duration-500">
       <ul className="mt-20">
         {navLinks.map((n) => (
           <li
@@ -51,7 +51,7 @@ const AsideBar = () => {
               title={n.name}
               end
               className={({ isActive }) =>
-                `flex items-center gap-4 p-3 uppercase text-sm lg:text-base  ${isActive ? "bg-brand-bg text-primary-gray rounded-l-full" : "text-white"}`
+                `flex items-center gap-4 p-3 first-letter:uppercase text-xs  ${isActive ? "bg-brand-bg text-primary-gray rounded-l-full" : "text-white"}`
               }
             >
               <span className="text-accent"> {n.icon} </span>
@@ -60,6 +60,18 @@ const AsideBar = () => {
           </li>
         ))}
       </ul>
+      {/** =============== App brand ============= */}
+      <div className="absolute bottom-10 left-0 w-full">
+        <p className="text-center mb-4 text-white text-sm"> Home </p>
+        <Link to="/" title="Home">
+          <img
+            src="/logo.png"
+            alt="brand logo"
+            aria-label="App logo"
+            className="h-10 w-auto mx-auto opacity-75 object-cover hover:-translate-y-1 duration-300"
+          />
+        </Link>
+      </div>
     </aside>
   );
 };
