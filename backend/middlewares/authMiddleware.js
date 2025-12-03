@@ -3,14 +3,14 @@ const jwt = require("jsonwebtoken");
 /**
  * ==========================================================
  * AUTH MIDDLEWARE
- * Handles JWT authentication and role-based authorization
+ * Verifies access token from Authorization header or cookies
  * ==========================================================
  */
-
 const authenticateToken = (req, res, next) => {
   try {
-    // Check token in headers or cookies
     const authHeader = req.headers.authorization;
+
+    // Accept token from: Authorization: Bearer <token> OR cookie accessToken
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : req.cookies?.accessToken;
@@ -18,21 +18,20 @@ const authenticateToken = (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Access denied. No token provided.",
+        message: "Access denied: No token provided.",
       });
     }
 
+    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Always populate req.user with correct info
+    // Attach user info for use in routes
     req.user = {
       id: decoded.id,
       name: decoded.name || null,
       email: decoded.email || null,
       role: decoded.role || "user",
     };
-
-    console.log("✅ Authenticated user:", req.user); // debug role
 
     next();
   } catch (err) {
@@ -47,7 +46,7 @@ const authenticateToken = (req, res, next) => {
 
     return res.status(401).json({
       success: false,
-      message: "Invalid authentication token.",
+      message: "Invalid or malformed authentication token.",
     });
   }
 };
@@ -55,31 +54,29 @@ const authenticateToken = (req, res, next) => {
 /**
  * ==========================================================
  * ROLE-BASED AUTHORIZATION
- * Example usage: roleAuthorization("admin", "professional")
+ * Example: authorizeRoles("admin", "professional")
  * ==========================================================
  */
 const authorizeRoles = (...allowedRoles) => (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: "Unauthorized. No user data found.",
+      message: "Unauthorized: Missing user data.",
     });
   }
 
   if (!allowedRoles.includes(req.user.role)) {
-    console.warn(
-      `⚠️ Forbidden: role ${req.user.role} not in allowed roles [${allowedRoles.join(", ")}]`
-    );
+    console.warn(`⚠️ Forbidden: ${req.user.role} cannot access this resource.`);
     return res.status(403).json({
       success: false,
-      message: "Forbidden. Insufficient permissions.",
+      message: "Forbidden: Insufficient role permissions.",
     });
   }
 
   next();
 };
 
-// Alias for legacy code
+// Backward compatibility for older code
 const roleAuthorization = (role) => authorizeRoles(role);
 
 module.exports = {

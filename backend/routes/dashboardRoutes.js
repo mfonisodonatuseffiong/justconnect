@@ -1,3 +1,4 @@
+// routes/dashboardRoutes.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -38,16 +39,18 @@ const upload = multer({ storage });
 // ROUTES
 // ====================================================
 
-// ✅ Unified dashboard (auto-detects role: user or professional)
+// Unified dashboard
 router.get("/", authenticateToken, getDashboard);
 
-// ✅ Professional-specific dashboard
-router.get("/professional-dashboard", authenticateToken, getProfessionalDashboard);
+// Professional dashboard
+router.get("/professional", authenticateToken, getProfessionalDashboard);
 
-// ✅ User-specific dashboard
-router.get("/user-dashboard", authenticateToken, authorizeRoles("user"), getUserDashboard);
+// User dashboard
+router.get("/user", authenticateToken, authorizeRoles("user"), getUserDashboard);
 
-// ✅ Upload profile photo (professionals only)
+// ====================================================
+// UPDATED: Upload profile photo (users + professionals)
+// ====================================================
 router.post(
   "/upload/profile-photo",
   authenticateToken,
@@ -56,21 +59,29 @@ router.post(
     try {
       const user = req.user;
 
-      if (user.role !== "professional") {
-        return res
-          .status(403)
-          .json({ message: "Only professionals can upload profile photos" });
+      // Ensure photo exists
+      if (!req.file) {
+        return res.status(400).json({ message: "No photo uploaded" });
       }
 
       const imageUrl = req.file.path;
 
-      await pool.query(
-        "UPDATE professionals SET profile_photo = $1 WHERE email = $2",
-        [imageUrl, user.email]
-      );
+      // Save in the correct table
+      if (user.role === "professional") {
+        await pool.query(
+          "UPDATE professionals SET profile_photo = $1 WHERE email = $2",
+          [imageUrl, user.email]
+        );
+      } else if (user.role === "user") {
+        await pool.query(
+          "UPDATE users SET profile_pic = $1 WHERE email = $2",
+          [imageUrl, user.email]
+        );
+      }
 
       res.json({
         message: "Profile photo uploaded successfully!",
+        role: user.role,
         photoUrl: imageUrl,
       });
     } catch (error) {
@@ -80,10 +91,10 @@ router.post(
   }
 );
 
-// ✅ Create a new service request (users only)
+// Create a new service request (users only)
 router.post("/", authenticateToken, authorizeRoles("user"), createRequest);
 
-// ✅ Update a request’s status (professionals or admin)
+// Update a request’s status (professionals or admin)
 router.patch("/:id/status", authenticateToken, updateRequestStatus);
 
 // ====================================================

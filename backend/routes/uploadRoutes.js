@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { uploadFile } = require("../controllers/uploadController");
+const { uploadProfilePicture } = require("../controllers/uploadController");
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const fileUpload = require("express-fileupload");
 
 // Middleware to handle file uploads
 router.use(fileUpload({ useTempFiles: true }));
 
-// Upload route
-router.post("/", authenticateToken, uploadFile);
+// Upload profile picture route
+router.post("/profile", authenticateToken, uploadProfilePicture);
 
 module.exports = router;

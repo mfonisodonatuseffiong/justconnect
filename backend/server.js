@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
-const pool = require("./config/db"); // DB connection already tests itself
+const pool = require("./config/db"); // DB connection already tested
 
 // Load environment variables
 dotenv.config();
@@ -15,9 +15,26 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ CORS configuration to allow credentials (cookies)
+// ✅ CORS configuration (dev vs prod)
+const devOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const prodOrigins = [process.env.FRONTEND_URL]; // your production frontend URL
+const allowedOrigins =
+  process.env.NODE_ENV === "production" ? prodOrigins : devOrigins;
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://127.0.0.1:5173",
+  origin: function (origin, callback) {
+    // allow requests with no origin (curl, Postman)
+    if (!origin) return callback(null, true);
+
+    const normalizedOrigin = origin.replace(/\/$/, ""); // remove trailing slash
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      callback(null, true);
+    } else {
+      console.error("❌ Blocked CORS request from:", origin);
+      callback(new Error(`CORS policy blocked request from origin: ${origin}`));
+    }
+  },
   credentials: true, // required for cookies
 };
 app.use(cors(corsOptions));
@@ -29,6 +46,7 @@ const professionalRoutes = require("./routes/professionalRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const requestRoutes = require("./routes/requestRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 // ✅ Base test route
 app.get("/", (req, res) => {
@@ -43,9 +61,10 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/professionals", professionalRoutes);
-app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes); // includes professional dashboard route
 app.use("/api/v1/services", serviceRoutes);
 app.use("/api/v1/requests", requestRoutes);
+app.use("/api/v1/upload", uploadRoutes); // profile picture upload
 
 // ✅ Handle unknown routes (404)
 app.use((req, res) => {
