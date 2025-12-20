@@ -15,7 +15,7 @@ const BrowseProfessionals = () => {
   const [selectedPro, setSelectedPro] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch professionals with optional filters
+  // ✅ Fetch professionals with optional search & category filters
   const fetchPros = async (term = "", category = "") => {
     setLoading(true);
     try {
@@ -27,13 +27,19 @@ const BrowseProfessionals = () => {
       if (params.length > 0) url += `?${params.join("&")}`;
 
       const res = await authAxios.get(url);
+      const result = Array.isArray(res.data) ? res.data : [];
 
-      // Use res.data.professionals instead of res.data
-      const result = Array.isArray(res.data.professionals)
-        ? res.data.professionals
-        : [];
-      setProfessionals(result);
+      // Null-safe fallback for search
+      const filtered = result.map((pro) => ({
+        ...pro,
+        service_name: pro.service_name || "Unspecified",
+        profile_pic: pro.profile_pic || pro.photo || "default-avatar.png",
+        location: pro.location || "Unknown",
+      }));
 
+      setProfessionals(filtered);
+
+      // Get service name for selected category
       if (category) {
         const serviceRes = await authAxios.get(`/services/${category}`);
         setServiceName(serviceRes.data?.name || "");
@@ -48,7 +54,7 @@ const BrowseProfessionals = () => {
     }
   };
 
-  // Fetch categories for dropdown
+  // ✅ Fetch all categories
   const fetchCategories = async () => {
     try {
       const res = await authAxios.get("/services");
@@ -85,7 +91,7 @@ const BrowseProfessionals = () => {
       >
         <input
           type="text"
-          placeholder="Search by name, service, or location..."
+          placeholder="Search by name, category, or location..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1 p-2 rounded bg-gray-800 text-white"
@@ -125,14 +131,15 @@ const BrowseProfessionals = () => {
               className="bg-gray-800 p-4 rounded-lg shadow hover:shadow-lg transition"
             >
               <img
-                src={pro.photo || "default-avatar.png"}
+                src={pro.profile_pic}
                 alt={pro.name}
-                className="w-24 h-24 rounded-full mb-2 mx-auto"
+                className="w-24 h-24 rounded-full mb-2 mx-auto object-cover"
               />
               <h3 className="text-lg font-semibold text-center">{pro.name}</h3>
               <p className="text-center text-gray-400">{pro.service_name}</p>
+              <p className="text-center text-gray-400">{pro.location}</p>
               <p className="text-center">⭐ {pro.rating}</p>
-              <p className="text-center">₦{pro.price}/hour</p>
+              <p className="text-center">₦{pro.price || "N/A"}/hour</p>
 
               <div className="mt-3 flex justify-center gap-2">
                 <button
@@ -172,14 +179,10 @@ const BrowseProfessionals = () => {
                   ×
                 </button>
               </div>
-              <img
-                src={selectedPro.photo || "default-avatar.png"}
-                alt={selectedPro.name}
-                className="w-24 h-24 rounded-full mb-4 mx-auto"
-              />
               <p className="text-gray-400 mb-2">{selectedPro.service_name}</p>
+              <p className="text-gray-400 mb-2">{selectedPro.location}</p>
               <p className="mb-2">⭐ {selectedPro.rating}</p>
-              <p className="mb-4">₦{selectedPro.price}/hour</p>
+              <p className="mb-4">₦{selectedPro.price || "N/A"}/hour</p>
               <p className="text-sm text-gray-300 mb-4">
                 {selectedPro.bio || "No bio available."}
               </p>
