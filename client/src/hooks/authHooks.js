@@ -1,6 +1,6 @@
 /**
- * @description This handles all auth hooks
- *              auth is an object from the store that holds auth.login, auth.logout, auth.register e.t.c
+ * @description Auth hook for handling login, logout, register, and password flows.
+ *              Integrates with authStore and ensures tokens are stored consistently.
  */
 
 import { useCallback } from "react";
@@ -13,9 +13,9 @@ import {
 } from "../validation/authValidation";
 
 export const useAuthHook = () => {
-  const { auth, user, error } = useAuthStore();
+  const { auth, user, error, clearUser } = useAuthStore();
 
-  // A validation function + validate user input
+  // Validate user input against schema
   const validate = (schema, payload) => {
     const { error: validateError } = schema.validate(payload);
     if (validateError) {
@@ -23,14 +23,17 @@ export const useAuthHook = () => {
     }
   };
 
-  // Callback to memorize data
+  // Check authenticated user
   const checkMe = useCallback(async () => {
     try {
       await auth.checkMe();
     } catch (err) {
-      console.error(err.message);
+      console.error("Auth check failed:", err.message);
+      clearUser(); // clear user if token invalid
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
     }
-  }, [auth]);
+  }, [auth, clearUser]);
 
   return {
     user,
@@ -38,13 +41,21 @@ export const useAuthHook = () => {
     auth,
     isAuthenticated: !!user,
 
-    // Check user
     checkMe,
 
-    // Validate input when user calls function
     login: async (payload) => {
       validate(loginSchema, payload);
-      return await auth.login(payload);
+
+      const response = await auth.login(payload);
+
+      if (response?.accessToken) {
+        localStorage.setItem("accessToken", response.accessToken);
+      }
+      if (response?.refreshToken) {
+        localStorage.setItem("refreshToken", response.refreshToken);
+      }
+
+      return response;
     },
 
     register: async (payload) => {
@@ -60,6 +71,18 @@ export const useAuthHook = () => {
     resetPassword: async (payload) => {
       validate(resetPasswordSchema, payload);
       return await auth.resetPassword(payload);
+    },
+
+    logout: async () => {
+      try {
+        await auth.logout();
+      } catch (err) {
+        console.error("Logout failed:", err.message);
+      } finally {
+        clearUser();
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+      }
     },
   };
 };

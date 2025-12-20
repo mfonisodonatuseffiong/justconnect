@@ -1,43 +1,43 @@
 /**
- * @description: Services component Display a litle of our services and a button to explore our services
+ * @description: Services component
+ *              Displays a list of services fetched from backend
+ *              Includes a button/link to explore all services
+ *              Each service card now has a "View Professionals" button
  */
 
-import { Wrench, Paintbrush, Plug, Hammer, Home } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { getServices } from "../../service/servicesService";
+import { Wrench, Paintbrush, Plug, Hammer, Home } from "lucide-react";
 
-const services = [
-  {
-    title: "Plumbing",
-    description:
-      "Expert plumbers available for installations, repairs, and maintenance.",
-    icon: <Wrench className="w-8 h-8 text-[var(--accent)]" />,
-  },
-  {
-    title: "Electrical",
-    description:
-      "Certified electricians for wiring, lighting, and electrical repairs.",
-    icon: <Plug className="w-8 h-8 text-[var(--accent)]" />,
-  },
-  {
-    title: "Painting",
-    description: "Professional painters to give your space a fresh new look.",
-    icon: <Paintbrush className="w-8 h-8 text-[var(--accent)]" />,
-  },
-  {
-    title: "Carpentry",
-    description:
-      "Skilled carpenters for furniture, fittings, and home projects.",
-    icon: <Hammer className="w-8 h-8 text-[var(--accent)]" />,
-  },
-  {
-    title: "Home Renovation",
-    description:
-      "Full-service renovation teams to transform your living space.",
-    icon: <Home className="w-8 h-8 text-[var(--accent)]" />,
-  },
-];
+const iconMap = {
+  Plumbing: <Wrench className="w-8 h-8 text-[var(--accent)]" />,
+  Electrical: <Plug className="w-8 h-8 text-[var(--accent)]" />,
+  Painting: <Paintbrush className="w-8 h-8 text-[var(--accent)]" />,
+  Carpentry: <Hammer className="w-8 h-8 text-[var(--accent)]" />,
+  "Home Renovation": <Home className="w-8 h-8 text-[var(--accent)]" />,
+};
 
 const OurServices = () => {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchServices = async () => {
+    setLoading(true);
+    try {
+      const data = await getServices();
+      setServices(data);
+    } catch (err) {
+      console.error("Error fetching services:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
   return (
     <section className="bg-gray-50 text-brand py-30 clip-slant">
       <div className="max-w-6xl mx-auto px-6 text-center">
@@ -48,30 +48,45 @@ const OurServices = () => {
           className="mb-12 max-w-2xl mx-auto text-primary-gray"
           data-aos="zoom-up"
         >
-          We connect clients with verified professionals for all kinds of
-          artisan jobs.
+          We connect clients with verified professionals for all kinds of artisan jobs.
         </p>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service, index) => (
-            <div
-              key={index}
-              data-aos="fade-up"
-              data-aos-delay={index * 100}
-              data-aos-duration="500"
-              data-aos-easing="ease-in-out"
-              className="bg-gray-50 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-500 ease-in-out hover:-translate-y-2"
-            >
-              <div className="flex justify-center mb-4">{service.icon}</div>
-              <h3 className="text-lg text-primary-gray font-semibold mb-2">
-                {service.title}
-              </h3>
-              <p className="opacity-75 text-primary-gray text-sm">
-                {service.description}
-              </p>
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-center text-primary-gray">Loading services...</p>
+        ) : (
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {services.map((service, index) => (
+              <div
+                key={service.id || index}
+                data-aos="fade-up"
+                data-aos-delay={index * 100}
+                data-aos-duration="500"
+                data-aos-easing="ease-in-out"
+                className="bg-gray-50 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-500 ease-in-out hover:-translate-y-2"
+              >
+                <div className="flex justify-center mb-4">
+                  {iconMap[service.name] || (
+                    <Home className="w-8 h-8 text-[var(--accent)]" />
+                  )}
+                </div>
+                <h3 className="text-lg text-primary-gray font-semibold mb-2">
+                  {service.name}
+                </h3>
+                <p className="opacity-75 text-primary-gray text-sm mb-4">
+                  {service.description || "No description available."}
+                </p>
+
+                {/* 🆕 Correct button: View Professionals */}
+                <Link
+                  to={`/user-dashboard/bookings/new?service=${service.id}`}
+                  className="inline-block bg-accent text-white px-4 py-2 rounded-lg font-semibold hover:bg-accent/80 transition"
+                >
+                  View Professionals
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* View All Services link */}
         <div className="mt-8">
@@ -79,7 +94,7 @@ const OurServices = () => {
             to="/explore-services"
             className="text-accent font-semibold hover:underline"
             data-aos="fade-up"
-            data-aos-delay={services.length * 100}
+            data-aos-delay={(services.length || 5) * 100}
             data-aos-duration="500"
           >
             View All Services

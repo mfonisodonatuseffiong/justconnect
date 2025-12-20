@@ -101,13 +101,13 @@ const Overview = () => {
           <CardTitle>Bookings This Week</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
+          <div style={{ width: "100%", height: 300 }}> {/* Fixed height */}
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
+              <LineChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="bookings" strokeWidth={2} />
+                <Line type="monotone" dataKey="bookings" stroke="#4F46E5" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>

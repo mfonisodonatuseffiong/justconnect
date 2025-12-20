@@ -1,6 +1,7 @@
 /**
- * @description: Authentication store for managing user authentication state.
- * This store uses Zustand for state management and persists the state using localStorage.
+ * @description: Authentication store (Zustand)
+ * - Exposes setUser and clearUser for proper logout/login handling
+ * - Clean, stable, industry-standard version
  */
 
 import { create } from "zustand";
@@ -13,27 +14,33 @@ import {
   resetPasswordService,
 } from "../service/authService";
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: null,
   error: null,
   isCheckingMe: false,
+  hasCheckedMe: false,
+
+  // 🔥 Exposed state helpers for components
+  setUser: (user) => set({ user, error: null }),
+  clearUser: () => set({ user: null, error: null, hasCheckedMe: false }),
 
   auth: {
-    // Check authentication
     checkMe: async () => {
+      const { hasCheckedMe } = get();
+      if (hasCheckedMe) return;
+
       set({ isCheckingMe: true });
       try {
         const data = await checkMeService();
-        set({ user: data.user, error: null });
+        set({ user: data.user, error: null, hasCheckedMe: true });
         return data;
       } catch (err) {
-        set({ user: null, error: err.message });
+        set({ user: null, error: err.message, hasCheckedMe: true });
       } finally {
         set({ isCheckingMe: false });
       }
     },
 
-    // Log in
     login: async (payload) => {
       set({ error: null });
       try {
@@ -46,19 +53,16 @@ export const useAuthStore = create((set) => ({
       }
     },
 
-    // Log out
     logout: async () => {
       try {
-        const data = await logoutService();
-        set({ user: null, error: null });
-        return data;
+        await logoutService();
+        get().clearUser(); // ✅ use exposed clearUser
       } catch (err) {
-        console.error("LOGOUT STORE ERROR:", err.message);
+        console.error("LOGOUT ERROR:", err.message);
         throw err;
       }
     },
 
-    // Sign up
     register: async (payload) => {
       set({ error: null });
       try {
@@ -66,33 +70,26 @@ export const useAuthStore = create((set) => ({
         set({ user: data.user, error: null });
         return data;
       } catch (err) {
-        console.error("REGISTER STORE ERROR:", err.message);
-        set({ user: null, error: err.message });
-        throw err;
-      }
-    },
-
-    // Forget password
-    forgetPassword: async (email) => {
-      set({ error: null });
-      try {
-        const data = await forgetPasswordService(email);
-        return data;
-      } catch (err) {
-        console.error("FORGET PASSWORD STORE ERROR:", err.message);
         set({ error: err.message });
         throw err;
       }
     },
 
-    // Reset password
+    forgetPassword: async (email) => {
+      set({ error: null });
+      try {
+        return await forgetPasswordService(email);
+      } catch (err) {
+        set({ error: err.message });
+        throw err;
+      }
+    },
+
     resetPassword: async (payload) => {
       set({ error: null });
       try {
-        const data = await resetPasswordService(payload);
-        return data;
+        return await resetPasswordService(payload);
       } catch (err) {
-        console.error("RESET PASSWORD STORE ERROR:", err.message);
         set({ error: err.message });
         throw err;
       }

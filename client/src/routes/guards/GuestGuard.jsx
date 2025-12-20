@@ -1,6 +1,6 @@
 /**
- * @desc This file conditionally checks user status
- * @access Blocks all authenticated users from having access to the public routes children
+ * @desc Restricts authenticated users from accessing public routes
+ * @access Public routes only
  */
 
 import { Outlet, Navigate } from "react-router-dom";
@@ -8,15 +8,19 @@ import { useAuthStore } from "../../store/authStore";
 import AppLoader from "../../components/commonUI/AppLoader";
 
 const GuestGuard = () => {
-  const { user, isCheckingMe } = useAuthStore();
+  const { user, isCheckingMe, hasCheckedMe } = useAuthStore();
 
-  // display a loader while verifying authentication
-  if (isCheckingMe) return <AppLoader />;
+  // ⏳ Still checking auth status
+  if (!hasCheckedMe || isCheckingMe) {
+    return <AppLoader />;
+  }
 
-  // redirect logged in user to home
-  if (user) return <Navigate to="/" replace />;
+  // 🔐 User already logged in → redirect to dashboard or home
+  if (user) {
+    return <Navigate to={`/dashboard/${user.role}`} replace />;
+  }
 
-  // if not logged in, allow them in
+  // ✅ Guest user → allow access
   return <Outlet />;
 };
 
