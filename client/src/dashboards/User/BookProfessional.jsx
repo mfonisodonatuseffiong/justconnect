@@ -33,40 +33,43 @@ const BookProfessional = () => {
   };
 
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">Book Professional</h1>
+    <div className="bg-white rounded-2xl shadow-md p-8 max-w-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-6 text-orange-500">
+        Book Professional
+      </h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           name="service_id"
           placeholder="Service ID"
           value={form.service_id}
           onChange={handleChange}
-          className="w-full p-2 rounded bg-gray-800 text-white"
+          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-400 focus:outline-none text-gray-800"
         />
         <input
           type="date"
           name="date"
           value={form.date}
           onChange={handleChange}
-          className="w-full p-2 rounded bg-gray-800 text-white"
+          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-400 focus:outline-none text-gray-800"
         />
         <input
           type="time"
           name="time"
           value={form.time}
           onChange={handleChange}
-          className="w-full p-2 rounded bg-gray-800 text-white"
+          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-400 focus:outline-none text-gray-800"
         />
         <textarea
           name="notes"
           placeholder="Notes"
           value={form.notes}
           onChange={handleChange}
-          className="w-full p-2 rounded bg-gray-800 text-white"
+          rows={4}
+          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 focus:outline-none text-gray-800"
         />
         <button
           type="submit"
-          className="bg-accent px-4 py-2 rounded text-white"
+          className="w-full bg-orange-500 hover:bg-purple-600 transition px-4 py-3 rounded-lg text-white font-semibold shadow-md"
         >
           Confirm Booking
         </button>

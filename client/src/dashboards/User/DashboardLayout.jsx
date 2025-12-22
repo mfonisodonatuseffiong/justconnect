@@ -11,7 +11,7 @@ const containerVariants = {
 
 export const UserDashboardLayout = () => {
   return (
-    <div className="flex h-screen overflow-hidden bg-black/90 text-white">
+    <div className="flex h-screen overflow-hidden bg-purple-950/95 text-white">
       {/* Sidebar */}
       <UserAsideBar />
 
@@ -26,8 +26,8 @@ export const UserDashboardLayout = () => {
         <UserNavbar />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-          <div className="bg-black/70 rounded-xl shadow-lg p-6 h-full">
+        <main className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-purple-800 scrollbar-track-purple-900">
+          <div className="bg-purple-950/70 rounded-2xl shadow-xl p-6 h-full">
             <Outlet />
           </div>
         </main>

@@ -22,7 +22,6 @@ const UserNavbar = () => {
 
   const defaultPic = getInitials(user?.name);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -35,7 +34,6 @@ const UserNavbar = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -49,7 +47,6 @@ const UserNavbar = () => {
     fetchNotifications();
   }, [user?.id]);
 
-  // Fetch messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -78,7 +75,8 @@ const UserNavbar = () => {
 
   return (
     <motion.header
-      className="fixed top-0 left-0 w-full h-16 z-50 flex items-center justify-between px-6 md:px-8 bg-black/80 backdrop-blur-md border-b border-gray-800"
+      className="fixed top-0 left-0 w-full h-16 z-50 flex items-center justify-between px-6 md:px-8
+                 bg-purple-950/90 backdrop-blur-md border-b border-purple-800 text-white"
       initial={{ opacity: 0, y: -15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
@@ -94,7 +92,7 @@ const UserNavbar = () => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           onClick={() => setOpenNotifications(!openNotifications)}
-          className="relative p-2 rounded-lg hover:bg-gray-800 transition"
+          className="relative p-2 rounded-lg hover:bg-purple-900 transition"
         >
           <Bell className="text-accent" size={20} />
           {notifications.length > 0 && (
@@ -111,7 +109,7 @@ const UserNavbar = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute right-14 top-14 w-72 bg-black/90 border border-gray-700 rounded-xl shadow-lg overflow-hidden"
+              className="absolute right-14 top-14 w-72 bg-purple-950/95 border border-purple-800 rounded-xl shadow-lg overflow-hidden"
             >
               {notifications.length === 0 ? (
                 <p className="text-gray-400 text-center py-4">No new notifications</p>
@@ -119,7 +117,7 @@ const UserNavbar = () => {
                 notifications.map((n) => (
                   <div
                     key={n.id}
-                    className="px-4 py-3 border-b border-gray-700 text-sm text-white hover:bg-gray-800 transition"
+                    className="px-4 py-3 border-b border-purple-800 text-sm text-white hover:bg-purple-900 transition"
                   >
                     {n.message}
                   </div>
@@ -133,7 +131,7 @@ const UserNavbar = () => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           onClick={() => setOpenMessages(!openMessages)}
-          className="relative p-2 rounded-lg hover:bg-gray-800 transition"
+          className="relative p-2 rounded-lg hover:bg-purple-900 transition"
         >
           <MessageCircle className="text-accent" size={20} />
           {messages.length > 0 && (
@@ -150,7 +148,7 @@ const UserNavbar = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute right-28 top-14 w-72 bg-black/90 border border-gray-700 rounded-xl shadow-lg overflow-hidden"
+              className="absolute right-28 top-14 w-72 bg-purple-950/95 border border-purple-800 rounded-xl shadow-lg overflow-hidden"
             >
               {messages.length === 0 ? (
                 <p className="text-gray-400 text-center py-4">No new messages</p>
@@ -159,14 +157,14 @@ const UserNavbar = () => {
                   {messages.slice(0, 5).map((m) => (
                     <div
                       key={m.id}
-                      className="px-4 py-3 border-b border-gray-700 text-sm text-white hover:bg-gray-800 transition"
+                      className="px-4 py-3 border-b border-purple-800 text-sm text-white hover:bg-purple-900 transition"
                     >
                       <strong>{m.sender_name}:</strong> {m.content}
                     </div>
                   ))}
                   <button
                     onClick={() => navigate("/user-dashboard/messages")}
-                    className="w-full text-center py-2 bg-gray-800 text-accent font-semibold hover:bg-accent hover:text-white transition"
+                    className="w-full text-center py-2 bg-purple-900 text-accent font-semibold hover:bg-accent hover:text-white transition"
                   >
                     View all messages
                   </button>
@@ -180,7 +178,7 @@ const UserNavbar = () => {
         <motion.div
           whileHover={{ scale: 1.05 }}
           onClick={() => setOpenDropdown(!openDropdown)}
-          className="w-10 h-10 rounded-full border-2 border-accent bg-gray-800 flex items-center justify-center cursor-pointer overflow-hidden"
+          className="w-10 h-10 rounded-full border-2 border-accent bg-purple-900 flex items-center justify-center cursor-pointer overflow-hidden"
         >
           {user?.profile_picture ? (
             <img
@@ -199,11 +197,11 @@ const UserNavbar = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
-              className="absolute right-0 top-14 w-48 bg-black/90 border border-gray-700 rounded-xl shadow-lg overflow-hidden"
+              className="absolute right-0 top-14 w-48 bg-purple-950/95 border border-purple-800 rounded-xl shadow-lg overflow-hidden"
             >
               <button
                 onClick={() => navigate("/user-dashboard/profile")}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition text-white"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-900 transition text-white"
               >
                 <User size={16} className="text-accent" />
                 Profile
@@ -211,7 +209,7 @@ const UserNavbar = () => {
 
               <button
                 onClick={() => navigate("/user-dashboard/settings")}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition text-white"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-900 transition text-white"
               >
                 <Settings size={16} className="text-accent" />
                 Settings

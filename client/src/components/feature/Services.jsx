@@ -2,7 +2,7 @@
  * @description: Services component
  *              Displays a list of services fetched from backend
  *              Includes a button/link to explore all services
- *              Each service card now has a "View Professionals" button
+ *              Each service card has a "View Professionals" button
  */
 
 import { useState, useEffect } from "react";
@@ -26,9 +26,11 @@ const OurServices = () => {
     setLoading(true);
     try {
       const data = await getServices();
-      setServices(data);
+      // Ensure we always have an array
+      setServices(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching services:", err);
+      setServices([]); // fallback to empty array
     } finally {
       setLoading(false);
     }
@@ -53,6 +55,8 @@ const OurServices = () => {
 
         {loading ? (
           <p className="text-center text-primary-gray">Loading services...</p>
+        ) : services.length === 0 ? (
+          <p className="text-center text-primary-gray">No services available.</p>
         ) : (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service, index) => (
@@ -70,13 +74,13 @@ const OurServices = () => {
                   )}
                 </div>
                 <h3 className="text-lg text-primary-gray font-semibold mb-2">
-                  {service.name}
+                  {service.name || "Unnamed Service"}
                 </h3>
                 <p className="opacity-75 text-primary-gray text-sm mb-4">
                   {service.description || "No description available."}
                 </p>
 
-                {/* 🆕 Correct button: View Professionals */}
+                {/* Button to View Professionals */}
                 <Link
                   to={`/user-dashboard/bookings/new?service=${service.id}`}
                   className="inline-block bg-accent text-white px-4 py-2 rounded-lg font-semibold hover:bg-accent/80 transition"
