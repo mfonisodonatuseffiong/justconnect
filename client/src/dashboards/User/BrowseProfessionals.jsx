@@ -83,6 +83,7 @@ const BrowseProfessionals = () => {
         pros = pros.map((pro) => ({
           ...pro,
           service_name: pro.service_name || "Uncategorized",
+          service_id: pro.service_id || pro.serviceId, // Ensure service_id is available
         }));
 
         if (selectedCategory) {
@@ -117,19 +118,36 @@ const BrowseProfessionals = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // FIXED: Booking submission to match backend exactly
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.fullName || !formData.phone || !formData.address || !formData.date || !formData.time) {
       alert("Please fill in all required fields.");
       return;
     }
 
+    // CRITICAL: Use exact field names backend expects
+    const bookingData = {
+      professional_id: selectedPro.id,           // ← underscore, not camelCase
+      service_id: selectedPro.service_id,        // ← must exist on selectedPro
+      date: formData.date,
+      time: formData.time,
+      notes: formData.notes || null,
+      // Optional extra info (not used by backend but safe to send)
+      fullName: formData.fullName,
+      phone: formData.phone,
+      email: formData.email,
+      address: formData.address,
+    };
+
     try {
-      await authAxios.post(`/bookings`, {
-        professionalId: selectedPro.id,
-        ...formData,
-      });
-      alert("Booking confirmed successfully!");
+      const response = await authAxios.post("/bookings", bookingData);
+
+      alert("Booking confirmed successfully! 🎉");
+      console.log("Booking created:", response.data);
+
+      // Reset form and close modal
       setSelectedPro(null);
       setFormData({
         fullName: "",
@@ -140,10 +158,14 @@ const BrowseProfessionals = () => {
         time: "",
         notes: "",
       });
+
       navigate("/user-dashboard/bookings");
     } catch (err) {
-      console.error("Booking failed:", err);
-      alert("Failed to book professional. Please try again.");
+      console.error("Booking error:", err.response?.data || err);
+      const message =
+        err.response?.data?.message ||
+        "Failed to book professional. Please try again.";
+      alert(message);
     }
   };
 
