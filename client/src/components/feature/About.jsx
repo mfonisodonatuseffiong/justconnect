@@ -10,19 +10,22 @@ import { ChevronRight } from "lucide-react";
 const About = ({ showButton = true, showTitle = true }) => {
   return (
     <section
-      className="relative py-20 text-brand overflow-hidden"
+      className="relative py-20 text-slate-800 overflow-hidden bg-orange-50"
       data-aos="fade-up"
     >
       <div className="max-w-6xl mx-auto px-2 md:px-12 lg:px-16">
         {/* Title */}
         <div className="text-center space-y-4 mb-12">
           {showTitle && (
-            <h2 className="text-4xl font-bold" data-aos="zoom">
-              About <span className="text-accent">JustConnect</span>
+            <h2
+              className="text-4xl font-bold text-slate-800"
+              data-aos="zoom"
+            >
+              About <span className="text-orange-600">JustConnect</span>
             </h2>
           )}
           <p
-            className="text-base text-primary-gray md:text-lg w-1/2 max-w-3xl mx-auto"
+            className="text-base text-slate-600 md:text-lg w-1/2 max-w-3xl mx-auto"
             data-aos="fade-in"
             data-aos-delay="500"
           >
@@ -37,12 +40,12 @@ const About = ({ showButton = true, showTitle = true }) => {
           {/* Left - Text */}
           <div className="space-y-6 place-items-center md:place-items-start">
             <h3
-              className="text-3xl font-semibold flex items-center gap-2"
+              className="text-3xl font-semibold flex items-center gap-2 text-orange-600"
               data-aos="fade-up-right"
             >
               Why Choose Us?
             </h3>
-            <ul className="space-y-4 text-primary-gray" data-aos="fade-right">
+            <ul className="space-y-4 text-slate-600" data-aos="fade-right">
               <li>✅ Verified and trusted artisans near you</li>
               <li data-aos-delay="500" data-aos="fade">
                 ✅ Safe and seamless booking experience
@@ -57,17 +60,17 @@ const About = ({ showButton = true, showTitle = true }) => {
             {showButton && (
               <Link
                 to="/about-us"
-                className="group w-full inline-flex items-center justify-center md:justify-start gap-1 mt-6 text-brand hover:text-accent font-semibold rounded-lg hover:underline transition-all"
+                className="group inline-flex items-center justify-center md:justify-start gap-1 mt-6 text-orange-600 hover:text-orange-500 font-semibold rounded-lg hover:underline transition-all"
               >
                 Learn More
-                <ChevronRight className="w-6 h-6 group-hover:translate-x-2" />
+                <ChevronRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
               </Link>
             )}
           </div>
 
           {/* Right - Illustration */}
           <div className="relative flex justify-center" data-aos="zoom-in">
-            <div className="absolute animate-pulse inset-0 rounded-full bg-purple-300 blur-2xl opacity-40"></div>
+            <div className="absolute animate-pulse inset-0 rounded-full bg-orange-200 blur-2xl opacity-40"></div>
             <img
               src={aboutImg}
               alt="About JustConnect illustration"

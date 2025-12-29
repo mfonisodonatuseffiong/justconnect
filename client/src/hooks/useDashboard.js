@@ -5,11 +5,22 @@ import { useAuthStore } from "../store/authStore";
 
 const useDashboard = () => {
   const { user } = useAuthStore();
-  const [data, setData] = useState(null);
+
+  const [dashboard, setDashboard] = useState({
+    stats: {
+      totalBookings: 0,
+      pendingBookings: 0,
+      completedBookings: 0,
+    },
+    recentBookings: [],
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!user?.id) return;
+
     let isMounted = true;
 
     const fetchDashboard = async () => {
@@ -17,31 +28,57 @@ const useDashboard = () => {
         setLoading(true);
         setError(null);
 
-        const res = await authAxios.get(`/dashboard/user/${user?.id}`);
-        if (isMounted) {
-          if (res.data?.success) {
-            setData(res.data);
-          } else {
-            setError(res.data?.message || "Failed to fetch dashboard data");
-          }
+        const res = await authAxios.get(`/dashboard/user/${user.id}`);
+
+        if (!isMounted) return;
+
+        if (res.data?.success) {
+          const payload = res.data.data || {};
+
+          setDashboard({
+            stats: {
+              totalBookings: payload.totalBookings || 0,
+              pendingBookings: payload.pendingBookings || 0,
+              completedBookings: payload.completedBookings || 0,
+            },
+            recentBookings: Array.isArray(payload.recentBookings)
+              ? payload.recentBookings.map((b) => ({
+                  id: b.id,
+                  serviceName: b.service_name,
+                  professionalName: b.professional_name,
+                  professionalLocation: b.professional_location,
+                  status: b.status,
+                  date: b.date,
+                }))
+              : [],
+          });
+        } else {
+          setError(res.data?.message || "Failed to load dashboard");
         }
       } catch (err) {
         if (isMounted) {
-          setError(err.response?.data?.message || "Failed to fetch dashboard data");
+          setError(
+            err.response?.data?.message ||
+              "Unable to fetch dashboard data"
+          );
         }
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
-    if (user?.id) fetchDashboard();
+    fetchDashboard();
 
     return () => {
       isMounted = false;
     };
   }, [user?.id]);
 
-  return { data, loading, error };
+  return {
+    dashboard,
+    loading,
+    error,
+  };
 };
 
 export default useDashboard;

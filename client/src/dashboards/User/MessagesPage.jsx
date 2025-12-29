@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import authAxios from "../../utils/authAxios";
 import { useAuthStore } from "../../store/authStore";
+import { MessageCircle } from "lucide-react";
+import { motion } from "framer-motion";
 
 const MessagesPage = () => {
   const { user } = useAuthStore();
@@ -18,30 +20,56 @@ const MessagesPage = () => {
         setLoading(false);
       }
     };
+
     if (user?.id) fetchMessages();
   }, [user?.id]);
 
-  if (loading) return <p className="text-gray-400">Loading messages...</p>;
+  if (loading) {
+    return (
+      <p className="text-orange-500 text-center mt-24 animate-pulse">
+        Loading messages…
+      </p>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6 text-white">
-      <div className="bg-purple-950/60 border border-purple-800 rounded-2xl shadow-lg p-8">
-        <h2 className="text-xl font-bold text-accent mb-6">Messages</h2>
+    <div className="bg-orange-50 min-h-screen p-6">
+      <div className="bg-white border border-orange-200 rounded-2xl shadow-md p-6">
+        <h2 className="text-2xl font-bold text-orange-600 mb-6 flex items-center gap-2">
+          <MessageCircle size={22} />
+          Messages
+        </h2>
+
         {messages.length === 0 ? (
-          <p className="text-gray-400">No messages yet</p>
+          <p className="text-slate-600 text-center py-16">
+            No messages yet
+          </p>
         ) : (
           <ul className="space-y-4">
             {messages.map((m) => (
-              <li
+              <motion.li
                 key={m._id}
-                className="p-4 bg-purple-950/40 border border-purple-800 rounded-xl shadow-md"
+                whileHover={{ scale: 1.01 }}
+                className="
+                  bg-white
+                  border border-orange-200
+                  rounded-xl
+                  p-4
+                  shadow-sm
+                "
               >
-                <p className="text-purple-300 font-semibold">
+                <p className="font-semibold text-slate-800">
                   From: {m.senderName}
                 </p>
-                <p className="text-gray-300">{m.content}</p>
-                <p className="text-gray-500 text-sm">{m.date}</p>
-              </li>
+
+                <p className="text-slate-600 mt-1">
+                  {m.content}
+                </p>
+
+                <p className="text-xs text-slate-400 mt-2">
+                  {m.date}
+                </p>
+              </motion.li>
             ))}
           </ul>
         )}

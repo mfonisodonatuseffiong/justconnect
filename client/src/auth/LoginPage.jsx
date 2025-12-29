@@ -36,34 +36,31 @@ const LoginPage = () => {
     setIsLoggingIn(true);
 
     try {
-      // Call login from your auth hook
       const response = await login(formData);
 
-      // Expecting backend to return { user, accessToken }
       const user = response?.user;
       const token = response?.accessToken;
 
       if (!user || !token) {
-        throw new Error("Login failed: invalid server response");
+        throw new Error("Invalid login response");
       }
 
-      // Persist token for authAxios
       localStorage.setItem("accessToken", token);
 
       toast.success(response?.message || "Login successful");
 
-      // Redirect based on role
       if (user.role === "professional") {
         navigate("/professional-dashboard", { replace: true });
       } else if (user.role === "user") {
         navigate("/user-dashboard", { replace: true });
       } else {
-        console.warn("Unknown role:", user.role);
         navigate("/", { replace: true });
       }
     } catch (err) {
-      console.error("Login error:", err);
-      const message = err?.response?.data?.message || err?.message || "Login failed";
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Login failed";
       setError(message);
       toast.error(message);
     } finally {
@@ -75,7 +72,7 @@ const LoginPage = () => {
     <AuthLayout>
       <FormWrapper
         title="Welcome Back"
-        subtitle="Fill in your credentials to gain access"
+        subtitle="Sign in to continue"
         error={error}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -101,27 +98,31 @@ const LoginPage = () => {
             required
           />
 
-          <p>
+          <div className="text-right">
             <Link
               to="/auth/forget-password"
-              className="text-secondary hover:text-brand hover:underline transition-colors duration-500"
+              className="text-orange-500 hover:text-orange-600 text-sm font-medium transition"
             >
-              Forget password?
+              Forgot password?
             </Link>
-          </p>
+          </div>
 
           <Button type="submit" disabled={isLoggingIn}>
-            {isLoggingIn ? <ButtonLoader text="Logging in..." /> : "Login"}
+            {isLoggingIn ? (
+              <ButtonLoader text="Logging in..." />
+            ) : (
+              "Login"
+            )}
           </Button>
         </form>
 
-        <p className="text-center mt-8 text-sm">
-          Don't have an account?{" "}
+        <p className="text-center mt-8 text-sm text-slate-600">
+          Don’t have an account?{" "}
           <Link
             to="/auth/signup"
-            className="text-accent hover:underline transition-colors duration-500"
+            className="text-orange-500 font-semibold hover:underline"
           >
-            Create new account
+            Create one
           </Link>
         </p>
       </FormWrapper>

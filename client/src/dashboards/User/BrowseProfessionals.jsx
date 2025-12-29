@@ -3,8 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import authAxios from "../../api";
 import DefaultAvatar from "../../assets/avatars/avatar-neutral.png";
+import { useAuthStore } from "../../store/authStore";
+import { Calendar, Clock, MapPin, Phone, Mail, MessageSquare, X } from "lucide-react";
 
 const BrowseProfessionals = () => {
+  const { user } = useAuthStore();
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -13,27 +16,46 @@ const BrowseProfessionals = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedPro, setSelectedPro] = useState(null);
 
-  const [bookingDate, setBookingDate] = useState("");
-  const [bookingTime, setBookingTime] = useState("");
-  const [notes, setNotes] = useState("");
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    address: "",
+    date: "",
+    time: "",
+    notes: "",
+  });
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const serviceIdFromUrl = searchParams.get("service");
 
-  // Fetch categories
+  // Prefill user info when opening booking modal
+  useEffect(() => {
+    if (selectedPro && user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: user.name || "",
+        phone: user.phone || "",
+        email: user.email || "",
+        address: user.address || "",
+      }));
+    }
+  }, [selectedPro, user]);
+
+  // Fetch categories/services
   const fetchCategories = async () => {
     try {
       const res = await authAxios.get("/services");
-      let cats = Array.isArray(res.data) ? res.data : [];
+      const cats = Array.isArray(res.data) ? res.data : [];
       if (!cats.find((c) => c.name === "Electrician")) {
-        cats.push({ id: "electrician", name: "Electrician" });
+        cats.push({ id: "1", name: "Electrician" });
       }
       setCategories(cats);
       if (serviceIdFromUrl) setSelectedCategory(serviceIdFromUrl);
     } catch (err) {
       console.error("Failed to fetch categories:", err);
-      setCategories([{ id: "electrician", name: "Electrician" }]);
+      setCategories([{ id: "1", name: "Electrician" }]);
       if (serviceIdFromUrl) setSelectedCategory(serviceIdFromUrl);
     }
   };
@@ -58,21 +80,25 @@ const BrowseProfessionals = () => {
         const res = await authAxios.get(url);
         let pros = Array.isArray(res.data) ? res.data : [];
 
-        // Ensure correct category filtering
+        pros = pros.map((pro) => ({
+          ...pro,
+          service_name: pro.service_name || "Uncategorized",
+        }));
+
         if (selectedCategory) {
           pros = pros.filter(
             (pro) =>
               String(pro.service_id) === String(selectedCategory) ||
-              String(pro.service_name).toLowerCase() === String(selectedCategory).toLowerCase()
+              String(pro.service_name).toLowerCase() ===
+                categories.find((c) => c.id === selectedCategory)?.name?.toLowerCase()
           );
         }
 
         setProfessionals(pros);
 
-        // Set service name for header
         if (selectedCategory) {
-          const serviceRes = await authAxios.get(`/services/${selectedCategory}`);
-          setServiceName(serviceRes.data?.name || selectedCategory);
+          const cat = categories.find((c) => String(c.id) === String(selectedCategory));
+          setServiceName(cat?.name || "Service");
         }
       } catch (err) {
         console.error("Failed to fetch professionals:", err);
@@ -84,29 +110,72 @@ const BrowseProfessionals = () => {
     };
 
     fetchPros();
-  }, [selectedCategory, searchTerm]);
+  }, [selectedCategory, searchTerm, categories]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.fullName || !formData.phone || !formData.address || !formData.date || !formData.time) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    try {
+      await authAxios.post(`/bookings`, {
+        professionalId: selectedPro.id,
+        ...formData,
+      });
+      alert("Booking confirmed successfully!");
+      setSelectedPro(null);
+      setFormData({
+        fullName: "",
+        phone: "",
+        email: "",
+        address: "",
+        date: "",
+        time: "",
+        notes: "",
+      });
+      navigate("/user-dashboard/bookings");
+    } catch (err) {
+      console.error("Booking failed:", err);
+      alert("Failed to book professional. Please try again.");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6 text-white">
-      <h1 className="text-xl font-bold mb-6 text-accent">
-        {selectedCategory && serviceName
-          ? `Professionals for ${serviceName}`
-          : "Browse Professionals"}
-      </h1>
+    <div className="min-h-screen bg-orange-50 p-6 space-y-10 text-slate-800">
+      {/* Page Header */}
+      <motion.section
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center"
+      >
+        <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-rose-400">
+          {selectedCategory && serviceName
+            ? `Top ${serviceName}s Near You`
+            : "Browse Trusted Professionals"}
+        </h1>
+        <p className="mt-2 text-slate-600">Find and book the best service providers instantly</p>
+      </motion.section>
 
-      {/* Search Form */}
-      <div className="mb-6 flex flex-col md:flex-row gap-3">
+      {/* Filters */}
+      <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-4">
         <input
           type="text"
-          placeholder="Search location"
+          placeholder="Search by location or name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 p-3 rounded-lg bg-purple-950/40 border border-purple-800 focus:ring-2 focus:ring-accent focus:outline-none text-white text-sm"
+          className="flex-1 px-5 py-4 rounded-xl border border-orange-200 bg-white shadow-sm focus:ring-4 focus:ring-orange-300 focus:border-orange-400 focus:outline-none text-slate-700 placeholder-slate-400"
         />
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="p-3 rounded-lg bg-purple-950/40 border border-purple-800 focus:ring-2 focus:ring-purple-400 focus:outline-none text-white text-sm"
+          className="px-5 py-4 rounded-xl border border-orange-200 bg-white shadow-sm focus:ring-4 focus:ring-orange-300 focus:border-orange-400 focus:outline-none text-slate-700"
         >
           <option value="">All Categories</option>
           {categories.map((cat) => (
@@ -119,39 +188,54 @@ const BrowseProfessionals = () => {
 
       {/* Professionals Grid */}
       {loading ? (
-        <p className="text-gray-400">Loading...</p>
+        <p className="text-center text-slate-500 text-lg">Loading professionals...</p>
       ) : professionals.length === 0 ? (
-        <p className="text-gray-400 text-center">
-          No professionals found for this search.
-        </p>
+        <div className="text-center py-16">
+          <p className="text-slate-500 text-lg">No professionals found for your search.</p>
+          <p className="text-slate-400 mt-2">Try adjusting filters or search term.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {professionals.map((pro) => (
             <motion.div
               key={pro.id}
-              className="bg-purple-950/60 border border-purple-800 p-4 rounded-xl shadow-md hover:shadow-lg transition text-center"
-              whileHover={{ scale: 1.03 }}
+              whileHover={{ scale: 1.05, y: -8 }}
+              className="bg-white border border-orange-200 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 text-center"
             >
-              <img
-                src={pro.profile_pic || pro.photo || DefaultAvatar}
-                alt="Professional avatar"
-                className="w-16 h-16 rounded-full mx-auto object-cover border-2 border-purple-700"
-              />
-              <h3 className="mt-2 text-sm font-semibold text-purple-300">
-                {pro.name || "Unnamed"}
-              </h3>
-              <p className="text-xs text-gray-400">{pro.service_name}</p>
-              {pro.location && pro.location !== "Unknown" && (
-                <p className="text-xs text-gray-400">{pro.location}</p>
-              )}
-              <div className="mt-3 flex justify-center">
-                <button
-                  onClick={() => setSelectedPro(pro)}
-                  className="px-3 py-1 text-sm rounded-lg bg-accent hover:bg-purple-600 text-white font-medium transition"
-                >
-                  Book Now
-                </button>
+              <div className="relative w-28 h-28 mx-auto mb-4">
+                <img
+                  src={pro.profile_pic || pro.photo || DefaultAvatar}
+                  alt={pro.name}
+                  className="w-full h-full rounded-full object-cover border-4 border-orange-100 shadow-lg"
+                />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-t from-orange-400/20 to-transparent" />
               </div>
+
+              <h3 className="text-lg font-bold text-slate-800">{pro.name || "Professional"}</h3>
+              <p className="text-orange-600 font-medium mt-1">{pro.service_name}</p>
+
+              <div className="mt-4 space-y-2 text-sm text-slate-600">
+                {pro.location && pro.location !== "Unknown" && (
+                  <div className="flex items-center justify-center gap-2">
+                    <MapPin size={16} className="text-orange-500" />
+                    <span>{pro.location}</span>
+                  </div>
+                )}
+                {pro.phone && (
+                  <div className="flex items-center justify-center gap-2">
+                    <Phone size={16} className="text-orange-500" />
+                    <span>{pro.phone}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setSelectedPro(pro)}
+                className="mt-6 w-full py-3 bg-orange-500 text-white font-semibold rounded-xl shadow hover:bg-orange-600 transition flex items-center justify-center gap-2"
+              >
+                Book Now
+                <Calendar size={18} />
+              </button>
             </motion.div>
           ))}
         </div>
@@ -161,71 +245,97 @@ const BrowseProfessionals = () => {
       <AnimatePresence>
         {selectedPro && (
           <motion.div
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedPro(null)}
           >
             <motion.div
-              className="bg-purple-950/80 border border-purple-800 p-6 rounded-2xl shadow-xl w-full max-w-sm"
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white border border-orange-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between mb-4">
-                <h2 className="text-lg font-bold text-accent">Book Professional</h2>
-                <button
-                  onClick={() => setSelectedPro(null)}
-                  className="text-xl text-gray-400 hover:text-white"
-                >
-                  ×
-                </button>
+              <div className="bg-gradient-to-r from-orange-500 to-rose-400 p-6 text-white">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">Book Appointment</h2>
+                    <p className="mt-1 opacity-90">with {selectedPro.name}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPro(null)}
+                    className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
-              <div className="text-sm space-y-1 mb-4 text-gray-300">
-                {selectedPro.location && selectedPro.location !== "Unknown" && (
-                  <p>
-                    <strong className="text-purple-300">Location:</strong> {selectedPro.location}
-                  </p>
-                )}
-                {selectedPro.contact && (
-                  <p>
-                    <strong className="text-purple-300">Phone:</strong> {selectedPro.contact}
-                  </p>
-                )}
-              </div>
+              <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+                {[
+                  { name: "fullName", icon: <Mail />, placeholder: "Full Name *", required: true },
+                  { name: "phone", icon: <Phone />, placeholder: "Phone Number *", required: true },
+                  { name: "email", icon: <Mail />, placeholder: "Email (optional)" },
+                  { name: "address", icon: <MapPin />, placeholder: "Service Address *", required: true },
+                ].map((field) => (
+                  <div key={field.name} className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500">
+                      {field.icon}
+                    </div>
+                    <input
+                      type="text"
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-orange-200 bg-orange-50/50 focus:bg-white focus:ring-4 focus:ring-orange-300 focus:border-orange-400 focus:outline-none text-slate-700"
+                    />
+                  </div>
+                ))}
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  navigate(`/user-dashboard/bookings/new/${selectedPro.id}`);
-                }}
-                className="space-y-3"
-              >
-                <input
-                  type="date"
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-purple-950/40 border border-purple-800 focus:ring-2 focus:ring-accent focus:outline-none text-white text-sm"
-                  required
-                />
-                <input
-                  type="time"
-                  value={bookingTime}
-                  onChange={(e) => setBookingTime(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-purple-950/40 border border-purple-800 focus:ring-2 focus:ring-accent focus:outline-none text-white text-sm"
-                  required
-                />
-                <textarea
-                  placeholder="Notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  className="w-full p-3 rounded-lg bg-purple-950/40 border border-purple-800 focus:ring-2 focus:ring-purple-400 focus:outline-none text-white text-sm"
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={20} />
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-orange-200 bg-orange-50/50 focus:bg-white focus:ring-4 focus:ring-orange-300 focus:border-orange-400 focus:outline-none text-slate-700"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" size={20} />
+                    <input
+                      type="time"
+                      name="time"
+                      value={formData.time}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border border-orange-200 bg-orange-50/50 focus:bg-white focus:ring-4 focus:ring-orange-300 focus:border-orange-400 focus:outline-none text-slate-700"
+                    />
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <MessageSquare className="absolute left-4 top-5 text-orange-500" size={20} />
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Additional notes or special requests (optional)"
+                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-orange-200 bg-orange-50/50 focus:bg-white focus:ring-4 focus:ring-orange-300 focus:border-orange-400 focus:outline-none text-slate-700 resize-none"
+                  />
+                </div>
+
                 <button
                   type="submit"
-                  className="w-full py-2 bg-accent hover:bg-purple-600 rounded-lg text-white font-semibold transition"
+                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-rose-400 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-orange-600 hover:to-rose-500 transition transform hover:scale-105"
                 >
                   Confirm Booking
                 </button>

@@ -1,12 +1,11 @@
 /**
- * @desc This is the navbar for all pages of the application
- *      - Exported to the main app file to display across all routes
- * @returns Navbar with logo, nav links, and sign-in button
+ * @desc Main Navbar for the entire application
+ *      - Fixed at top, responsive, clean & modern
  */
 
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, X, ChevronRight, LogInIcon } from "lucide-react";
+import { Menu, X, LogIn, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../../store/authStore";
 import { useAuthHook } from "../../hooks/authHooks";
@@ -14,162 +13,171 @@ import { useAuthHook } from "../../hooks/authHooks";
 const Navbar = () => {
   const isAuthenticated = useAuthStore((state) => !!state.user);
   const { auth } = useAuthHook();
-  const [mobileMenu, setMobileMenu] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  /** Nav links list */
-  const navlinks = [
-    { title: "Explore", link: "/explore-services", label: "explore page" },
-    { title: "About", link: "/about-us", label: "About page" },
-    { title: "Faq", link: "/faqs", label: "Frequently asked questions page" },
-    { title: "Contact", link: "/contact-us", label: "Contact us page" },
+  const navLinks = [
+    { title: "Explore", link: "/explore-services" },
+    { title: "About", link: "/about-us" },
+    { title: "FAQ", link: "/faqs" },
+    { title: "Contact", link: "/contact-us" },
   ];
 
-  /** Toggle mobile menu visibility */
-  const toggleVisibility = () => setMobileMenu((prev) => !prev);
+  const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
 
-  // Log out function
   const handleLogout = async () => {
-    setMobileMenu(false);
+    setMobileMenuOpen(false);
     try {
       const res = await auth.logout();
-      toast.success(res.message || "Logout successful.");
+      toast.success(res.message || "Logged out successfully!");
     } catch (err) {
-      toast.error(
-        err.message ||
-          "Something went wrong while logging out, Please try again.",
-      );
+      toast.error(err.message || "Logout failed. Please try again.");
     }
   };
 
   return (
-    <header
-      className={`navbar fixed top-0 h-24 w-full bg-brand-bg text-primary-gray font-medium shadow z-50`}
-      aria-label="navbar"
-    >
-      <nav className="relative max-w-7xl h-full mx-auto px-4 flex items-center justify-between">
-        {/* ------ LOGO --------- */}
-        <div className="flex items-center h-full">
-          <Link
-            to="/"
-            aria-label="App logo, clicks and takes you home"
-            className="flex items-center focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-          >
+    <>
+      <header
+        className="
+          fixed top-0 left-0 right-0 z-50
+          h-16
+          bg-white/90 backdrop-blur-md
+          border-b border-orange-200
+          shadow-sm
+        "
+      >
+        <nav className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
             <img
-              title="Home"
               src="/logo-white-bg.png"
-              alt="JustConnect Logo"
-              className="h-auto w-35 drop-shadow-accent object-cover focus:outline-none focus:ring-white hover:-translate-y-1 duration-300"
+              alt="JustConnect"
+              className="h-10 w-auto object-contain hover:scale-105 transition-transform duration-300"
             />
           </Link>
-        </div>
-        {/* Desktop Links */}
-        <ul className="hidden md:flex space-x-6 items-center">
-          {navlinks.map((list, idx) => (
-            <li key={idx} aria-label={list.label} className="relative">
-              <NavLink
-                to={list.link}
-                className={({ isActive }) => {
-                  return `relative inline-block py-2 transition-all duration-500 group ${isActive ? "text-accent" : "hover:text-accent"}`;
-                }}
+
+          {/* Desktop Navigation */}
+          <ul className="hidden md:flex items-center gap-8">
+            {navLinks.map((item) => (
+              <li key={item.link}>
+                <NavLink
+                  to={item.link}
+                  className={({ isActive }) =>
+                    `relative text-slate-700 font-medium transition-colors duration-300
+                    ${isActive ? "text-orange-600" : "hover:text-orange-600"}`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {item.title}
+                      <span
+                        className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all duration-500
+                        ${isActive ? "w-full" : "w-0 group-hover:w-full"}`}
+                      />
+                    </>
+                  )}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+
+          {/* Desktop Auth Button */}
+          <div className="hidden md:block">
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className="
+                  inline-flex items-center gap-2 px-6 py-2.5
+                  rounded-full font-semibold text-white
+                  bg-gradient-to-r from-orange-500 to-rose-500
+                  shadow-md hover:shadow-lg
+                  hover:scale-105 transition-all duration-300
+                "
               >
-                {({ isActive }) => (
-                  <>
-                    {list.title}
-                    {/* underline hover effect */}
-                    <span
-                      className={`absolute bottom-0 left-0 h-0.5 bg-accent rounded-full transition-all duration-500 ${
-                        isActive
-                          ? "w-full opacity-100"
-                          : "w-0 opacity-0 group-hover:w-full group-hover:opacity-100"
-                      }`}
-                    />
-                  </>
-                )}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+                Log out
+                <LogIn size={18} />
+              </button>
+            ) : (
+              <Link
+                to="/auth/login"
+                className="
+                  inline-flex items-center gap-2 px-6 py-2.5
+                  rounded-full font-semibold text-white
+                  bg-gradient-to-r from-orange-500 to-rose-500
+                  shadow-md hover:shadow-lg
+                  hover:scale-105 transition-all duration-300
+                "
+              >
+                Sign in
+                <ChevronRight size={18} />
+              </Link>
+            )}
+          </div>
 
-        {/* ======= Sign-in Button ========*/}
-        <div className="hidden md:flex">
-          {isAuthenticated ? (
-            <button
-              aria-label="log out button"
-              role="button"
-              onClick={handleLogout}
-              className="inline-flex gap-3 items-center px-8 py-2 rounded-full font-semibold shadow text-white hover:bg-white bg-accent hover:text-accent transition duration-500"
-            >
-              Log out
-              <LogInIcon size={14} />
-            </button>
-          ) : (
-            <Link
-              to="/auth/login"
-              className="inline-flex gap-3 items-center px-8 py-2 rounded-full font-semibold shadow text-white hover:bg-white bg-accent hover:text-accent transition duration-500"
-            >
-              Sign in
-              <ChevronRight />
-            </Link>
-          )}
-        </div>
-
-        {/* ============= Mobile Menu Button ====================*/}
-        <div className="md:hidden">
+          {/* Mobile Menu Toggle */}
           <button
-            type="button"
-            aria-label="toggle navigation menu"
-            onClick={toggleVisibility}
+            onClick={toggleMobileMenu}
+            className="md:hidden p-2 rounded-lg hover:bg-orange-100 transition"
+            aria-label="Toggle menu"
           >
-            {mobileMenu ? <X size={30} /> : <Menu size={30} />}
+            {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
-        </div>
+        </nav>
 
-        {/* Mobile Nav Links */}
-        {mobileMenu && (
-          <div className="absolute top-full left-0 w-full pb-15 bg-brand-bg backdrop-blur-md md:hidden">
-            <ul className="flex flex-col px-4 space-y-8 py-6">
-              {navlinks.map((list, idx) => (
-                <li key={idx} aria-label={list.label}>
-                  <NavLink
-                    to={list.link}
-                    onClick={() => setMobileMenu(false)}
-                    className={({ isActive }) =>
-                      `block px-4 py-2 text-lg rounded-md transition ${
-                        isActive
-                          ? "bg-accent"
-                          : "hover:bg-accent hover:text-white"
-                      }`
-                    }
-                  >
-                    {list.title}
-                  </NavLink>
-                </li>
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-lg border-b border-orange-200 shadow-xl md:hidden">
+            <div className="px-6 py-8 space-y-6">
+              {navLinks.map((item) => (
+                <NavLink
+                  key={item.link}
+                  to={item.link}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `block text-lg font-medium py-3 px-4 rounded-xl transition-all
+                    ${isActive 
+                      ? "bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md" 
+                      : "text-slate-700 hover:bg-orange-100 hover:text-orange-600"}`
+                  }
+                >
+                  {item.title}
+                </NavLink>
               ))}
-              <li>
+
+              <div className="pt-6 border-t border-orange-100">
                 {isAuthenticated ? (
                   <button
-                    aria-label="log out button"
-                    role="button"
                     onClick={handleLogout}
-                    className="block w-full text-center py-3 rounded-md font-medium text-accent border border-accent hover:bg-accent hover:text-white transition duration-300"
+                    className="
+                      w-full py-4 rounded-xl font-semibold text-white
+                      bg-gradient-to-r from-orange-500 to-rose-500
+                      shadow-lg hover:shadow-xl transition-all
+                    "
                   >
                     Log out
                   </button>
                 ) : (
                   <Link
                     to="/auth/login"
-                    onClick={() => setMobileMenu(false)}
-                    className="block w-full text-center py-3 rounded-md font-medium text-accent border border-accent hover:bg-accent hover:text-white transition duration-300"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="
+                      block w-full text-center py-4 rounded-xl font-semibold text-white
+                      bg-gradient-to-r from-orange-500 to-rose-500
+                      shadow-lg hover:shadow-xl transition-all
+                    "
                   >
                     Sign in
                   </Link>
                 )}
-              </li>
-            </ul>
+              </div>
+            </div>
           </div>
         )}
-      </nav>
-    </header>
+      </header>
+
+      {/* IMPORTANT: Add this padding to your main content pages! */}
+      {/* In your HomePage.jsx, About.jsx, etc., wrap content with: */}
+      {/* <div className="pt-16"> ...your content... </div> */}
+    </>
   );
 };
 

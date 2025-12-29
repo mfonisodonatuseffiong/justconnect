@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Calendar,
-  CheckCircle,
-  XCircle,
   CalendarCheck,
+  CheckCircle,
   FileText,
   MessageCircle,
   ArrowRight,
@@ -24,147 +22,166 @@ import {
 import useDashboard from "../../hooks/useDashboard";
 import { useAuthStore } from "../../store/authStore";
 
-/* 🔥 Purple + Accent Colors */
+/* Warm Orange + Rose Palette */
 const STATUS_COLORS = {
-  pending: "#f97316",    // accent
-  completed: "#8b5cf6",  // purple
-  canceled: "#ef4444",   // red
-  unknown: "#6b7280",
+  pending: "#f97316",     // orange-500
+  completed: "#fb7185",   // rose-400
+  canceled: "#ef4444",    // red-500
+  unknown: "#9ca3af",     // gray-400
 };
 
-const UserHome = () => {
-  const { user } = useAuthStore();
-  const { data, loading } = useDashboard();
+const KnobCard = ({ title, value, Icon }) => (
+  <motion.div
+    whileHover={{ scale: 1.08, y: -8 }}
+    className="flex flex-col items-center"
+  >
+    <div className="relative w-36 h-36 rounded-full bg-white border-6 border-orange-300 shadow-2xl flex items-center justify-center">
+      <div className="absolute top-3 w-2 h-6 bg-orange-600 rounded-full shadow-md" />
+      
+      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-50 to-orange-100 shadow-inner flex flex-col items-center justify-center border-4 border-white">
+        <Icon size={28} className="text-orange-600 mb-2" />
+        <span className="text-3xl font-extrabold text-slate-800">{value}</span>
+      </div>
+    </div>
+    <p className="mt-5 text-base font-semibold text-slate-700 tracking-wider">{title}</p>
+  </motion.div>
+);
 
-  const firstName = user?.name?.split(" ")[0] || "there";
+const UserHome = () => {
+  const { data, loading, refetch } = useDashboard();
 
   const kpiCards = [
-    { title: "My Requests", value: data?.totalBookings || 0, Icon: CalendarCheck },
-    { title: "Completed", value: data?.statusCount?.completed || 0, Icon: CheckCircle },
-    { title: "Bookings", value: data?.statusCount?.pending || 0, Icon: FileText },
-    { title: "Messages", value: data?.messages || 0, Icon: MessageCircle },
+    { title: "Total Bookings", value: data?.totalBookings ?? 0, Icon: CalendarCheck },
+    { title: "Completed", value: data?.stats?.completed ?? 0, Icon: CheckCircle },
+    { title: "Pending", value: data?.stats?.pending ?? 0, Icon: FileText },
+    { title: "Messages", value: data?.messages ?? 0, Icon: MessageCircle },
   ];
 
-  const chartData = data?.statusCount
-    ? Object.entries(data.statusCount).map(([status, count]) => ({
-        status,
-        count,
-        color: STATUS_COLORS[status] || STATUS_COLORS.unknown,
+  const chartData = data?.bookingStatus
+    ? data.bookingStatus.map(item => ({
+        status: item.status,
+        count: parseInt(item.count, 10),
+        color: STATUS_COLORS[item.status] || STATUS_COLORS.unknown,
       }))
     : [];
 
   const weeklyData = data?.weeklyRequests || [];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-950 p-6 space-y-10 text-white">
-
-      {/* 👋 Welcome */}
-      <section className="bg-gradient-to-r from-purple-900/40 to-accent/30 rounded-2xl p-8 text-center shadow-xl">
-        <h1 className="text-4xl font-extrabold text-accent mb-2">
-          Welcome back, {firstName}
+    <div className="min-h-screen bg-orange-50 p-6 lg:p-10 space-y-16 text-slate-800">
+      {/* Elegant Header Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="text-center max-w-4xl mx-auto"
+      >
+        <h1 className="text-4xl lg:text-6xl font-extrabold text-slate-800 leading-tight">
+          Dashboard
         </h1>
-        <p className="text-gray-300 text-lg">
-          Here’s your dashboard overview
+        <p className="mt-6 text-xl lg:text-2xl text-slate-600 font-medium leading-relaxed">
+          Manage your bookings, track progress, and stay connected with trusted professionals — all in one place.
         </p>
+      </motion.section>
+
+      {/* KPI Knob Cards */}
+      <section className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 justify-items-center">
+          {kpiCards.map((card) => (
+            <KnobCard key={card.title} {...card} />
+          ))}
+        </div>
       </section>
 
-      {/* 📊 KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiCards.map((card) => (
-          <motion.div key={card.title} whileHover={{ scale: 1.04 }}>
-            <div className="bg-purple-950/60 border border-purple-800 rounded-2xl p-6 flex items-center gap-4 shadow-lg">
-              <card.Icon className="w-9 h-9 text-accent" />
-              <div>
-                <p className="text-sm text-gray-400">{card.title}</p>
-                <h2 className="text-2xl font-bold text-purple-300">
-                  {card.value}
-                </h2>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {/* Booking Status Summary Cards */}
+      <section className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {chartData.map((card) => (
+            <motion.div
+              key={card.status}
+              whileHover={{ scale: 1.05, y: -6 }}
+              className="bg-white border-2 border-orange-200 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all"
+            >
+              {card.status === "completed" && (
+                <CheckCircle className="mx-auto mb-4 text-rose-500" size={48} />
+              )}
+              {card.status === "pending" && (
+                <FileText className="mx-auto mb-4 text-orange-500" size={48} />
+              )}
+              {card.status === "canceled" && (
+                <XCircle className="mx-auto mb-4 text-red-500" size={48} />
+              )}
+              <p className="capitalize text-lg font-semibold text-slate-600">{card.status}</p>
+              <p className="text-4xl font-extrabold text-slate-800 mt-2">{card.count}</p>
+            </motion.div>
+          ))}
 
-      {/* 📦 Booking Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-purple-950/60 border border-purple-800 rounded-2xl p-6 text-center shadow-lg">
-          <Calendar className="mx-auto mb-2 text-accent" size={36} />
-          <p className="text-gray-400">Total Bookings</p>
-          <p className="text-3xl font-bold text-purple-300">
-            {data?.totalBookings || 0}
-          </p>
-        </div>
-
-        {chartData.map((card) => (
-          <div
-            key={card.status}
-            className="bg-purple-950/60 border border-purple-800 rounded-2xl p-6 text-center shadow-lg"
+          {/* Total Bookings Card */}
+          <motion.div
+            whileHover={{ scale: 1.05, y: -6 }}
+            className="bg-gradient-to-br from-orange-400 to-rose-400 rounded-3xl p-8 text-center shadow-xl text-white"
           >
-            {card.status === "completed" && (
-              <CheckCircle className="mx-auto mb-2 text-purple-400" size={36} />
-            )}
-            {card.status === "pending" && (
-              <Calendar className="mx-auto mb-2 text-accent" size={36} />
-            )}
-            {card.status === "canceled" && (
-              <XCircle className="mx-auto mb-2 text-red-500" size={36} />
-            )}
-            <p className="capitalize text-gray-400">{card.status}</p>
-            <p className="text-3xl font-bold text-purple-300">{card.count}</p>
-          </div>
-        ))}
-      </div>
+            <CalendarCheck className="mx-auto mb-4" size={48} />
+            <p className="text-lg font-semibold opacity-90">All Time Total</p>
+            <p className="text-5xl font-extrabold mt-2">{data?.totalBookings ?? 0}</p>
+          </motion.div>
+        </div>
+      </section>
 
-      {/* 📈 Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Requests */}
-        <div className="bg-purple-950/60 border border-purple-800 rounded-2xl p-6 h-80 shadow-lg">
-          <h2 className="text-lg font-bold mb-4 text-accent">
-            Requests This Week
-          </h2>
+      {/* Charts Section */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-7xl mx-auto">
+        {/* Weekly Requests Line Chart */}
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="bg-white border-2 border-orange-200 rounded-3xl p-8 shadow-xl h-96"
+        >
+          <h2 className="text-2xl font-bold mb-6 text-orange-600">Weekly Requests Trend</h2>
           {weeklyData.length === 0 ? (
-            <p className="text-gray-400 text-center mt-24">
-              No requests this week
-            </p>
+            <p className="text-slate-500 text-center mt-32 text-lg">No requests this week yet</p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weeklyData}>
-                <XAxis dataKey="day" stroke="#aaa" />
-                <YAxis stroke="#aaa" />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="4 4" stroke="#fed7aa" />
+                <XAxis dataKey="day" stroke="#475569" fontSize={14} />
+                <YAxis stroke="#475569" fontSize={14} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#fff", border: "2px solid #fb923c", borderRadius: "12px" }}
+                />
                 <Line
                   type="monotone"
                   dataKey="count"
                   stroke="#f97316"
-                  strokeWidth={3}
+                  strokeWidth={4}
+                  dot={{ fill: "#fb7185", r: 6 }}
+                  activeDot={{ r: 8 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </motion.div>
 
-        {/* Booking Status */}
-        <div className="bg-purple-950/60 border border-purple-800 rounded-2xl p-6 h-80 shadow-lg">
-          <h2 className="text-lg font-bold mb-4 text-accent">
-            Booking Status
-          </h2>
+        {/* Booking Status Bar Chart */}
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="bg-white border-2 border-orange-200 rounded-3xl p-8 shadow-xl h-96"
+        >
+          <h2 className="text-2xl font-bold mb-6 text-orange-600">Current Booking Status</h2>
           {chartData.length === 0 ? (
-            <p className="text-gray-400 text-center mt-24">
-              No booking data available
-            </p>
+            <p className="text-slate-500 text-center mt-32 text-lg">No booking data available</p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
-                <XAxis dataKey="status" stroke="#aaa" />
-                <YAxis allowDecimals={false} stroke="#aaa" />
+                <CartesianGrid strokeDasharray="4 4" stroke="#fed7aa" />
+                <XAxis dataKey="status" stroke="#475569" fontSize={14} />
+                <YAxis allowDecimals={false} stroke="#475569" fontSize={14} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#0f0f0f",
-                    borderColor: "#f97316",
-                  }}
+                  contentStyle={{ backgroundColor: "#fff", border: "2px solid #fb923c", borderRadius: "12px" }}
                 />
-                <Bar dataKey="count" radius={[10, 10, 0, 0]}>
+                <Bar dataKey="count" radius={[20, 20, 0, 0]}>
                   {chartData.map((entry) => (
                     <Cell key={entry.status} fill={entry.color} />
                   ))}
@@ -172,28 +189,37 @@ const UserHome = () => {
               </BarChart>
             </ResponsiveContainer>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </section>
 
-      {/* 🚀 Quick Actions */}
-      <div className="flex gap-4 mt-6">
+      {/* Action Buttons */}
+      <motion.section
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="flex flex-col sm:flex-row gap-6 justify-center mt-12"
+      >
         <Link to="/user-dashboard/requests">
-          <button className="flex items-center gap-2 rounded-xl bg-accent px-6 py-3 font-semibold shadow-lg hover:bg-accent/90 transition">
-            View Requests <ArrowRight size={16} className="text-white" />
+          <button className="flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-orange-500 to-rose-400 px-10 py-5 font-bold text-white text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition transform">
+            View All Requests <ArrowRight size={20} />
           </button>
         </Link>
 
         <Link to="/user-dashboard/bookings">
-          <button className="flex items-center gap-2 rounded-xl border border-purple-500 text-purple-300 px-6 py-3 font-semibold hover:bg-purple-600 hover:text-white transition">
-            View Bookings <ArrowRight size={16} className="text-white" />
+          <button
+            onClick={refetch}
+            className="flex items-center justify-center gap-3 rounded-2xl bg-white border-4 border-orange-300 text-orange-600 px-10 py-5 font-bold text-lg shadow-xl hover:bg-orange-500 hover:text-white hover:border-orange-400 transition transform hover:scale-105"
+          >
+            Refresh Bookings <ArrowRight size={20} />
           </button>
         </Link>
-      </div>
+      </motion.section>
 
+      {/* Loading State */}
       {loading && (
-        <p className="text-gray-400 text-center">
-          Loading dashboard...
-        </p>
+        <div className="text-center py-20">
+          <p className="text-slate-600 text-xl">Loading your dashboard...</p>
+        </div>
       )}
     </div>
   );

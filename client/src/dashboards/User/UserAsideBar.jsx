@@ -22,55 +22,100 @@ const navLinks = [
 
 const UserAsideBar = () => {
   return (
-    <aside className="
-      hidden md:flex flex-col w-56
-      bg-gradient-to-b from-purple-950/80 via-purple-900/70 to-accent/10
-      backdrop-blur-xl
-      border-r border-purple-800/40
-      shadow-2xl
-      p-6
-      relative
-    ">
-      <ul className="space-y-3 mt-10">
-        {navLinks.map(({ title, icon: Icon, link }) => (
-          <motion.li
-            key={title}
-            whileHover={{ scale: 1.04 }}
-            transition={{ type: "spring", stiffness: 260 }}
-          >
-            <NavLink
-              to={link}
-              end
-              className={({ isActive }) =>
-                `group flex items-center gap-3 p-3 rounded-xl font-semibold
-                 transition-all duration-300 ${
-                  isActive
-                    ? "bg-accent text-white shadow-lg"
-                    : "text-gray-300 hover:bg-purple-900/60 hover:text-accent"
-                }`
-              }
-            >
-              <Icon
-                size={20}
-                className="
-                  transition-colors duration-300
-                  text-gray-400
-                  group-hover:text-accent
-                "
-              />
-              <span className="text-sm">{title}</span>
-            </NavLink>
-          </motion.li>
-        ))}
-      </ul>
+    <aside
+      className="
+        hidden md:flex flex-col w-72 min-h-screen
+        bg-gradient-to-b from-white via-orange-50/50 to-orange-100/30
+        border-r-2 border-orange-200
+        shadow-2xl
+        px-6 py-10
+        relative overflow-hidden
+      "
+    >
+      {/* Optional subtle decorative element */}
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-200/10 via-transparent to-rose-200/10 pointer-events-none" />
 
-      {/* Logo */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-        <img
-          src="/logo.png"
-          alt="App Logo"
-          className="h-10 w-auto opacity-70 hover:opacity-100 transition-opacity"
-        />
+      {/* Navigation Links */}
+      <nav className="flex-1 mt-8">
+        <ul className="space-y-3">
+          {navLinks.map(({ title, icon: Icon, link }) => (
+            <motion.li
+              key={title}
+              whileHover={{ x: 8 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              <NavLink
+                to={link}
+                end
+                className={({ isActive }) =>
+                  `
+                  group relative flex items-center gap-4 px-6 py-4 rounded-2xl
+                  font-semibold text-base tracking-wide transition-all duration-300
+                  overflow-hidden
+                  ${
+                    isActive
+                      ? "bg-gradient-to-r from-orange-400 to-rose-400 text-white shadow-xl"
+                      : "text-slate-700 hover:bg-orange-100/70 hover:text-orange-600"
+                  }
+                `
+                }
+              >
+                {/* Active indicator bar */}
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeSidebarIndicator"
+                        className="absolute inset-0 bg-gradient-to-r from-orange-500 to-rose-500 rounded-2xl"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+
+                    <Icon
+                      size={22}
+                      className={`
+                        relative z-10 transition-colors duration-300
+                        ${isActive ? "text-white" : "text-slate-500 group-hover:text-orange-600"}
+                      `}
+                    />
+                    <span className="relative z-10">{title}</span>
+
+                    {/* Hover glow effect */}
+                    {!isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-300/20 to-rose-300/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            </motion.li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Footer Logo */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <motion.div
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-rose-400 rounded-full blur-xl opacity-40 scale-150" />
+          <img
+            src="/logo.png"
+            alt="JustConnect Logo"
+            className="
+              relative h-14 w-auto
+              drop-shadow-lg
+              hover:drop-shadow-2xl
+              transition-all duration-300
+            "
+          />
+        </motion.div>
+
+        <p className="text-center mt-3 text-xs text-slate-500 font-medium">
+          © 2025 JustConnect
+        </p>
       </div>
     </aside>
   );

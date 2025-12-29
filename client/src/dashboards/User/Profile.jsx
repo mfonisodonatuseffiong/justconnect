@@ -1,29 +1,34 @@
-import { useEffect, useState } from "react";
-import { useAuthStore } from "../../store/authStore";
-import authAxios from "../../api";
+import { motion } from "framer-motion";
 
 const Profile = () => {
-  const { user } = useAuthStore();
-  const [profile, setProfile] = useState(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const res = await authAxios.get(`/users/${user.id}`);
-      setProfile(res.data.profile);
-    };
-    fetchProfile();
-  }, [user.id]);
-
-  if (!profile) return <p>Loading profile...</p>;
-
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-4">My Profile</h1>
-      <p><strong>Name:</strong> {profile.name}</p>
-      <p><strong>Email:</strong> {profile.email}</p>
-      <p><strong>Location:</strong> {profile.location || "N/A"}</p>
-      <p><strong>Contact:</strong> {profile.contact || "N/A"}</p>
-      <img src={profile.profile_pic} alt="Profile" className="w-32 h-32 rounded-full mt-4" />
+    <div className="bg-orange-50 min-h-screen p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-lg mx-auto bg-white border border-orange-200 rounded-2xl shadow-md p-6"
+      >
+        <h1 className="text-2xl font-bold text-orange-600 mb-6">
+          Profile
+        </h1>
+
+        <div className="space-y-4 text-slate-700">
+          <div className="flex justify-between">
+            <span className="font-semibold text-orange-500">Name</span>
+            <span>Sam Lagos</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="font-semibold text-orange-500">Email</span>
+            <span>samlagos@example.com</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="font-semibold text-orange-500">Role</span>
+            <span className="capitalize">User</span>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
