@@ -33,7 +33,7 @@ const authenticateToken = (req, res, next) => {
       role: decoded.role || "user",
     };
 
-    next();
+    return next();
   } catch (err) {
     console.error("❌ Token verification failed:", err.message);
 
@@ -73,7 +73,7 @@ const authorizeRoles = (...allowedRoles) => (req, res, next) => {
     });
   }
 
-  next();
+  return next();
 };
 
 // Backward compatibility for older code

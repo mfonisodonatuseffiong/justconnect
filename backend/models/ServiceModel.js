@@ -50,8 +50,19 @@ const ensureServiceTable = async () => {
  * Service Model
  */
 const Service = {
-  // Get all services with optional pagination
-  getAll: async (limit = 20, offset = 0) => {
+  // ✅ Get all services (no pagination, for dropdowns)
+  getAll: async () => {
+    try {
+      const { rows } = await pool.query("SELECT * FROM services ORDER BY id ASC");
+      return rows;
+    } catch (err) {
+      console.error("❌ Error fetching services:", err.message);
+      throw err;
+    }
+  },
+
+  // ✅ Optional: Get services with pagination
+  getPaginated: async (limit = 20, offset = 0) => {
     try {
       const { rows } = await pool.query(
         "SELECT * FROM services ORDER BY id ASC LIMIT $1 OFFSET $2",
@@ -59,7 +70,7 @@ const Service = {
       );
       return rows;
     } catch (err) {
-      console.error("❌ Error fetching services:", err.message);
+      console.error("❌ Error fetching paginated services:", err.message);
       throw err;
     }
   },

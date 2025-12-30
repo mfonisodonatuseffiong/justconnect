@@ -26,25 +26,11 @@ const validateService = (req, res, next) => {
  * ==========================================================
  */
 
-// Get all services with optional pagination
-router.get("/", authenticateToken, async (req, res) => {
+// ✅ Get all services (return plain array for dropdown)
+router.get("/", async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = (page - 1) * limit;
-
-    const services = await Service.getAll(limit, offset);
-    const total = await Service.countAll();
-
-    res.status(200).json({
-      success: true,
-      message: "Services fetched successfully",
-      count: services.length,
-      total,
-      page,
-      limit,
-      data: services,
-    });
+    const services = await Service.getAll();
+    res.status(200).json(services); // <-- return array directly
   } catch (err) {
     console.error("❌ Error fetching services:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
@@ -52,43 +38,54 @@ router.get("/", authenticateToken, async (req, res) => {
 });
 
 // Get single service by ID
-router.get("/:id", authenticateToken, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const service = await Service.getById(req.params.id);
     if (!service) {
       return res.status(404).json({ success: false, message: "Service not found" });
     }
-    res.status(200).json({ success: true, message: "Service fetched successfully", data: service });
+    res.status(200).json(service); // <-- return object directly
   } catch (err) {
     console.error("❌ Error fetching service:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// Get professionals linked to a service
+// Get professionals linked to a service with filters, search, and pagination
 router.get("/:serviceId/professionals", authenticateToken, async (req, res) => {
   try {
     const { serviceId } = req.params;
+    const { page = 1, limit = 12, category = "", location = "", search = "" } = req.query;
+    const offset = (page - 1) * limit;
 
-    const result = await pool.query(
-      `SELECT id, name, email, contact, location, experience, rating
-       FROM professionals
-       WHERE service_id = $1`,
-      [serviceId]
-    );
+    let query = `SELECT id, name, email, contact, location, experience, rating, category, avatar
+                 FROM professionals
+                 WHERE service_id = $1`;
+    const params = [serviceId];
+    let paramIndex = 2;
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No professionals found for this service",
-      });
+    if (category) {
+      query += ` AND category = $${paramIndex}`;
+      params.push(category);
+      paramIndex++;
+    }
+    if (location) {
+      query += ` AND location = $${paramIndex}`;
+      params.push(location);
+      paramIndex++;
+    }
+    if (search) {
+      query += ` AND LOWER(name) LIKE $${paramIndex}`;
+      params.push(`%${search.toLowerCase()}%`);
+      paramIndex++;
     }
 
-    res.status(200).json({
-      success: true,
-      count: result.rows.length,
-      data: result.rows,
-    });
+    query += ` ORDER BY id ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+
+    res.status(200).json(result.rows);
   } catch (err) {
     console.error("❌ Error fetching professionals:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
@@ -102,42 +99,11 @@ router.get("/:serviceId/professionals", authenticateToken, async (req, res) => {
  */
 const adminRouter = express.Router();
 
-// Admin: Dashboard overview
-adminRouter.get("/overview", authenticateToken, authorizeRoles("admin"), async (req, res) => {
-  try {
-    const [servicesResult, prosResult, usersResult, reportsResult] = await Promise.all([
-      pool.query("SELECT id, name FROM services ORDER BY id ASC"),
-      pool.query("SELECT id, name, email, service_id, rating FROM professionals ORDER BY id ASC"),
-      pool.query("SELECT id, name, email, role FROM users ORDER BY id ASC"),
-      pool.query("SELECT id, user_id, professional_id, description, created_at FROM reports ORDER BY created_at DESC"),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      totals: {
-        services: servicesResult.rows.length,
-        professionals: prosResult.rows.length,
-        users: usersResult.rows.length,
-        reports: reportsResult.rows.length,
-      },
-      data: {
-        services: servicesResult.rows,
-        professionals: prosResult.rows,
-        users: usersResult.rows,
-        reports: reportsResult.rows,
-      },
-    });
-  } catch (err) {
-    console.error("❌ Error fetching admin overview:", err.message);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
 // Admin: Create new service
 adminRouter.post("/", authenticateToken, authorizeRoles("admin"), validateService, async (req, res) => {
   try {
     const service = await Service.create(req.body.name);
-    res.status(201).json({ success: true, message: "Service created successfully", data: service });
+    res.status(201).json(service); // <-- return object directly
   } catch (err) {
     console.error("❌ Error creating service:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
@@ -151,7 +117,7 @@ adminRouter.put("/:id", authenticateToken, authorizeRoles("admin"), validateServ
     if (!service) {
       return res.status(404).json({ success: false, message: "Service not found" });
     }
-    res.status(200).json({ success: true, message: "Service updated successfully", data: service });
+    res.status(200).json(service);
   } catch (err) {
     console.error("❌ Error updating service:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
@@ -172,7 +138,6 @@ adminRouter.delete("/:id", authenticateToken, authorizeRoles("admin"), async (re
   }
 });
 
-// Mount admin routes at /admin
 router.use("/admin", adminRouter);
 
 module.exports = router;

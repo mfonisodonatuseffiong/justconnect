@@ -1,3 +1,4 @@
+// routes/bookingRoutes.js
 const express = require("express");
 const router = express.Router();
 
@@ -33,21 +34,29 @@ router.get(
 
 // ✅ Professional or Admin - view bookings assigned to a professional
 router.get(
-  "/pro/:professionalId",
+  "/professional/:professionalId",
   authenticateToken,
   authorizeRoles("professional", "admin"),
   bookingController.getProfessionalBookings
 );
 
-// ✅ Admin only - update booking status
+// ✅ User - cancel their own pending booking
+router.post(
+  "/:id/cancel",
+  authenticateToken,
+  authorizeRoles("user"),
+  bookingController.cancelBooking
+);
+
+// ✅ Admin or Professional - update booking status
 router.put(
   "/:id/status",
   authenticateToken,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "professional"),
   bookingController.updateStatus
 );
 
-// ✅ Admin only - delete booking
+// ✅ Admin only - delete booking record
 router.delete(
   "/:id",
   authenticateToken,

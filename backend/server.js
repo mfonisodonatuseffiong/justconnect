@@ -1,45 +1,118 @@
 // server.js
 const express = require("express");
+const http = require("http");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
-const pool = require("./config/db"); // DB connection already tested
+const { Server } = require("socket.io");
 
 // Load environment variables
 dotenv.config();
 
-// Initialize Express app
+// Initialize Express + HTTP Server
 const app = express();
+const server = http.createServer(app);
 
-// ✅ Core middlewares
-app.use(express.json());
+// =========================
+// SOCKET.IO SETUP
+// =========================
+const io = new Server(server, {
+  cors: {
+    origin: (origin, callback) => {
+      // Allow all in development
+      if (process.env.NODE_ENV !== "production") {
+        return callback(null, true);
+      }
+
+      // Production: only allow your frontend
+      const allowedOrigins = process.env.FRONTEND_URL
+        ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
+        : [];
+      
+      if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+        return callback(null, true);
+      }
+      
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// Store active users: socket.id → userId
+const activeUsers = new Map();
+
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  console.log("🔌 New client connected:", socket.id);
+
+  // User identifies themselves after login
+  socket.on("authenticate", (userId) => {
+    if (userId) {
+      activeUsers.set(socket.id, userId);
+      socket.join(`user_${userId}`); // Join personal room
+      console.log(`👤 User ${userId} authenticated on socket ${socket.id}`);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    const userId = activeUsers.get(socket.id);
+    if (userId) {
+      activeUsers.delete(socket.id);
+      console.log(`👋 User ${userId} disconnected`);
+    }
+    console.log("🔌 Client disconnected:", socket.id);
+  });
+});
+
+// Make io available in controllers
+app.set("io", io);
+app.set("activeUsers", activeUsers);
+
+/* =========================
+   CORE MIDDLEWARES
+========================= */
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
-// ✅ CORS configuration (dev vs prod)
-const devOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
-const prodOrigins = [process.env.FRONTEND_URL]; // your production frontend URL
-const allowedOrigins =
-  process.env.NODE_ENV === "production" ? prodOrigins : devOrigins;
+/* =========================
+   CORS CONFIGURATION
+========================= */
+const devOriginRegex = /^http:\/\/(localhost|127\.0\.0\.1):517\d$/;
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    // allow requests with no origin (curl, Postman)
+  origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    const normalizedOrigin = origin.replace(/\/$/, ""); // remove trailing slash
+    const normalizedOrigin = origin.replace(/\/$/, "");
 
-    if (allowedOrigins.includes(normalizedOrigin)) {
-      callback(null, true);
+    if (process.env.NODE_ENV !== "production") {
+      if (devOriginRegex.test(normalizedOrigin)) {
+        return callback(null, true);
+      }
     } else {
-      console.error("❌ Blocked CORS request from:", origin);
-      callback(new Error(`CORS policy blocked request from origin: ${origin}`));
+      const allowed = process.env.FRONTEND_URL
+        ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
+        : [];
+      if (allowed.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
     }
+
+    console.error("❌ Blocked CORS:", normalizedOrigin);
+    return callback(null, false);
   },
-  credentials: true, // required for cookies
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
+
 app.use(cors(corsOptions));
 
-// ✅ Import route modules
+/* =========================
+   ROUTES
+========================= */
 const authRoutes = require("./routes/authRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const professionalRoutes = require("./routes/professionalRoutes");
@@ -47,44 +120,66 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const userRoutes = require("./routes/userRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 
-// ✅ Base test route
+/* =========================
+   BASE ROUTE
+========================= */
 app.get("/", (req, res) => {
   res.json({
     success: true,
     message: "Welcome to JustConnect API 🚀",
     version: "v1",
+    environment: process.env.NODE_ENV || "development",
+    realtime: "Socket.IO enabled",
   });
 });
 
-// ✅ Mount API routes
+/* =========================
+   API ROUTES
+========================= */
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/professionals", professionalRoutes);
-app.use("/api/v1/dashboard", dashboardRoutes); // includes professional dashboard route
+app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/services", serviceRoutes);
 app.use("/api/v1/requests", requestRoutes);
-app.use("/api/v1/upload", uploadRoutes); // profile picture upload
+app.use("/api/v1/upload", uploadRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/messages", messageRoutes);
 
-// ✅ Handle unknown routes (404)
+/* =========================
+   404 HANDLER
+========================= */
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route not found: ${req.originalUrl}`,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
   });
 });
 
-// ✅ Central error handler
+/* =========================
+   GLOBAL ERROR HANDLER
+========================= */
 app.use((err, req, res, next) => {
-  console.error("💥 Global error:", err.stack);
-  res.status(500).json({
+  console.error("💥 Global error:", err.message);
+  res.status(err.status || 500).json({
     success: false,
-    message: "Internal Server Error",
+    message: err.message || "Internal Server Error",
   });
 });
 
-// ✅ Start server
+/* =========================
+   START SERVER
+========================= */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 JustConnect API running on port ${PORT}`);
+  console.log(`🔌 Socket.IO ready for real-time updates`);
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`🌐 Dev frontend: http://localhost:5173`);
+  }
 });

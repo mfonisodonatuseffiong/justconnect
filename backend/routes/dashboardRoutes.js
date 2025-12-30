@@ -1,4 +1,3 @@
-// routes/dashboardRoutes.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -39,18 +38,21 @@ const upload = multer({ storage });
 // ROUTES
 // ====================================================
 
-// Unified dashboard
+// Unified dashboard (admin/global overview)
 router.get("/", authenticateToken, getDashboard);
 
-// Professional dashboard
+// Professional dashboard overview
 router.get("/professional", authenticateToken, getProfessionalDashboard);
 
-// User dashboard
-router.get("/user", authenticateToken, authorizeRoles("user"), getUserDashboard);
+// 🆕 User dashboard overview (with userId param)
+router.get(
+  "/user/:userId",
+  authenticateToken,
+  authorizeRoles("user"),
+  getUserDashboard
+);
 
-// ====================================================
-// UPDATED: Upload profile photo (users + professionals)
-// ====================================================
+// Upload profile photo (users + professionals)
 router.post(
   "/upload/profile-photo",
   authenticateToken,
@@ -59,14 +61,12 @@ router.post(
     try {
       const user = req.user;
 
-      // Ensure photo exists
       if (!req.file) {
         return res.status(400).json({ message: "No photo uploaded" });
       }
 
       const imageUrl = req.file.path;
 
-      // Save in the correct table
       if (user.role === "professional") {
         await pool.query(
           "UPDATE professionals SET profile_photo = $1 WHERE email = $2",
