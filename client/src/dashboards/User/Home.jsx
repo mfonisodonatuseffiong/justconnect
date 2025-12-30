@@ -20,7 +20,6 @@ import {
   Line,
 } from "recharts";
 import useDashboard from "../../hooks/useDashboard";
-import { useAuthStore } from "../../store/authStore";
 
 /* Warm Orange + Rose Palette */
 const STATUS_COLORS = {
@@ -74,13 +73,13 @@ const UserHome = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-center max-w-4xl mx-auto"
+        className="text-center max-w-4xl mx-auto py-12"
       >
-        <h1 className="text-4xl lg:text-6xl font-extrabold text-slate-800 leading-tight">
+        <h1 className="text-5xl lg:text-6xl font-extrabold text-orange-500 leading-tight">
           Dashboard
         </h1>
-        <p className="mt-6 text-xl lg:text-2xl text-slate-600 font-medium leading-relaxed">
-          Manage your bookings, track progress, and stay connected with trusted professionals — all in one place.
+        <p className="mt-8 text-xl lg:text-2xl text-slate-600 font-light leading-relaxed max-w-3xl mx-auto">
+          Seamlessly manage bookings, monitor service progress, and maintain direct communication with verified professionals — everything centralized for your convenience.
         </p>
       </motion.section>
 

@@ -8,6 +8,13 @@ import { useAuthHook } from "../../hooks/authHooks";
 import { useAuthStore } from "../../store/authStore";
 import { getInitials } from "../../utils/getInitials";
 import authAxios from "../../api";
+import { io } from "socket.io-client";
+
+// Vite env variable (correct way)
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+// Backend base URL for images
+const BACKEND_URL = "http://localhost:5000";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
@@ -20,6 +27,7 @@ const UserNavbar = () => {
   const [notifications, setNotifications] = useState([]);
   const [messages, setMessages] = useState([]);
   const dropdownRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   const defaultPic = getInitials(user?.name);
 
@@ -36,16 +44,76 @@ const UserNavbar = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Fetch notifications & messages
+  // Initial fetch of notifications & messages — FIXED PATHS
   useEffect(() => {
     if (!user?.id) return;
-    authAxios.get(`/api/v1/notifications/user/${user.id}`)
-      .then(res => setNotifications(res.data.notifications || []))
-      .catch(() => setNotifications([]));
 
-    authAxios.get(`/api/v1/messages/user/${user.id}`)
-      .then(res => setMessages(res.data.messages || []))
-      .catch(() => setMessages([]));
+    const fetchData = async () => {
+      try {
+        const [notifRes, msgRes] = await Promise.all([
+          authAxios.get(`/notifications/user/${user.id}`),
+          authAxios.get(`/messages/user/${user.id}`),
+        ]);
+
+        setNotifications(notifRes.data?.data || notifRes.data || []);
+        setMessages(msgRes.data?.data || msgRes.data?.messages || []);
+      } catch (err) {
+        console.error("Error fetching initial data:", err);
+      }
+    };
+
+    fetchData();
+  }, [user?.id]);
+
+  // Socket.IO real-time updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const newSocket = io(SOCKET_URL, {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+    });
+
+    newSocket.on("connect", () => {
+      console.log("Navbar connected to Socket.IO");
+      newSocket.emit("authenticate", user.id);
+    });
+
+    newSocket.on("new_notification", (notification) => {
+      console.log("New notification:", notification);
+      setNotifications((prev) => [notification, ...prev]);
+      toast.success("New notification!");
+    });
+
+    newSocket.on("notification_updated", ({ id, read }) => {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read } : n))
+      );
+    });
+
+    newSocket.on("notification_deleted", ({ id }) => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    });
+
+    newSocket.on("new_message", (message) => {
+      console.log("New message:", message);
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === message.id || m._id === message._id);
+        if (exists) return prev;
+        return [message, ...prev];
+      });
+      toast.success("New message received!");
+    });
+
+    newSocket.on("message_deleted", ({ messageId }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId && m._id !== messageId));
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
   }, [user?.id]);
 
   const handleLogout = async () => {
@@ -59,6 +127,18 @@ const UserNavbar = () => {
     } catch (error) {
       toast.error("Error logging out");
     }
+  };
+
+  // Format relative time
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return date.toLocaleDateString();
   };
 
   return (
@@ -83,7 +163,7 @@ const UserNavbar = () => {
         >
           <Bell size={20} className="text-gray-600" />
           {notifications.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
               {notifications.length > 99 ? "99+" : notifications.length}
             </span>
           )}
@@ -96,7 +176,7 @@ const UserNavbar = () => {
         >
           <MessageCircle size={20} className="text-gray-600" />
           {messages.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
               {messages.length > 99 ? "99+" : messages.length}
             </span>
           )}
@@ -107,8 +187,18 @@ const UserNavbar = () => {
           onClick={() => setOpenProfile(!openProfile)}
           className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-semibold">
-            {defaultPic}
+          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-md">
+            {user?.profile_picture ? (
+              <img
+                src={`${BACKEND_URL}${user.profile_picture}`}
+                alt={user.name || "User"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-semibold">
+                {defaultPic}
+              </div>
+            )}
           </div>
           <div className="hidden md:block text-left">
             <p className="text-sm font-medium text-gray-900">{user?.name || "User"}</p>
@@ -125,21 +215,40 @@ const UserNavbar = () => {
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-16 right-32 w-80 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
             >
-              <div className="p-4 border-b border-gray-100">
-                <h3 className="font-semibold text-gray-900">Notifications</h3>
+              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-rose-50">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <Bell size={18} />
+                  Notifications
+                  {notifications.length > 0 && (
+                    <span className="ml-auto text-sm text-orange-600">
+                      {notifications.length} new
+                    </span>
+                  )}
+                </h3>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">No new notifications</p>
+                  <p className="text-center py-12 text-gray-500">No notifications yet</p>
                 ) : (
                   notifications.map((n) => (
-                    <div key={n.id} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-100">
-                      <p className="text-sm text-gray-800">{n.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">{n.time_ago || "Just now"}</p>
+                    <div
+                      key={n.id}
+                      className={`px-4 py-3 hover:bg-gray-50 border-b border-gray-100 ${
+                        !n.read ? "bg-orange-50/50" : ""
+                      }`}
+                    >
+                      <p className="text-sm text-gray-800 font-medium">{n.message}</p>
+                      <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(n.created_at || n.createdAt)}</p>
                     </div>
                   ))
                 )}
               </div>
+              <button
+                onClick={() => navigate("/user-dashboard/notifications")}
+                className="w-full py-3 bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 transition"
+              >
+                View all notifications
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -153,28 +262,39 @@ const UserNavbar = () => {
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-16 right-20 w-80 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
             >
-              <div className="p-4 border-b border-gray-100">
-                <h3 className="font-semibold text-gray-900">Messages</h3>
+              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-rose-50">
+                <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                  <MessageCircle size={18} />
+                  Messages
+                  {messages.length > 0 && (
+                    <span className="ml-auto text-sm text-orange-600">
+                      {messages.length} new
+                    </span>
+                  )}
+                </h3>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {messages.length === 0 ? (
-                  <p className="text-center py-8 text-gray-500">No new messages</p>
+                  <p className="text-center py-12 text-gray-500">No messages yet</p>
                 ) : (
                   <>
                     {messages.slice(0, 5).map((m) => (
-                      <div key={m.id} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-sm font-bold">
-                          {getInitials(m.sender_name)}
+                      <div key={m.id || m._id} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                          {(m.sender_name || m.senderName || "P").charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{m.sender_name}</p>
-                          <p className="text-sm text-gray-600 line-clamp-2">{m.content}</p>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {m.sender_name || m.senderName || "Professional"}
+                          </p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{m.content || m.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(m.created_at || m.createdAt)}</p>
                         </div>
                       </div>
                     ))}
                     <button
                       onClick={() => navigate("/user-dashboard/messages")}
-                      className="w-full py-3 bg-gray-50 text-gray-700 font-medium hover:bg-gray-100"
+                      className="w-full py-3 bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 transition"
                     >
                       View all messages
                     </button>
@@ -194,14 +314,31 @@ const UserNavbar = () => {
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-16 right-4 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
             >
-              <div className="p-4 border-b border-gray-100">
-                <p className="font-semibold text-gray-900">{user?.name}</p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
+              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-rose-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                    {user?.profile_picture ? (
+                      <img
+                        src={`${BACKEND_URL}${user.profile_picture}`}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-bold text-lg">
+                        {defaultPic}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">{user?.name}</p>
+                    <p className="text-sm text-gray-600">{user?.email}</p>
+                  </div>
+                </div>
               </div>
 
               <button
                 onClick={() => navigate("/user-dashboard/profile")}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 transition"
               >
                 <User size={18} />
                 My Profile
@@ -209,7 +346,7 @@ const UserNavbar = () => {
 
               <button
                 onClick={() => navigate("/user-dashboard/settings")}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 transition"
               >
                 <Settings size={18} />
                 Settings
@@ -218,7 +355,7 @@ const UserNavbar = () => {
               <div className="border-t border-gray-100">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 font-medium"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 font-medium transition"
                 >
                   <LogOut size={18} />
                   Logout
