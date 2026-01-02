@@ -14,18 +14,18 @@ async function addUser(
   email,
   password,
   role = "user",
-  profile_pic = null,
+  profile_picture = null,
   sex = null,
   phone = null,
   address = null
 ) {
   const query = `
-    INSERT INTO users (name, email, password, role, phone, address, sex, profile_pic, created_at, updated_at)
+    INSERT INTO users (name, email, password, role, phone, address, sex, profile_picture, created_at, updated_at)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8, NOW(), NOW())
-    RETURNING id, name, email, role, phone, address, sex, profile_pic;
+    RETURNING id, name, email, role, phone, address, sex, profile_picture;
   `;
 
-  const values = [name, email, password, role, phone, address, sex, profile_pic];
+  const values = [name, email, password, role, phone, address, sex, profile_picture];
   const { rows } = await pool.query(query, values);
   return rows[0];
 }
@@ -36,7 +36,7 @@ async function addUser(
  */
 async function getUserByEmail(email) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, password, role, phone, address, sex, profile_pic,
+    `SELECT id, name, email, password, role, phone, address, sex, profile_picture,
             reset_token, reset_token_expiry
      FROM users
      WHERE LOWER(email) = LOWER($1)
@@ -52,7 +52,7 @@ async function getUserByEmail(email) {
  */
 async function getUserById(id) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, role, phone, address, sex, profile_pic
+    `SELECT id, name, email, role, phone, address, sex, profile_picture
      FROM users
      WHERE id = $1
      LIMIT 1`,
@@ -123,9 +123,9 @@ async function clearResetToken(userId) {
 async function updateUserProfilePic(userId, url) {
   const { rows } = await pool.query(
     `UPDATE users
-     SET profile_pic = $1, updated_at = NOW()
+     SET profile_picture = $1, updated_at = NOW()
      WHERE id = $2
-     RETURNING id, name, email, role, phone, address, sex, profile_pic`,
+     RETURNING id, name, email, role, phone, address, sex, profile_picture`,
     [url, userId]
   );
 

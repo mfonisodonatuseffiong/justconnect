@@ -26,7 +26,7 @@ const generateAccessToken = (user) => {
     { id: user.id, name: user.name, email: user.email, role: user.role },
     process.env.JWT_SECRET,
     {
-      expiresIn: "24h",               // 🔥 24 hours
+      expiresIn: "24h",
       issuer: "justconnect.app",
       audience: "justconnect-users",
     }
@@ -44,7 +44,7 @@ const safeUserPayload = (userRow) => {
     name: userRow.name,
     email: userRow.email,
     role: userRow.role,
-    profile_pic: userRow.profile_pic || null,
+    profile_picture: userRow.profile_picture || null, // ✅ FIXED: use correct column
     sex: userRow.sex || null,
     category: userRow.category || null,
     location: userRow.location || null,
@@ -56,7 +56,6 @@ const safeUserPayload = (userRow) => {
    AUTH CONTROLLER
 ====================================================== */
 const authController = {
-
   /* ===========================
      REGISTER
   ============================ */
@@ -67,7 +66,7 @@ const authController = {
         email,
         password,
         role = "user",
-        profile_pic = null,
+        profile_picture = null,
         sex = null,
         category = null,
         location = null,
@@ -86,7 +85,7 @@ const authController = {
 
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      await addUser(name, email, hashedPassword, finalRole, profile_pic, sex);
+      await addUser(name, email, hashedPassword, finalRole, profile_picture, sex);
 
       // Auto-create professional entry
       if (finalRole === "professional") {
@@ -109,7 +108,6 @@ const authController = {
         user: safeUserPayload(userRow),
         accessToken,
       });
-
     } catch (err) {
       console.error("❌ Registration error:", err);
       return res.status(500).json({ error: "Server error during registration." });
@@ -155,7 +153,6 @@ const authController = {
         user: safeUserPayload(userRow),
         accessToken,
       });
-
     } catch (err) {
       console.error("❌ Login error:", err);
       return res.status(500).json({ error: "Server error during login." });
@@ -163,7 +160,7 @@ const authController = {
   },
 
   /* ===========================
-     LOGOUT (NO REFRESH TOKENS)
+     LOGOUT
   ============================ */
   logout: async (req, res) => {
     try {
@@ -222,7 +219,6 @@ const authController = {
       await clearResetToken(user.id);
 
       return res.json({ message: "Password reset successful" });
-
     } catch (err) {
       console.error("❌ Reset password error:", err);
       return res.status(500).json({ error: "Server error during password reset." });
@@ -234,17 +230,19 @@ const authController = {
   ============================ */
   getProfile: async (req, res) => {
     try {
-      const userRow = await getUserById(req.user.id);
+      const result = await pool.query(
+        "SELECT id, name, email, role, profile_picture, sex FROM users WHERE id = $1",
+        [req.user.id]
+      );
+      const userRow = result.rows[0];
       if (!userRow) return res.status(404).json({ message: "User not found" });
 
       let profData = null;
-
       if (userRow.role === "professional") {
         const proRes = await pool.query(
           "SELECT category, location, contact FROM professionals WHERE LOWER(email) = LOWER($1) LIMIT 1",
           [userRow.email]
         );
-
         if (proRes.rows.length > 0) profData = proRes.rows[0];
       }
 
@@ -256,7 +254,6 @@ const authController = {
       });
 
       return res.json({ success: true, user: payload });
-
     } catch (err) {
       console.error("❌ Get profile error:", err);
       return res.status(500).json({ error: "Server error while fetching profile." });

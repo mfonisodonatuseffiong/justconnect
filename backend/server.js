@@ -19,12 +19,10 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      // Allow all in development
       if (process.env.NODE_ENV !== "production") {
         return callback(null, true);
       }
 
-      // Production: only allow your frontend
       const allowedOrigins = process.env.FRONTEND_URL
         ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
         : [];
@@ -40,18 +38,16 @@ const io = new Server(server, {
   },
 });
 
-// Store active users: socket.id → userId
+// Store active users
 const activeUsers = new Map();
 
-// Socket.IO connection handling
 io.on("connection", (socket) => {
   console.log("🔌 New client connected:", socket.id);
 
-  // User identifies themselves after login
   socket.on("authenticate", (userId) => {
     if (userId) {
       activeUsers.set(socket.id, userId);
-      socket.join(`user_${userId}`); // Join personal room
+      socket.join(`user_${userId}`);
       console.log(`👤 User ${userId} authenticated on socket ${socket.id}`);
     }
   });
@@ -66,7 +62,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Make io available in controllers
 app.set("io", io);
 app.set("activeUsers", activeUsers);
 
@@ -109,6 +104,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// ✅ ADD THIS LINE — Serve uploaded images
+app.use("/uploads", express.static("uploads"));
 
 /* =========================
    ROUTES

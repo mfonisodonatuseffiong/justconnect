@@ -66,6 +66,22 @@ module.exports = {
         return res.status(400).json({ success: false, message: "Missing required fields" });
       }
 
+      // ✅ PREVENT DUPLICATE PENDING BOOKINGS WITH SAME PROFESSIONAL
+      const duplicateCheck = await pool.query(
+        `SELECT id FROM bookings 
+         WHERE user_id = $1 
+         AND professional_id = $2 
+         AND status = 'pending'`,
+        [req.user.id, professional_id]
+      );
+
+      if (duplicateCheck.rows.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "You already have a pending booking with this professional. Please wait for confirmation or cancel the existing one before booking again.",
+        });
+      }
+
       const data = {
         user_id: req.user.id,
         professional_id,
@@ -138,12 +154,10 @@ module.exports = {
     const userId = req.user.id;
 
     try {
-      // Only users can cancel their own pending bookings
       if (!checkRole(req.user, ["user"])) {
         return res.status(403).json({ success: false, message: "Only users can cancel bookings" });
       }
 
-      // Find booking
       const bookingRes = await pool.query(
         "SELECT * FROM bookings WHERE id = $1 AND user_id = $2 AND status = 'pending'",
         [bookingId, userId]
@@ -155,10 +169,8 @@ module.exports = {
 
       const booking = bookingRes.rows[0];
 
-      // Cancel the booking
       await pool.query("UPDATE bookings SET status = 'cancelled' WHERE id = $1", [bookingId]);
 
-      // Increment cancellation count
       await pool.query(
         `UPDATE users 
          SET cancellation_count = cancellation_count + 1,
@@ -167,7 +179,6 @@ module.exports = {
         [userId]
       );
 
-      // Get updated count
       const countRes = await pool.query("SELECT cancellation_count FROM users WHERE id = $1", [userId]);
       const count = countRes.rows[0].cancellation_count;
 
@@ -182,10 +193,8 @@ module.exports = {
         warning = "Important: You've cancelled multiple bookings. New bookings are restricted for 7 days to maintain fairness for professionals.";
       }
 
-      // === REAL-TIME NOTIFICATIONS ===
       const io = req.app.get("io");
       if (io) {
-        // Notify user
         const userNotif = await pool.query(
           `INSERT INTO notifications (user_id, message, status, created_at) 
            VALUES ($1, $2, 'unread', NOW()) RETURNING *`,
@@ -193,7 +202,6 @@ module.exports = {
         );
         io.to(`user_${userId}`).emit("new_notification", userNotif.rows[0]);
 
-        // Notify professional
         const proNotif = await pool.query(
           `INSERT INTO notifications (user_id, message, status, created_at) 
            VALUES ($1, $2, 'unread', NOW()) RETURNING *`,
@@ -201,7 +209,6 @@ module.exports = {
         );
         io.to(`user_${booking.professional_id}`).emit("new_notification", proNotif.rows[0]);
 
-        // Emit cancellation event
         io.to(`user_${userId}`).emit("booking_cancelled", { bookingId });
         io.to(`user_${booking.professional_id}`).emit("booking_cancelled", { bookingId });
       }
@@ -277,7 +284,7 @@ module.exports = {
     }
   },
 
-  // Other methods (unchanged)
+  // Other methods unchanged...
   getAll: async (req, res) => {
     try {
       if (!checkRole(req.user, ["admin"])) {
