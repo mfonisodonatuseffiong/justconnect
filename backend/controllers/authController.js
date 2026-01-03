@@ -9,7 +9,6 @@ const pool = require("../config/db");
 const {
   addUser,
   getUserByEmail,
-  getUserById,
   updateUserPassword,
   saveResetToken,
   findUserByResetToken,
@@ -35,6 +34,7 @@ const generateAccessToken = (user) => {
 
 /* ======================================================
    SAFE USER DATA
+   Always return a consistent shape for the frontend
 ====================================================== */
 const safeUserPayload = (userRow) => {
   if (!userRow) return null;
@@ -44,11 +44,13 @@ const safeUserPayload = (userRow) => {
     name: userRow.name,
     email: userRow.email,
     role: userRow.role,
-    profile_picture: userRow.profile_picture || null, // ✅ FIXED: use correct column
+    profile_picture: userRow.profile_picture || null,
     sex: userRow.sex || null,
     category: userRow.category || null,
     location: userRow.location || null,
+    phone: userRow.phone || null,
     contact: userRow.contact || null,
+    updated_at: userRow.updated_at || null,
   };
 };
 
@@ -70,6 +72,7 @@ const authController = {
         sex = null,
         category = null,
         location = null,
+        phone = null,
         contact = null,
       } = req.body;
 
@@ -226,12 +229,13 @@ const authController = {
   },
 
   /* ===========================
-     GET PROFILE
+     GET PROFILE (/auth/me)
   ============================ */
   getProfile: async (req, res) => {
     try {
       const result = await pool.query(
-        "SELECT id, name, email, role, profile_picture, sex FROM users WHERE id = $1",
+        `SELECT id, name, email, role, profile_picture, sex, location, phone, updated_at
+         FROM users WHERE id = $1`,
         [req.user.id]
       );
       const userRow = result.rows[0];
@@ -249,8 +253,8 @@ const authController = {
       const payload = safeUserPayload({
         ...userRow,
         category: profData?.category,
-        location: profData?.location,
-        contact: profData?.contact,
+        location: profData?.location || userRow.location,
+        contact: profData?.contact || userRow.phone,
       });
 
       return res.json({ success: true, user: payload });
