@@ -13,6 +13,9 @@ const useDashboard = () => {
       completedBookings: 0,
     },
     recentBookings: [],
+    weeklyRequests: [],
+    bookingStatus: [],
+    messages: 0,
   });
 
   const [loading, setLoading] = useState(true);
@@ -37,9 +40,9 @@ const useDashboard = () => {
 
           setDashboard({
             stats: {
-              totalBookings: payload.totalBookings || 0,
-              pendingBookings: payload.pendingBookings || 0,
-              completedBookings: payload.completedBookings || 0,
+              totalBookings: payload.stats?.totalBookings || 0,
+              pendingBookings: payload.stats?.pendingBookings || 0,
+              completedBookings: payload.stats?.completedBookings || 0,
             },
             recentBookings: Array.isArray(payload.recentBookings)
               ? payload.recentBookings.map((b) => ({
@@ -51,6 +54,19 @@ const useDashboard = () => {
                   date: b.date,
                 }))
               : [],
+            weeklyRequests: Array.isArray(payload.weeklyRequests)
+              ? payload.weeklyRequests.map((r) => ({
+                  day: r.day,
+                  count: parseInt(r.count, 10),
+                }))
+              : [],
+            bookingStatus: Array.isArray(payload.bookingStatus)
+              ? payload.bookingStatus.map((s) => ({
+                  status: s.status,
+                  count: parseInt(s.count, 10),
+                }))
+              : [],
+            messages: payload.messages || 0,
           });
         } else {
           setError(res.data?.message || "Failed to load dashboard");

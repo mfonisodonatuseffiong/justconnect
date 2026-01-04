@@ -1,8 +1,8 @@
 /**
- * @description: Authentication store (Zustand)
- * - Clean, stable, industry-standard
- * - Properly exposes setUser and clearUser
- * - Ready for profile picture updates and real-time features
+ * @description Authentication store (Zustand)
+ * - Persists user in localStorage
+ * - Syncs with backend /auth/me
+ * - Exposes clean helpers for components
  */
 
 import { create } from "zustand";
@@ -15,25 +15,43 @@ import {
   resetPasswordService,
 } from "../service/authService";
 
+const savedUser = localStorage.getItem("user");
+
 export const useAuthStore = create((set, get) => ({
-  user: null,
+  /* ---------------- State ---------------- */
+  user: savedUser ? JSON.parse(savedUser) : null,
   error: null,
   isCheckingMe: false,
   hasCheckedMe: false,
 
-  // 🔥 Exposed helpers — use these in components
-  setUser: (user) => set({ user, error: null }),
-  clearUser: () => set({ user: null, error: null, hasCheckedMe: false }),
+  /* ---------------- Derived ---------------- */
+  isAuthenticated: () => Boolean(get().user),
 
+  /* ---------------- Mutators ---------------- */
+  setUser: (user) => {
+    if (!user) return;
+    localStorage.setItem("user", JSON.stringify(user));
+    set({ user, error: null });
+  },
+
+  clearUser: () => {
+    localStorage.removeItem("user");
+    set({
+      user: null,
+      error: null,
+      hasCheckedMe: false,
+    });
+  },
+
+  /* ---------------- Actions ---------------- */
   auth: {
     checkMe: async () => {
-      const { hasCheckedMe } = get();
-      if (hasCheckedMe) return;
+      if (get().hasCheckedMe) return;
 
       set({ isCheckingMe: true });
       try {
         const data = await checkMeService();
-        get().setUser(data.user); // ← Use exposed setUser
+        if (data?.user) get().setUser(data.user);
         set({ hasCheckedMe: true });
         return data;
       } catch (err) {
@@ -48,7 +66,7 @@ export const useAuthStore = create((set, get) => ({
       set({ error: null });
       try {
         const data = await loginService(payload);
-        get().setUser(data.user);
+        if (data?.user) get().setUser(data.user);
         return data;
       } catch (err) {
         get().clearUser();
@@ -71,7 +89,7 @@ export const useAuthStore = create((set, get) => ({
       set({ error: null });
       try {
         const data = await registerService(payload);
-        get().setUser(data.user);
+        if (data?.user) get().setUser(data.user);
         return data;
       } catch (err) {
         set({ error: err.message });

@@ -10,9 +10,8 @@ import { getInitials } from "../../utils/getInitials";
 import authAxios from "../../api";
 import { io } from "socket.io-client";
 
-// Vite env variable (correct way)
+// Vite environment variable
 const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
 // Backend base URL for images
 const BACKEND_URL = "http://localhost:5000";
 
@@ -31,20 +30,20 @@ const UserNavbar = () => {
 
   const defaultPic = getInitials(user?.name);
 
-  // Close dropdowns on outside click
+  // Close dropdowns when clicking outside
   useEffect(() => {
-    const handler = (e) => {
+    const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setOpenNotifications(false);
         setOpenMessages(false);
         setOpenProfile(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Initial fetch of notifications & messages — FIXED PATHS
+  // Fetch initial notifications and messages
   useEffect(() => {
     if (!user?.id) return;
 
@@ -80,7 +79,6 @@ const UserNavbar = () => {
     });
 
     newSocket.on("new_notification", (notification) => {
-      console.log("New notification:", notification);
       setNotifications((prev) => [notification, ...prev]);
       toast.success("New notification!");
     });
@@ -96,7 +94,6 @@ const UserNavbar = () => {
     });
 
     newSocket.on("new_message", (message) => {
-      console.log("New message:", message);
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === message.id || m._id === message._id);
         if (exists) return prev;
@@ -110,10 +107,7 @@ const UserNavbar = () => {
     });
 
     setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
+    return () => newSocket.disconnect();
   }, [user?.id]);
 
   const handleLogout = async () => {
@@ -124,12 +118,11 @@ const UserNavbar = () => {
       localStorage.removeItem("refreshToken");
       toast.success("Logged out successfully");
       navigate("/auth/login");
-    } catch (error) {
+    } catch {
       toast.error("Error logging out");
     }
   };
 
-  // Format relative time
   const formatTimeAgo = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -143,18 +136,9 @@ const UserNavbar = () => {
 
   return (
     <header
-      className="
-        sticky top-0 z-50
-        h-16 w-full
-        bg-white/90 backdrop-blur-md
-        border-b border-gray-200
-        shadow-sm
-        flex items-center justify-end
-        px-6 lg:px-10
-      "
+      className="sticky top-0 z-50 h-16 w-full bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm flex items-center justify-end px-6 lg:px-10"
       ref={dropdownRef}
     >
-      {/* Right Section: Icons + Avatar */}
       <div className="flex items-center gap-4">
         {/* Notifications */}
         <button
@@ -182,7 +166,7 @@ const UserNavbar = () => {
           )}
         </button>
 
-        {/* Avatar + Profile Dropdown */}
+        {/* Profile */}
         <button
           onClick={() => setOpenProfile(!openProfile)}
           className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition"
@@ -190,8 +174,12 @@ const UserNavbar = () => {
           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-md">
             {user?.profile_picture ? (
               <img
-                src={`${BACKEND_URL}${user.profile_picture}`}
-                alt={user.name || "User"}
+                src={
+                  user.profile_picture.startsWith("http")
+                    ? user.profile_picture
+                    : `${BACKEND_URL}${user.profile_picture}`
+                }
+                alt={user?.name || "User"}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -202,12 +190,13 @@ const UserNavbar = () => {
           </div>
           <div className="hidden md:block text-left">
             <p className="text-sm font-medium text-gray-900">{user?.name || "User"}</p>
-            <p className="text-xs text-gray-500">{user?.email}</p>
+            <p className="text-xs text-gray-500">{user?.email || ""}</p>
           </div>
         </button>
 
-        {/* Notifications Dropdown */}
+        {/* Dropdowns */}
         <AnimatePresence>
+          {/* Notifications Dropdown */}
           {openNotifications && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -217,12 +206,9 @@ const UserNavbar = () => {
             >
               <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-rose-50">
                 <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <Bell size={18} />
-                  Notifications
+                  <Bell size={18} /> Notifications
                   {notifications.length > 0 && (
-                    <span className="ml-auto text-sm text-orange-600">
-                      {notifications.length} new
-                    </span>
+                    <span className="ml-auto text-sm text-orange-600">{notifications.length} new</span>
                   )}
                 </h3>
               </div>
@@ -251,10 +237,8 @@ const UserNavbar = () => {
               </button>
             </motion.div>
           )}
-        </AnimatePresence>
 
-        {/* Messages Dropdown */}
-        <AnimatePresence>
+          {/* Messages Dropdown */}
           {openMessages && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -264,12 +248,9 @@ const UserNavbar = () => {
             >
               <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-rose-50">
                 <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <MessageCircle size={18} />
-                  Messages
+                  <MessageCircle size={18} /> Messages
                   {messages.length > 0 && (
-                    <span className="ml-auto text-sm text-orange-600">
-                      {messages.length} new
-                    </span>
+                    <span className="ml-auto text-sm text-orange-600">{messages.length} new</span>
                   )}
                 </h3>
               </div>
@@ -284,9 +265,7 @@ const UserNavbar = () => {
                           {(m.sender_name || m.senderName || "P").charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">
-                            {m.sender_name || m.senderName || "Professional"}
-                          </p>
+                          <p className="font-medium text-gray-900">{m.sender_name || m.senderName || "Professional"}</p>
                           <p className="text-sm text-gray-600 line-clamp-2">{m.content || m.message}</p>
                           <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(m.created_at || m.createdAt)}</p>
                         </div>
@@ -303,10 +282,8 @@ const UserNavbar = () => {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
 
-        {/* Profile Dropdown */}
-        <AnimatePresence>
+          {/* Profile Dropdown */}
           {openProfile && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -314,25 +291,27 @@ const UserNavbar = () => {
               exit={{ opacity: 0, y: -10 }}
               className="absolute top-16 right-4 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
             >
-              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-rose-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-                    {user?.profile_picture ? (
-                      <img
-                        src={`${BACKEND_URL}${user.profile_picture}`}
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-bold text-lg">
-                        {defaultPic}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{user?.name}</p>
-                    <p className="text-sm text-gray-600">{user?.email}</p>
-                  </div>
+              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-rose-50 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+                  {user?.profile_picture ? (
+                    <img
+                      src={
+                        user.profile_picture.startsWith("http")
+                          ? user.profile_picture
+                          : `${BACKEND_URL}${user.profile_picture}`
+                      }
+                      alt={user?.name || "User"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-bold text-lg">
+                      {defaultPic}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900">{user?.name || "User"}</p>
+                  <p className="text-sm text-gray-600">{user?.email || ""}</p>
                 </div>
               </div>
 
@@ -340,16 +319,14 @@ const UserNavbar = () => {
                 onClick={() => navigate("/user-dashboard/profile")}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 transition"
               >
-                <User size={18} />
-                My Profile
+                <User size={18} /> My Profile
               </button>
 
               <button
                 onClick={() => navigate("/user-dashboard/settings")}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-gray-700 transition"
               >
-                <Settings size={18} />
-                Settings
+                <Settings size={18} /> Settings
               </button>
 
               <div className="border-t border-gray-100">
@@ -357,8 +334,7 @@ const UserNavbar = () => {
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 font-medium transition"
                 >
-                  <LogOut size={18} />
-                  Logout
+                  <LogOut size={18} /> Logout
                 </button>
               </div>
             </motion.div>

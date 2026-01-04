@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import authAxios from "../../utils/authAxios";
 import { useAuthStore } from "../../store/authStore";
-import { MessageCircle, User, Clock } from "lucide-react";
+import { MessageCircle, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 
-// ✅ FIXED: Use Vite's correct syntax for environment variables
 const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 const MessagesPage = () => {
@@ -13,17 +12,17 @@ const MessagesPage = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [chatUnlockedBookings, setChatUnlockedBookings] = useState({});
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
 
   // Fetch initial messages
   useEffect(() => {
     const fetchMessages = async () => {
       if (!user?.id) return;
-
       try {
         const res = await authAxios.get(`/messages/user/${user.id}`);
         const fetchedMessages = res.data?.data || res.data?.messages || [];
-
-        // Sort newest first
         const sorted = fetchedMessages.sort(
           (a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
         );
@@ -34,14 +33,12 @@ const MessagesPage = () => {
         setLoading(false);
       }
     };
-
     fetchMessages();
   }, [user?.id]);
 
-  // Socket.IO real-time connection
+  // Socket.IO connection
   useEffect(() => {
     if (!user?.id) return;
-
     const newSocket = io(SOCKET_URL, {
       withCredentials: true,
       transports: ["websocket", "polling"],
@@ -57,33 +54,48 @@ const MessagesPage = () => {
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === message.id || m._id === message._id);
         if (exists) return prev;
-        return [message, ...prev]; // Add to top
+        return [message, ...prev];
       });
     });
 
-    setSocket(newSocket);
+    newSocket.on("chat_unlocked", ({ bookingId }) => {
+      setChatUnlockedBookings((prev) => ({ ...prev, [bookingId]: true }));
+    });
 
-    return () => {
-      newSocket.disconnect();
-    };
+    setSocket(newSocket);
+    return () => newSocket.disconnect();
   }, [user?.id]);
+
+  // Send message
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedBookingId) return;
+
+    const msg = {
+      sender_id: user.id,
+      receiver_id: null, // set based on context (professional id)
+      content: newMessage,
+      booking_id: selectedBookingId,
+    };
+
+    socket.emit("send_message", msg);
+    setMessages((prev) => [msg, ...prev]);
+    setNewMessage("");
+  };
 
   // Format timestamp
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
-
-    if (isToday) {
-      return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    } else {
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      });
-    }
+    return isToday
+      ? date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+      : date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
   };
 
   if (loading) {
@@ -141,15 +153,7 @@ const MessagesPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02, y: -4 }}
-                className="
-                  bg-white
-                  border-2 border-orange-200
-                  rounded-3xl
-                  p-6
-                  shadow-xl
-                  hover:shadow-2xl
-                  transition-all duration-300
-                "
+                className="bg-white border-2 border-orange-200 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300"
               >
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex items-center gap-4 flex-1">
@@ -174,16 +178,41 @@ const MessagesPage = () => {
                   </p>
                 </div>
 
-                {msg.bookingId && (
+                {msg.booking_id && (
                   <div className="mt-4 pl-16">
                     <p className="text-sm text-orange-600 font-medium">
-                      Related to Booking #{(msg.bookingId || "").slice(-6).toUpperCase()}
+                      Related to Booking #{(msg.booking_id || "").slice(-6).toUpperCase()}
                     </p>
                   </div>
                 )}
               </motion.div>
             ))}
           </div>
+        )}
+
+        {/* Composer */}
+        {selectedBookingId && (
+          chatUnlockedBookings[selectedBookingId] ? (
+            <form onSubmit={handleSend} className="flex gap-3 mt-6">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 border-2 border-orange-200 rounded-xl px-4 py-2"
+              />
+              <button
+                type="submit"
+                className="px-6 py-2 bg-orange-500 text-white rounded-xl font-bold"
+              >
+                Send
+              </button>
+            </form>
+          ) : (
+            <div className="p-4 bg-orange-100 text-orange-700 rounded-xl text-center mt-6">
+              Chat will be available once the professional accepts your booking.
+            </div>
+          )
         )}
       </div>
     </div>

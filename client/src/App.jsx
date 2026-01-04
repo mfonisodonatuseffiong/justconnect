@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import AOS from "aos";
@@ -7,19 +8,17 @@ import Navbar from "./components/layout/Navbar";
 import FooterBar from "./components/layout/FooterBar";
 import AppLoader from "./components/commonUI/AppLoader";
 import ScrollToTop from "./components/commonUI/ScrollTop";
-import { useAuthHook } from "./hooks/authHooks";
 import { useAuthStore } from "./store/authStore";
 
 // User Dashboard imports
 import DashboardLayout from "./dashboards/User/DashboardLayout";
 import Home from "./dashboards/User/Home";
-import RequestsPage from "./dashboards/User/RequestsPage";
 import BookingsPage from "./dashboards/User/BookingsPage";
 import MessagesPage from "./dashboards/User/MessagesPage";
 import ProfilePage from "./dashboards/User/ProfilePage";
 import SettingsPage from "./dashboards/User/SettingsPage";
 
-// 🆕 Booking flow pages
+// Booking flow pages
 import BrowseProfessionals from "./dashboards/User/BrowseProfessionals.jsx";
 import BookProfessional from "./dashboards/User/BookProfessional";
 import BookingConfirmation from "./dashboards/User/BookingConfirmation";
@@ -28,8 +27,7 @@ import BookingConfirmation from "./dashboards/User/BookingConfirmation";
 import AppRoutes from "./routes/AppRoutes";
 
 const App = () => {
-  const { checkMe } = useAuthHook();
-  const { isCheckingMe, hasCheckedMe } = useAuthStore();
+  const { auth, isCheckingMe } = useAuthStore();
   const location = useLocation();
 
   const hiddenRoutes = [
@@ -46,19 +44,21 @@ const App = () => {
     location.pathname.startsWith(path)
   );
 
+  // 🔥 Always sync with backend on app startup
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (token && !hasCheckedMe) {
+    if (token) {
       (async () => {
         try {
-          await checkMe();
+          await auth.checkMe();
         } catch (err) {
           console.error("App init checkMe error:", err);
         }
       })();
     }
-  }, [checkMe, hasCheckedMe]);
+  }, [auth]);
 
+  // AOS animations
   useEffect(() => {
     AOS.init({
       offset: 50,
@@ -76,21 +76,22 @@ const App = () => {
       <ScrollToTop />
 
       <Routes>
+        {/* Standalone Booking Confirmation Page */}
+        <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+
         {/* User Dashboard */}
         <Route path="/user-dashboard" element={<DashboardLayout />}>
           <Route index element={<Home />} />
-          <Route path="requests" element={<RequestsPage />} />
           <Route path="bookings" element={<BookingsPage />} />
-          {/* 🆕 Booking flow */}
+          {/* Booking Flow */}
           <Route path="bookings/new" element={<BrowseProfessionals />} />
           <Route path="bookings/new/:id" element={<BookProfessional />} />
-          <Route path="bookings/confirmation" element={<BookingConfirmation />} />
           <Route path="messages" element={<MessagesPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {/* Other app routes */}
+        {/* All other routes (auth, landing, 404, etc.) */}
         <Route path="/*" element={<AppRoutes />} />
       </Routes>
 

@@ -1,18 +1,17 @@
+// src/dashboards/User/UserAsideBar.jsx
 import { NavLink } from "react-router-dom";
 import {
   Home,
-  UserCheck,
   CalendarCheck,
+  Briefcase,
   MessageCircle,
   User,
   Settings,
-  Briefcase,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navLinks = [
   { title: "Home", icon: Home, link: "." },
-  { title: "My Requests", icon: UserCheck, link: "requests" },
   { title: "Bookings", icon: CalendarCheck, link: "bookings" },
   { title: "Book a Professional", icon: Briefcase, link: "bookings/new" },
   { title: "Messages", icon: MessageCircle, link: "messages" },
@@ -32,7 +31,7 @@ const UserAsideBar = () => {
         relative overflow-hidden
       "
     >
-      {/* Optional subtle decorative element */}
+      {/* Subtle background glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-orange-200/10 via-transparent to-rose-200/10 pointer-events-none" />
 
       {/* Navigation Links */}
@@ -60,7 +59,6 @@ const UserAsideBar = () => {
                 `
                 }
               >
-                {/* Active indicator bar */}
                 {({ isActive }) => (
                   <>
                     {isActive && (
@@ -81,7 +79,6 @@ const UserAsideBar = () => {
                     />
                     <span className="relative z-10">{title}</span>
 
-                    {/* Hover glow effect */}
                     {!isActive && (
                       <div className="absolute inset-0 bg-gradient-to-r from-orange-300/20 to-rose-300/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
                     )}
