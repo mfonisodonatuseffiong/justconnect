@@ -21,13 +21,12 @@ const getUserDashboard = async (req, res) => {
   try {
     const user = req.user;
     if (user.role !== "user") {
-      return res.status(403).json({ message: "Access denied. Users only." });
+      return res.status(403).json({ success: false, message: "Access denied. Users only." });
     }
 
-    // ✅ Use userId from route params
     const userId = parseInt(req.params.userId, 10);
     if (!userId) {
-      return res.status(400).json({ message: "Invalid user ID" });
+      return res.status(400).json({ success: false, message: "Invalid user ID" });
     }
 
     const page = parseInt(req.query.page) || 1;
@@ -69,24 +68,47 @@ const getUserDashboard = async (req, res) => {
       [userId]
     );
 
-    // Booking status (grouped)
+    // Booking stats (for KPI card)
+    const bookingStatsResult = await pool.query(
+      `SELECT 
+         COUNT(*) AS total_bookings,
+         COUNT(*) FILTER (WHERE status ILIKE 'pending' OR status ILIKE 'in_progress') AS pending_bookings,
+         COUNT(*) FILTER (WHERE status ILIKE 'completed' OR status ILIKE 'accepted') AS completed_bookings
+       FROM bookings
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    // Booking status breakdown (for chart)
     const bookingStatusResult = await pool.query(
-      `SELECT status, COUNT(*) AS count
+      `SELECT 
+         CASE 
+           WHEN status ILIKE 'accepted' THEN 'completed'
+           WHEN status ILIKE 'in_progress' THEN 'pending'
+           WHEN status ILIKE 'cancelled' THEN 'cancelled'
+           ELSE status
+         END AS status,
+         COUNT(*) AS count
        FROM bookings
        WHERE user_id = $1
        GROUP BY status`,
       [userId]
     );
 
-    // 🆕 Total bookings
-    const totalBookingsResult = await pool.query(
-      `SELECT COUNT(*) AS total_bookings
-       FROM bookings
-       WHERE user_id = $1`,
+    // Recent bookings (limit 5)
+    const recentBookingsResult = await pool.query(
+      `SELECT b.id, s.name AS service_name, p.name AS professional_name, p.location AS professional_location,
+              b.status, b.date
+       FROM bookings b
+       LEFT JOIN services s ON b.service_id = s.id
+       LEFT JOIN professionals p ON b.professional_id = p.id
+       WHERE b.user_id = $1
+       ORDER BY b.date DESC
+       LIMIT 5`,
       [userId]
     );
 
-    // 🆕 Messages count
+    // Messages count
     const messagesResult = await pool.query(
       `SELECT COUNT(*) AS total_messages
        FROM messages
@@ -100,28 +122,39 @@ const getUserDashboard = async (req, res) => {
       user_name: user.name,
     }));
 
+    // Format booking stats
+    const bookingStats = bookingStatsResult.rows[0] || {};
+    const stats = {
+      totalBookings: parseInt(bookingStats.total_bookings, 10) || 0,
+      pendingBookings: parseInt(bookingStats.pending_bookings, 10) || 0,
+      completedBookings: parseInt(bookingStats.completed_bookings, 10) || 0,
+    };
+
     res.json({
-      profile: {
-        id: userId,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-      stats: statsResult.rows[0],
-      requests: requestsWithUserName,
-      weeklyRequests: weeklyRequestsResult.rows,
-      bookingStatus: bookingStatusResult.rows,
-      totalBookings: parseInt(totalBookingsResult.rows[0].total_bookings, 10), // ✅ added
-      messages: parseInt(messagesResult.rows[0].total_messages, 10),
-      pagination: {
-        page,
-        limit,
-        total: parseInt(statsResult.rows[0].total),
+      success: true,
+      data: {
+        profile: {
+          id: userId,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        stats,
+        recentBookings: recentBookingsResult.rows,
+        requests: requestsWithUserName,
+        weeklyRequests: weeklyRequestsResult.rows,
+        bookingStatus: bookingStatusResult.rows,
+        messages: parseInt(messagesResult.rows[0].total_messages, 10),
+        pagination: {
+          page,
+          limit,
+          total: parseInt(statsResult.rows[0].total, 10),
+        },
       },
     });
   } catch (error) {
     console.error("User dashboard error:", error);
-    res.status(500).json({ error: "Server error fetching user dashboard" });
+    res.status(500).json({ success: false, message: "Server error fetching user dashboard" });
   }
 };
 

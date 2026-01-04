@@ -32,7 +32,7 @@ const messageController = {
   // Send a new message + Real-time broadcast
   sendMessage: async (req, res) => {
     try {
-      const { sender_id, receiver_id, content } = req.body;
+      const { sender_id, receiver_id, content, booking_id } = req.body;
 
       if (!sender_id || !receiver_id || !content?.trim()) {
         return res.status(400).json({ 
@@ -41,12 +41,32 @@ const messageController = {
         });
       }
 
+      // ✅ Check booking acceptance before allowing chat
+      if (booking_id) {
+        const bookingRes = await pool.query(
+          `SELECT status FROM bookings 
+           WHERE id = $1 AND (user_id = $2 OR professional_id = $2)`,
+          [booking_id, sender_id]
+        );
+
+        if (bookingRes.rows.length === 0) {
+          return res.status(404).json({ success: false, message: "Booking not found" });
+        }
+
+        if (bookingRes.rows[0].status !== "accepted") {
+          return res.status(403).json({ 
+            success: false, 
+            message: "Chat is only available once the professional accepts the booking" 
+          });
+        }
+      }
+
       // Insert message
       const result = await pool.query(
-        `INSERT INTO messages (sender_id, receiver_id, content, created_at) 
-         VALUES ($1, $2, $3, NOW()) 
+        `INSERT INTO messages (sender_id, receiver_id, content, booking_id, created_at) 
+         VALUES ($1, $2, $3, $4, NOW()) 
          RETURNING *`,
-        [sender_id, receiver_id, content.trim()]
+        [sender_id, receiver_id, content.trim(), booking_id || null]
       );
 
       const newMessage = result.rows[0];
@@ -68,9 +88,7 @@ const messageController = {
       // === REAL-TIME BROADCAST ===
       const io = req.app.get("io");
       if (io) {
-        // Send to receiver
         io.to(`user_${receiver_id}`).emit("new_message", message);
-        // Send back to sender (for instant UI update)
         io.to(`user_${sender_id}`).emit("new_message", message);
 
         console.log(`📩 Message sent in real-time to users ${sender_id} & ${receiver_id}`);
@@ -103,7 +121,7 @@ const messageController = {
 
       const { sender_id, receiver_id } = result.rows[0];
 
-      // Notify both users of deletion (optional enhancement)
+      // Notify both users of deletion
       const io = req.app.get("io");
       if (io) {
         io.to(`user_${sender_id}`).emit("message_deleted", { messageId: id });
