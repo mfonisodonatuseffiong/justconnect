@@ -1,14 +1,17 @@
+// src/pages/User/MessagesPage.jsx
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import authAxios from "../../utils/authAxios";
 import { useAuthStore } from "../../store/authStore";
-import { MessageCircle, Clock } from "lucide-react";
+import { MessageCircle, Clock, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const SOCKET_URL =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 const MessagesPage = () => {
   const { user } = useAuthStore();
+
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
@@ -16,16 +19,24 @@ const MessagesPage = () => {
   const [chatUnlockedBookings, setChatUnlockedBookings] = useState({});
   const [selectedBookingId, setSelectedBookingId] = useState(null);
 
-  // Fetch initial messages
+  /* =======================
+     Fetch Initial Messages
+  ======================== */
   useEffect(() => {
     const fetchMessages = async () => {
       if (!user?.id) return;
+
       try {
         const res = await authAxios.get(`/messages/user/${user.id}`);
-        const fetchedMessages = res.data?.data || res.data?.messages || [];
-        const sorted = fetchedMessages.sort(
-          (a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date)
+        const fetched =
+          res.data?.data || res.data?.messages || [];
+
+        const sorted = fetched.sort(
+          (a, b) =>
+            new Date(b.createdAt || b.date) -
+            new Date(a.createdAt || a.date)
         );
+
         setMessages(sorted);
       } catch (err) {
         console.error("Error fetching messages:", err);
@@ -33,47 +44,64 @@ const MessagesPage = () => {
         setLoading(false);
       }
     };
+
     fetchMessages();
   }, [user?.id]);
 
-  // Socket.IO connection
+  /* =======================
+     Socket.IO Connection
+  ======================== */
   useEffect(() => {
     if (!user?.id) return;
+
     const newSocket = io(SOCKET_URL, {
       withCredentials: true,
       transports: ["websocket", "polling"],
     });
 
     newSocket.on("connect", () => {
-      console.log("Messages page connected to Socket.IO");
+      console.log("Connected to Socket.IO (messages)");
       newSocket.emit("authenticate", user.id);
     });
 
     newSocket.on("new_message", (message) => {
-      console.log("New message received:", message);
       setMessages((prev) => {
-        const exists = prev.some((m) => m.id === message.id || m._id === message._id);
+        const exists = prev.some(
+          (m) => m.id === message.id || m._id === message._id
+        );
         if (exists) return prev;
         return [message, ...prev];
       });
     });
 
+    newSocket.on("message_deleted", ({ messageId }) => {
+      setMessages((prev) =>
+        prev.filter((m) => (m.id || m._id) !== messageId)
+      );
+    });
+
     newSocket.on("chat_unlocked", ({ bookingId }) => {
-      setChatUnlockedBookings((prev) => ({ ...prev, [bookingId]: true }));
+      setChatUnlockedBookings((prev) => ({
+        ...prev,
+        [bookingId]: true,
+      }));
     });
 
     setSocket(newSocket);
+
     return () => newSocket.disconnect();
   }, [user?.id]);
 
-  // Send message
-  const handleSend = async (e) => {
+  /* =======================
+     Send Message
+  ======================== */
+  const handleSend = (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedBookingId) return;
 
     const msg = {
       sender_id: user.id,
-      receiver_id: null, // set based on context (professional id)
+      receiver_id: null, // set based on context
       content: newMessage,
       booking_id: selectedBookingId,
     };
@@ -83,13 +111,35 @@ const MessagesPage = () => {
     setNewMessage("");
   };
 
-  // Format timestamp
+  /* =======================
+     Delete Message
+  ======================== */
+  const handleDelete = async (msgId) => {
+    try {
+      setMessages((prev) =>
+        prev.filter((m) => (m.id || m._id) !== msgId)
+      );
+      await authAxios.delete(`/messages/${msgId}`);
+    } catch (err) {
+      console.error("Error deleting message:", err);
+    }
+  };
+
+  /* =======================
+     Format Date
+  ======================== */
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
+
+    const isToday =
+      date.toDateString() === now.toDateString();
+
     return isToday
-      ? date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+      ? date.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        })
       : date.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
@@ -98,19 +148,31 @@ const MessagesPage = () => {
         });
   };
 
+  /* =======================
+     Loading State
+  ======================== */
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "linear",
+          }}
           className="w-16 h-16 rounded-full border-8 border-orange-200 border-t-orange-500"
         />
-        <p className="mt-6 text-xl text-orange-600 font-medium">Loading your messages...</p>
+        <p className="mt-6 text-xl text-orange-600 font-medium">
+          Loading your messages...
+        </p>
       </div>
     );
   }
 
+  /* =======================
+     Render
+  ======================== */
   return (
     <div className="min-h-screen bg-orange-50 p-6 lg:p-10">
       {/* Header */}
@@ -128,22 +190,20 @@ const MessagesPage = () => {
         </p>
       </motion.div>
 
-      {/* Messages List */}
+      {/* Messages */}
       <div className="max-w-4xl mx-auto">
         {messages.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-20 bg-white rounded-3xl shadow-xl border border-orange-200"
-          >
+          <div className="text-center py-20 bg-white rounded-3xl shadow-xl border border-orange-200">
             <div className="w-32 h-32 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-6">
               <MessageCircle size={56} className="text-orange-400" />
             </div>
-            <p className="text-2xl font-semibold text-slate-700">No messages yet</p>
-            <p className="text-slate-500 mt-3 text-lg">
-              Messages from professionals will appear here instantly after booking
+            <p className="text-2xl font-semibold text-slate-700">
+              No messages yet
             </p>
-          </motion.div>
+            <p className="text-slate-500 mt-3 text-lg">
+              Messages from professionals will appear here after booking
+            </p>
+          </div>
         ) : (
           <div className="space-y-6">
             {messages.map((msg, index) => (
@@ -153,35 +213,55 @@ const MessagesPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02, y: -4 }}
-                className="bg-white border-2 border-orange-200 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300"
+                className="bg-white border-2 border-orange-200 rounded-3xl p-6 shadow-xl"
               >
-                <div className="flex items-start justify-between gap-6">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                      {(msg.sender_name || msg.senderName || "P").charAt(0).toUpperCase()}
+                <div className="flex justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-rose-400 flex items-center justify-center text-white font-bold">
+                      {(msg.sender_name ||
+                        msg.senderName ||
+                        "P")[0].toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-800 text-lg">
-                        {msg.sender_name || msg.senderName || "Professional"}
+                      <p className="font-bold text-slate-800">
+                        {msg.sender_name ||
+                          msg.senderName ||
+                          "Professional"}
                       </p>
-                      <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
+                      <p className="text-sm text-slate-500 flex items-center gap-1">
                         <Clock size={14} />
-                        {formatDate(msg.createdAt || msg.date || msg.created_at)}
+                        {formatDate(
+                          msg.createdAt ||
+                            msg.date ||
+                            msg.created_at
+                        )}
                       </p>
                     </div>
                   </div>
+
+                  <button
+                    onClick={() =>
+                      handleDelete(msg.id || msg._id)
+                    }
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 size={20} />
+                  </button>
                 </div>
 
-                <div className="mt-5 pl-16">
-                  <p className="text-lg text-slate-700 leading-relaxed">
+                <div className="mt-4 pl-16">
+                  <p className="text-slate-700 text-lg">
                     {msg.content || msg.message}
                   </p>
                 </div>
 
                 {msg.booking_id && (
-                  <div className="mt-4 pl-16">
+                  <div className="mt-3 pl-16">
                     <p className="text-sm text-orange-600 font-medium">
-                      Related to Booking #{(msg.booking_id || "").slice(-6).toUpperCase()}
+                      Related to Booking #
+                      {String(msg.booking_id)
+                        .slice(-6)
+                        .toUpperCase()}
                     </p>
                   </div>
                 )}
@@ -193,24 +273,30 @@ const MessagesPage = () => {
         {/* Composer */}
         {selectedBookingId && (
           chatUnlockedBookings[selectedBookingId] ? (
-            <form onSubmit={handleSend} className="flex gap-3 mt-6">
+            <form
+              onSubmit={handleSend}
+              className="flex gap-3 mt-6"
+            >
               <input
                 type="text"
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) =>
+                  setNewMessage(e.target.value)
+                }
                 placeholder="Type your message..."
                 className="flex-1 border-2 border-orange-200 rounded-xl px-4 py-2"
               />
               <button
                 type="submit"
-                className="px-6 py-2 bg-orange-500 text-white rounded-xl font-bold"
+                className="px-6 py-2 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition"
               >
                 Send
               </button>
             </form>
           ) : (
             <div className="p-4 bg-orange-100 text-orange-700 rounded-xl text-center mt-6">
-              Chat will be available once the professional accepts your booking.
+              Chat will be available once the professional
+              accepts your booking.
             </div>
           )
         )}

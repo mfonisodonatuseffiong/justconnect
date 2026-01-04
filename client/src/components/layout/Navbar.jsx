@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, LogIn, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../../store/authStore";
@@ -14,6 +14,7 @@ const Navbar = () => {
   const isAuthenticated = useAuthStore((state) => !!state.user);
   const { auth } = useAuthHook();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navLinks = [
     { title: "Explore", link: "/explore-services" },
@@ -29,6 +30,8 @@ const Navbar = () => {
     try {
       const res = await auth.logout();
       toast.success(res.message || "Logged out successfully!");
+      // Redirect to hero section (main page)
+      navigate("/");
     } catch (err) {
       toast.error(err.message || "Logout failed. Please try again.");
     }

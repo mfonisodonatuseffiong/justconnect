@@ -1,3 +1,4 @@
+// src/dashboards/User/UserHome.jsx
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -111,59 +112,10 @@ const UserHome = () => {
         </div>
       </section>
 
-      {/* Status Summary */}
-      <section className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {chartData.map((card) => (
-            <motion.div
-              key={card.status}
-              whileHover={{ scale: 1.05, y: -6 }}
-              className="bg-white border-2 border-orange-200 rounded-3xl p-8 text-center shadow-xl"
-            >
-              {card.status === "completed" && (
-                <CheckCircle className="mx-auto mb-4 text-rose-500" size={48} />
-              )}
-              {card.status === "pending" && (
-                <FileText className="mx-auto mb-4 text-orange-500" size={48} />
-              )}
-              {card.status === "cancelled" && (
-                <XCircle className="mx-auto mb-4 text-red-500" size={48} />
-              )}
-
-              <p className="capitalize text-lg font-semibold text-slate-600">
-                {card.status}
-              </p>
-              <p className="text-4xl font-extrabold text-slate-800 mt-2">
-                {card.count}
-              </p>
-            </motion.div>
-          ))}
-
-          {/* Total */}
-          <motion.div
-            whileHover={{ scale: 1.05, y: -6 }}
-            className="bg-gradient-to-br from-orange-400 to-rose-400 rounded-3xl p-8 text-center shadow-xl text-white"
-          >
-            <CalendarCheck className="mx-auto mb-4" size={48} />
-            <p className="text-lg font-semibold opacity-90">
-              All Time Total
-            </p>
-            <p className="text-5xl font-extrabold mt-2">
-              {dashboard.stats.totalBookings}
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Charts */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-7xl mx-auto">
         {/* Weekly Line Chart */}
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="bg-white border-2 border-orange-200 rounded-3xl p-8 shadow-xl h-96"
-        >
+        <motion.div className="bg-white border-2 border-orange-200 rounded-3xl p-8 shadow-xl h-96">
           <h2 className="text-2xl font-bold mb-6 text-orange-600">
             Weekly Requests Trend
           </h2>
@@ -191,51 +143,64 @@ const UserHome = () => {
         </motion.div>
 
         {/* Status Bar Chart */}
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          className="bg-white border-2 border-orange-200 rounded-3xl p-8 shadow-xl h-96"
-        >
+        <motion.div className="bg-white border-2 border-orange-200 rounded-3xl p-8 shadow-xl h-96">
           <h2 className="text-2xl font-bold mb-6 text-orange-600">
             Current Booking Status
           </h2>
 
-          {chartData.length === 0 ? (
-            <p className="text-slate-500 text-center mt-32">
-              No booking data available
-            </p>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="4 4" stroke="#fed7aa" />
-                <XAxis dataKey="status" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" radius={[20, 20, 0, 0]}>
-                  {chartData.map((entry) => (
-                    <Cell key={entry.status} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="4 4" stroke="#fed7aa" />
+              <XAxis dataKey="status" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" radius={[20, 20, 0, 0]}>
+                {chartData.map((entry) => (
+                  <Cell key={entry.status} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </motion.div>
       </section>
 
+      {/* Action Buttons */}
+      <motion.section className="flex flex-col sm:flex-row gap-6 justify-center mt-12">
+        {/* View All Requests — FIXED */}
+        <Link
+          to="/user-dashboard/requests"
+          className="flex items-center justify-center gap-3 rounded-xl 
+                     bg-gradient-to-r from-orange-300 to-orange-500 
+                     px-8 py-4 font-bold text-white text-lg 
+                     shadow-lg hover:shadow-xl hover:scale-105 transition"
+        >
+          View All Requests <ArrowRight size={20} />
+        </Link>
+
+        {/* View All Bookings */}
+        <Link
+          to="/user-dashboard/bookings"
+          className="flex items-center justify-center gap-3 rounded-xl 
+                     bg-white border-4 border-orange-400 
+                     text-orange-600 px-8 py-4 font-bold text-lg 
+                     shadow-lg hover:bg-orange-500 hover:text-white 
+                     hover:border-orange-500 transition hover:scale-105"
+        >
+          View All Bookings <ArrowRight size={20} />
+        </Link>
+      </motion.section>
+
       {/* Loading & Error */}
       {loading && (
-        <div className="text-center py-20">
-          <p className="text-slate-600 text-xl">
-            Loading your dashboard...
-          </p>
-        </div>
+        <p className="text-center py-20 text-xl text-slate-600">
+          Loading your dashboard...
+        </p>
       )}
 
       {error && (
-        <div className="text-center py-20">
-          <p className="text-red-600 text-xl">Error: {error}</p>
-        </div>
+        <p className="text-center py-20 text-xl text-red-600">
+          Error: {error}
+        </p>
       )}
     </div>
   );
