@@ -6,7 +6,7 @@ import { getProfessionals } from "../service/servicesService";
 import { useAuthHook } from "../hooks/authHooks";
 
 const categories = [
-  "", "Electrician", "Plumber", "Carpenter", "Painter",
+  "Electrician", "Plumber", "Carpenter", "Painter",
   "Mechanic", "Cleaner", "Hair Stylist", "Tailor",
   "Driver", "Chef", "Technician", "Mason", "Gardener", "Teacher"
 ];
@@ -14,13 +14,13 @@ const categories = [
 const locations = ["", "Lagos", "Abuja", "Port Harcourt"];
 
 export default function Service() {
-  const { user, isAuthenticated } = useAuthHook();
+  const { isAuthenticated } = useAuthHook();
   const [filters, setFilters] = useState({ location: "", category: "", search: "" });
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const limit = 12; // items per page
+  const limit = 12;
   const [error, setError] = useState(null);
 
   const fetchProfessionals = async () => {
@@ -33,10 +33,9 @@ export default function Service() {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem("token"); // make sure login stores token
+      const token = localStorage.getItem("token");
       const res = await getProfessionals({ ...filters, page, limit, token });
 
-      // handle backend response format
       setProfessionals(res.data || []);
       setTotalPages(Math.ceil((res.total || res.data.length) / limit));
     } catch (err) {
@@ -57,23 +56,40 @@ export default function Service() {
     setPage(1);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="text-center mt-20 text-red-500">
-        You must be logged in to view professionals.
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen mt-[6rem] p-2">
-      <div className="mb-8 bg-gradient-to-tl from-brand via-primary-gray to-brand backdrop-blur-sm p-2 pt-16 md:py-20 rounded-2xl shadow-lg z-30">
+      {/* ✅ Always show Our Services cards */}
+      <section className="mb-16">
+        <h2 className="text-3xl font-bold text-center mb-4">Our Services</h2>
+        <p className="text-center text-gray-600 mb-10">
+          We connect clients with verified professionals for all kinds of artisan jobs.
+        </p>
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {categories.map((cat) => (
+            <div
+              key={cat}
+              onClick={() => handleFilterChange("category", cat)}
+              className="cursor-pointer transform hover:scale-105 transition"
+            >
+              <Card
+                img={null}
+                name={cat}
+                profession={cat}
+                location="Available Nationwide"
+              />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ✅ Professionals list (only if logged in) */}
+      <div className="mb-8 bg-gradient-to-tl from-brand via-primary-gray to-brand p-6 rounded-2xl shadow-lg">
         <h1 className="text-2xl sm:text-3xl font-bold text-center">
           Find & Hire Skilled <span className="text-accent">Professionals</span>
         </h1>
 
         {/* Filters */}
-        <div className="max-w-7xl mx-auto mt-4 md:mt-16 grid sm:grid-cols-3 gap-4 backdrop-blur-sm p-4 rounded-2xl shadow-lg mb-10 z-30">
+        <div className="max-w-7xl mx-auto mt-6 grid sm:grid-cols-3 gap-4 p-4 rounded-2xl shadow-lg">
           <SelectDropdown
             value={filters.location}
             onChange={(val) => handleFilterChange("location", val)}
@@ -84,7 +100,7 @@ export default function Service() {
           <SelectDropdown
             value={filters.category}
             onChange={(val) => handleFilterChange("category", val)}
-            options={categories}
+            options={["", ...categories]}
             placeholder="All Categories"
             icon={Briefcase}
           />
@@ -105,7 +121,7 @@ export default function Service() {
       ) : error ? (
         <p className="text-center text-red-500 mt-20">{error}</p>
       ) : professionals.length === 0 ? (
-        <p className="text-center text-primary-gray col-span-full opacity-80 mt-20">
+        <p className="text-center text-primary-gray opacity-80 mt-20">
           No professionals match your filters.
         </p>
       ) : (
