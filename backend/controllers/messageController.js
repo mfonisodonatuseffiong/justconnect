@@ -2,7 +2,7 @@
 const pool = require("../config/db");
 
 const messageController = {
-  // Get messages for a specific user
+  // 📩 Get messages for a specific user
   getUserMessages: async (req, res) => {
     try {
       const { userId } = req.params;
@@ -14,7 +14,8 @@ const messageController = {
          FROM messages m
          LEFT JOIN users sender ON m.sender_id = sender.id
          LEFT JOIN users receiver ON m.receiver_id = receiver.id
-         WHERE m.sender_id = $1 OR m.receiver_id = $1 
+         WHERE (m.sender_id = $1 OR m.receiver_id = $1)
+           AND (m.deleted IS NULL OR m.deleted = false) -- hide deleted from user
          ORDER BY m.created_at DESC`,
         [userId]
       );
@@ -29,7 +30,7 @@ const messageController = {
     }
   },
 
-  // Send a new message + Real-time broadcast
+  // 📨 Send a new message + Real-time broadcast
   sendMessage: async (req, res) => {
     try {
       const { sender_id, receiver_id, content, booking_id } = req.body;
@@ -63,8 +64,8 @@ const messageController = {
 
       // Insert message
       const result = await pool.query(
-        `INSERT INTO messages (sender_id, receiver_id, content, booking_id, created_at) 
-         VALUES ($1, $2, $3, $4, NOW()) 
+        `INSERT INTO messages (sender_id, receiver_id, content, booking_id, created_at, deleted) 
+         VALUES ($1, $2, $3, $4, NOW(), false) 
          RETURNING *`,
         [sender_id, receiver_id, content.trim(), booking_id || null]
       );
@@ -105,13 +106,16 @@ const messageController = {
     }
   },
 
-  // Delete a message
+  // 🗑️ Soft Delete a message (mark as deleted, keep record for audit)
   deleteMessage: async (req, res) => {
     try {
       const { id } = req.params;
 
       const result = await pool.query(
-        "DELETE FROM messages WHERE id = $1 RETURNING sender_id, receiver_id",
+        `UPDATE messages 
+         SET deleted = true, deleted_at = NOW() 
+         WHERE id = $1 
+         RETURNING sender_id, receiver_id`,
         [id]
       );
 
@@ -128,7 +132,7 @@ const messageController = {
         io.to(`user_${receiver_id}`).emit("message_deleted", { messageId: id });
       }
 
-      res.status(200).json({ success: true, message: "Message deleted successfully" });
+      res.status(200).json({ success: true, message: "Message deleted (soft delete)" });
     } catch (err) {
       console.error("❌ Error deleting message:", err.message);
       res.status(500).json({ success: false, message: "Server error deleting message" });

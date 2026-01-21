@@ -51,6 +51,7 @@ safeRoute(
         return res.status(500).json({ message: "Server error: getUserProfileById missing" });
       }
 
+      // Call the controller method directly
       const fullProfile = await authController.getUserProfileById(req, res);
 
       res.json({

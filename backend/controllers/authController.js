@@ -167,7 +167,20 @@ const authController = {
   ============================ */
   logout: async (req, res) => {
     try {
-      return res.json({ message: "Logged out successfully." });
+      // Clear JWT cookie if present
+      res.clearCookie("token");
+
+      // Destroy session if using express-session
+      if (req.session) {
+        req.session.destroy(err => {
+          if (err) {
+            console.error("❌ Session destroy error:", err);
+          }
+        });
+      }
+
+      // Redirect to hero section (main page)
+      return res.redirect("/");
     } catch (err) {
       console.error("❌ Logout error:", err);
       return res.status(500).json({ error: "Server error during logout." });
@@ -266,6 +279,5 @@ const authController = {
 };
 
 /* Dashboard compatibility */
-authController.getUserProfileById = authController.getProfile;
-
+authController.getUserProfileBy
 module.exports = authController;
