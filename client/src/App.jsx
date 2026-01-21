@@ -8,6 +8,7 @@ import FooterBar from "./components/layout/FooterBar";
 import AppLoader from "./components/commonUI/AppLoader";
 import ScrollToTop from "./components/commonUI/ScrollTop";
 import { useAuthStore } from "./store/authStore";
+import Explore from "./pages/Explore";
 
 // User Dashboard
 import DashboardLayout from "./dashboards/User/DashboardLayout";
@@ -78,6 +79,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+        <Route path="/explore" element={<Explore />} />
 
         <Route path="/user-dashboard" element={<DashboardLayout />}>
           <Route index element={<Home />} />

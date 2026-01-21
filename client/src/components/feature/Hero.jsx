@@ -1,6 +1,6 @@
 /**
- * @desc Premium Hero Section – Industry Standard Design
- *       Smooth scroll to "Our Services" for maximum engagement
+ * @desc Premium Hero Section – Enhanced Background Design
+ *       Subtle, modern depth using senior-dev techniques
  */
 import { Link } from "react-router-dom";
 import { LayoutDashboard, UserPlus } from "lucide-react";
@@ -8,9 +8,8 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
 
 const Hero = () => {
-  const user = useAuthStore((state => state.user));
+  const user = useAuthStore((state) => state.user);
 
-  // Smooth scroll to Our Services section
   const scrollToServices = () => {
     const servicesSection = document.getElementById("our-services");
     if (servicesSection) {
@@ -23,14 +22,27 @@ const Hero = () => {
 
   return (
     <section className="relative bg-gradient-to-br from-orange-50 via-white to-rose-50 overflow-hidden py-24 md:py-32">
-      {/* Background Image */}
+      {/* Enhanced Background Layers – Senior Dev Style */}
       <div className="absolute inset-0 -z-10">
+        {/* Main Background Image */}
         <img
           src="/hero.webp"
           alt="Trusted Artisans at Work"
-          className="w-full h-full object-cover opacity-20"
+          className="w-full h-full object-cover opacity-15"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/80" />
+
+        {/* Subtle Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-white/70" />
+
+        {/* Floating Orbs – Depth & Movement */}
+        <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-orange-300/30 to-rose-300/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-32 right-20 w-80 h-80 bg-gradient-to-tl from-rose-300/25 to-orange-200/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-to-r from-orange-200/20 to-transparent rounded-full blur-2xl animate-ping slow" />
+
+        {/* Grain Texture Overlay – Premium Feel */}
+        <div className="absolute inset-0 mix-blend-multiply opacity-5">
+          <div className="w-full h-full bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[length:20px_20px]" />
+        </div>
       </div>
 
       {/* Main Content */}
@@ -60,7 +72,6 @@ const Hero = () => {
           {/* CTA Buttons */}
           <div className="mt-12 flex flex-col sm:flex-row gap-6 justify-center items-center">
             {user ? (
-              // Logged-in user: Go to dashboard
               <Link
                 to="/user-dashboard"
                 className="group relative inline-flex items-center justify-center gap-4 px-12 py-6 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold text-xl shadow-2xl hover:shadow-orange-300/50 transition-all duration-300 overflow-hidden"
@@ -71,7 +82,6 @@ const Hero = () => {
               </Link>
             ) : (
               <>
-                {/* Primary CTA: Smooth scroll to Our Services */}
                 <button
                   onClick={scrollToServices}
                   className="group relative inline-flex items-center px-14 py-7 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold text-xl shadow-2xl hover:shadow-orange-400/60 transition-all duration-300 overflow-hidden cursor-pointer"
@@ -80,7 +90,6 @@ const Hero = () => {
                   <div className="absolute inset-0 bg-white/20 scale-0 group-hover:scale-150 transition-transform duration-700" />
                 </button>
 
-                {/* Secondary CTA: Create Account */}
                 <Link
                   to="/auth/signup"
                   className="group inline-flex items-center gap-4 px-12 py-7 rounded-full border-3 border-orange-500 text-orange-600 font-bold text-xl bg-white hover:bg-orange-500 hover:text-white shadow-xl hover:shadow-orange-300/50 transition-all duration-300"

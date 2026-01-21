@@ -1,27 +1,61 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Search, MapPin, Briefcase } from "lucide-react";
 import Card from "../components/commonUI/Card";
 import SelectDropdown from "../components/commonUI/selectDropdownList";
 import { getProfessionals } from "../service/servicesService";
 import { useAuthHook } from "../hooks/authHooks";
-
-const categories = [
-  "Electrician", "Plumber", "Carpenter", "Painter",
-  "Mechanic", "Cleaner", "Hair Stylist", "Tailor",
-  "Driver", "Chef", "Technician", "Mason", "Gardener", "Teacher"
-];
-
-const locations = ["", "Lagos", "Abuja", "Port Harcourt"];
+import authAxios from "../api"; // adjust path if needed
 
 export default function Service() {
   const { isAuthenticated } = useAuthHook();
-  const [filters, setFilters] = useState({ location: "", category: "", search: "" });
+  const locationHook = useLocation();
+
+  // Read query param "service" from URL
+  const params = new URLSearchParams(locationHook.search);
+  const initialService = params.get("service") || "";
+
+  const [filters, setFilters] = useState({ location: "", category: initialService, search: "" });
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 12;
   const [error, setError] = useState(null);
+
+  // Dynamic categories from backend
+  const [categories, setCategories] = useState([]);
+
+  // Fetch real categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await authAxios.get("/services");
+        const cats = Array.isArray(res.data) ? res.data.map(c => c.name || c.title || c.service_name) : [];
+
+        // Fallback if backend empty/fails
+        if (cats.length === 0) {
+          cats.push(
+            "Plumbing", "Electrical", "Carpentry", "Painting",
+            "Mechanic", "Cleaning", "Hair & Beauty", "Tailor",
+            "Driver", "Chef", "Tech Repair", "Mason", "Gardener", "Tutoring", "Music Lessons", "Photography", "Childcare", "Auto Repair"
+          );
+        }
+
+        setCategories(cats);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+        // Fallback hardcoded
+        setCategories([
+          "Plumbing", "Electrical", "Carpentry", "Painting",
+          "Mechanic", "Cleaning", "Hair & Beauty", "Tailor",
+          "Driver", "Chef", "Tech Repair", "Mason", "Gardener", "Tutoring", "Music Lessons", "Photography", "Childcare", "Auto Repair"
+        ]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const fetchProfessionals = async () => {
     if (!isAuthenticated) {
@@ -34,10 +68,17 @@ export default function Service() {
     setError(null);
     try {
       const token = localStorage.getItem("token");
-      const res = await getProfessionals({ ...filters, page, limit, token });
+      const res = await getProfessionals({
+        service: filters.category || undefined,
+        location: filters.location || undefined,
+        search: filters.search || undefined,
+        page,
+        limit,
+        token,
+      });
 
       setProfessionals(res.data || []);
-      setTotalPages(Math.ceil((res.total || res.data.length) / limit));
+      setTotalPages(Math.ceil((res.total || res.data?.length || 0) / limit));
     } catch (err) {
       console.error("Error fetching professionals:", err);
       setProfessionals([]);
@@ -58,7 +99,7 @@ export default function Service() {
 
   return (
     <div className="min-h-screen mt-[6rem] p-2">
-      {/* ✅ Always show Our Services cards */}
+      {/* Our Services cards – now using dynamic categories */}
       <section className="mb-16">
         <h2 className="text-3xl font-bold text-center mb-4">Our Services</h2>
         <p className="text-center text-gray-600 mb-10">
@@ -82,7 +123,7 @@ export default function Service() {
         </div>
       </section>
 
-      {/* ✅ Professionals list (only if logged in) */}
+      {/* Professionals list (only if logged in) */}
       <div className="mb-8 bg-gradient-to-tl from-brand via-primary-gray to-brand p-6 rounded-2xl shadow-lg">
         <h1 className="text-2xl sm:text-3xl font-bold text-center">
           Find & Hire Skilled <span className="text-accent">Professionals</span>
@@ -93,7 +134,7 @@ export default function Service() {
           <SelectDropdown
             value={filters.location}
             onChange={(val) => handleFilterChange("location", val)}
-            options={locations}
+            options={["", "Lagos", "Abuja", "Port Harcourt"]}
             placeholder="All Locations"
             icon={MapPin}
           />
@@ -101,7 +142,7 @@ export default function Service() {
             value={filters.category}
             onChange={(val) => handleFilterChange("category", val)}
             options={["", ...categories]}
-            placeholder="All Categories"
+            placeholder="All Services"
             icon={Briefcase}
           />
           <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg">
@@ -121,18 +162,25 @@ export default function Service() {
       ) : error ? (
         <p className="text-center text-red-500 mt-20">{error}</p>
       ) : professionals.length === 0 ? (
-        <p className="text-center text-primary-gray opacity-80 mt-20">
-          No professionals match your filters.
-        </p>
+        <div className="text-center mt-20">
+          <p className="text-xl font-semibold text-slate-700">
+            {filters.category
+              ? `No professionals available in ${filters.category} at the moment.`
+              : "No professionals match your filters."}
+          </p>
+          <p className="mt-3 text-slate-500">
+            Please check back later or try a different category/location.
+          </p>
+        </div>
       ) : (
         <>
           <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {professionals.map((pro) => (
               <Card
                 key={pro.id}
-                img={pro.avatar || "https://i.pravatar.cc/150"}
+                img={pro.photo || pro.avatar || "https://i.pravatar.cc/150"}
                 name={pro.name}
-                profession={pro.category || "N/A"}
+                profession={pro.service_name || pro.service || pro.category || "N/A"}
                 location={pro.location || "Unknown"}
               />
             ))}

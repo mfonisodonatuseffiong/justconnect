@@ -1,185 +1,165 @@
 /**
- * @desc Main Navbar for the entire application
- *      - Fixed at top, responsive, clean & modern
+ * @desc Premium Main Navbar – Industry Standard Design
+ *       Smooth scroll to landing page sections (About, FAQ, Services)
  */
-
 import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, LogIn, ChevronRight } from "lucide-react";
-import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { Menu, X, LogIn, LogOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../../store/authStore";
-import { useAuthHook } from "../../hooks/authHooks";
 
 const Navbar = () => {
-  const isAuthenticated = useAuthStore((state) => !!state.user);
-  const { auth } = useAuthHook();
+  const user = useAuthStore((state) => state.user);
+  const clearUser = useAuthStore((state) => state.clearUser);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
 
-  const navLinks = [
-    { title: "Explore", link: "/explore-services" },
-    { title: "About", link: "/about-us" },
-    { title: "FAQ", link: "/faqs" },
-    { title: "Contact", link: "/contact-us" },
-  ];
-
-  const toggleMobileMenu = () => setMobileMenuOpen((prev) => !prev);
-
-  const handleLogout = async () => {
+  // Smooth scroll to section
+  const scrollToSection = (sectionId) => {
     setMobileMenuOpen(false);
-    try {
-      const res = await auth.logout();
-      toast.success(res.message || "Logged out successfully!");
-      // Redirect to hero section (main page)
-      navigate("/");
-    } catch (err) {
-      toast.error(err.message || "Logout failed. Please try again.");
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // If section not found (not on landing page), go to home and scroll
+      window.location.href = `/#${sectionId}`;
     }
   };
 
+  // Logout handler
+  const handleLogout = () => {
+    clearUser();
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    setMobileMenuOpen(false);
+    window.location.href = "/"; // Go to home page
+  };
+
+  const navItems = [
+    { label: "Explore", action: () => scrollToSection("our-services") },
+    { label: "About", action: () => scrollToSection("about") },
+    { label: "FAQ", action: () => scrollToSection("faq") },
+    { label: "Contact", link: "/contact-us" },
+  ];
+
   return (
     <>
-      <header
-        className="
-          fixed top-0 left-0 right-0 z-50
-          h-16
-          bg-white/90 backdrop-blur-md
-          border-b border-orange-200
-          shadow-sm
-        "
-      >
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/90 backdrop-blur-xl border-b border-orange-100 shadow-sm">
         <nav className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <button
+            onClick={() => (window.location.href = "/")}
+            className="flex items-center hover:scale-105 transition-transform duration-300"
+          >
             <img
               src="/logo-white-bg.png"
               alt="JustConnect"
-              className="h-10 w-auto object-contain hover:scale-105 transition-transform duration-300"
+              className="h-10 w-auto object-contain"
             />
-          </Link>
+          </button>
 
           {/* Desktop Navigation */}
-          <ul className="hidden md:flex items-center gap-8">
-            {navLinks.map((item) => (
-              <li key={item.link}>
-                <NavLink
-                  to={item.link}
-                  className={({ isActive }) =>
-                    `relative text-slate-700 font-medium transition-colors duration-300
-                    ${isActive ? "text-orange-600" : "hover:text-orange-600"}`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {item.title}
-                      <span
-                        className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-rose-500 rounded-full transition-all duration-500
-                        ${isActive ? "w-full" : "w-0 group-hover:w-full"}`}
-                      />
-                    </>
-                  )}
-                </NavLink>
+          <ul className="hidden lg:flex items-center gap-10">
+            {navItems.map((item) => (
+              <li key={item.label}>
+                {item.link ? (
+                  <Link
+                    to={item.link}
+                    className="text-lg font-medium text-slate-700 hover:text-orange-600 transition-colors duration-300 relative group"
+                  >
+                    {item.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-500 to-rose-500 group-hover:w-full transition-all duration-500" />
+                  </Link>
+                ) : (
+                  <button
+                    onClick={item.action}
+                    className="text-lg font-medium text-slate-700 hover:text-orange-600 transition-colors duration-300 relative group"
+                  >
+                    {item.label}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-500 to-rose-500 group-hover:w-full transition-all duration-500" />
+                  </button>
+                )}
               </li>
             ))}
           </ul>
 
           {/* Desktop Auth Button */}
-          <div className="hidden md:block">
-            {isAuthenticated ? (
+          <div className="hidden lg:block">
+            {user ? (
               <button
                 onClick={handleLogout}
-                className="
-                  inline-flex items-center gap-2 px-6 py-2.5
-                  rounded-full font-semibold text-white
-                  bg-gradient-to-r from-orange-500 to-rose-500
-                  shadow-md hover:shadow-lg
-                  hover:scale-105 transition-all duration-300
-                "
+                className="group inline-flex items-center gap-3 px-8 py-3 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
               >
-                Log out
-                <LogIn size={18} />
+                <LogOut size={20} className="group-hover:translate-x-1 transition" />
+                Log Out
               </button>
             ) : (
               <Link
                 to="/auth/login"
-                className="
-                  inline-flex items-center gap-2 px-6 py-2.5
-                  rounded-full font-semibold text-white
-                  bg-gradient-to-r from-orange-500 to-rose-500
-                  shadow-md hover:shadow-lg
-                  hover:scale-105 transition-all duration-300
-                "
+                className="group inline-flex items-center gap-3 px-8 py-3 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
               >
-                Sign in
-                <ChevronRight size={18} />
+                <LogIn size={20} className="group-hover:translate-x-1 transition" />
+                Sign In
               </Link>
             )}
           </div>
 
           {/* Mobile Menu Toggle */}
           <button
-            onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-lg hover:bg-orange-100 transition"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 rounded-lg hover:bg-orange-100 transition"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </nav>
 
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-lg border-b border-orange-200 shadow-xl md:hidden">
-            <div className="px-6 py-8 space-y-6">
-              {navLinks.map((item) => (
-                <NavLink
-                  key={item.link}
-                  to={item.link}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `block text-lg font-medium py-3 px-4 rounded-xl transition-all
-                    ${isActive 
-                      ? "bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md" 
-                      : "text-slate-700 hover:bg-orange-100 hover:text-orange-600"}`
-                  }
-                >
-                  {item.title}
-                </NavLink>
-              ))}
-
-              <div className="pt-6 border-t border-orange-100">
-                {isAuthenticated ? (
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-2xl border-b border-orange-100 lg:hidden"
+            >
+              <div className="px-6 py-8 space-y-4">
+                {navItems.map((item) => (
                   <button
-                    onClick={handleLogout}
-                    className="
-                      w-full py-4 rounded-xl font-semibold text-white
-                      bg-gradient-to-r from-orange-500 to-rose-500
-                      shadow-lg hover:shadow-xl transition-all
-                    "
+                    key={item.label}
+                    onClick={item.action || (() => setMobileMenuOpen(false))}
+                    className="block w-full text-left py-4 px-6 rounded-xl text-lg font-medium text-slate-700 hover:bg-orange-100 hover:text-orange-600 transition"
                   >
-                    Log out
+                    {item.label}
                   </button>
-                ) : (
-                  <Link
-                    to="/auth/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="
-                      block w-full text-center py-4 rounded-xl font-semibold text-white
-                      bg-gradient-to-r from-orange-500 to-rose-500
-                      shadow-lg hover:shadow-xl transition-all
-                    "
-                  >
-                    Sign in
-                  </Link>
-                )}
+                ))}
+
+                <div className="pt-6 border-t border-orange-100">
+                  {user ? (
+                    <button
+                      onClick={handleLogout}
+                      className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold shadow-lg hover:shadow-xl transition"
+                    >
+                      Log Out
+                    </button>
+                  ) : (
+                    <Link
+                      to="/auth/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block w-full text-center py-4 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 text-white font-bold shadow-lg hover:shadow-xl transition"
+                    >
+                      Sign In
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* IMPORTANT: Add this padding to your main content pages! */}
-      {/* In your HomePage.jsx, About.jsx, etc., wrap content with: */}
-      {/* <div className="pt-16"> ...your content... </div> */}
+      {/* Padding for fixed navbar */}
+      <div className="h-16" />
     </>
   );
 };
