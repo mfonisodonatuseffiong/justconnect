@@ -164,7 +164,6 @@ const Professional = {
 
   /**
    * Search professionals (by name, service name, or location)
-   * (optional - you can keep or remove)
    */
   search: async (term) => {
     try {
