@@ -23,16 +23,16 @@ const Explore = () => {
 
   const totalPages = Math.ceil(total / 9);
 
-  // Read category from URL (e.g. ?category=Plumbing)
+  // Read service from URL (?service=Electrical)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const categoryParam = params.get("category");
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
+    const serviceParam = params.get("service");
+    if (serviceParam) {
+      setSelectedCategory(serviceParam);
     }
   }, [location.search]);
 
-  // Fetch categories (real ones from backend)
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -59,7 +59,7 @@ const Explore = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch professionals – send category NAME (not ID)
+  // Fetch professionals
   useEffect(() => {
     const fetchProfessionals = async () => {
       try {
@@ -71,9 +71,8 @@ const Explore = () => {
           search: debouncedSearch || undefined,
         };
 
-        // Only filter if not "All Services"
         if (selectedCategory !== "All Services") {
-          params.service = selectedCategory; // ← name like "Plumbing"
+          params.service = selectedCategory;
         }
 
         const res = await getProfessionals(params);
@@ -121,7 +120,6 @@ const Explore = () => {
         {/* Filters */}
         <div className="flex justify-center mb-12">
           <div className="flex w-full max-w-3xl gap-3">
-            {/* Category dropdown – uses NAME as value */}
             <select
               value={selectedCategory}
               onChange={(e) => {
@@ -137,7 +135,6 @@ const Explore = () => {
               ))}
             </select>
 
-            {/* Search */}
             <div className="relative flex-1">
               <input
                 type="text"
@@ -186,8 +183,9 @@ const Explore = () => {
                   <h2 className="text-lg font-bold text-slate-800 text-center">
                     {pro.name}
                   </h2>
-                  <p className="text-sm text-slate-600 text-center">
-                    {pro.service?.name || pro.service || selectedCategoryName}
+                  {/* Show real profession instead of "All Services" */}
+                  <p className="text-sm text-slate-600 text-center font-medium">
+                    {pro.service_name || pro.service || pro.category || selectedCategoryName || "Professional"}
                   </p>
                   <p className="text-sm text-slate-500 text-center">
                     {pro.location || "Location not available"}
