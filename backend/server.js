@@ -1,4 +1,8 @@
-// server.js
+/**
+ * JustConnect Backend Server
+ * Main entry point - Express + Socket.IO + CORS + routes
+ */
+
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
@@ -20,18 +24,30 @@ const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
       if (process.env.NODE_ENV !== "production") {
-        return callback(null, true);
+        // Allow all common dev ports
+        const devOrigins = [
+          "http://localhost:5173",
+          "http://localhost:5174",
+          "http://127.0.0.1:5173",
+          "http://127.0.0.1:5174",
+          "http://localhost:3000",
+          "http://127.0.0.1:3000",
+        ];
+        if (!origin || devOrigins.includes(origin.replace(/\/$/, ""))) {
+          return callback(null, true);
+        }
       }
 
+      // Production: only allow FRONTEND_URL
       const allowedOrigins = process.env.FRONTEND_URL
         ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
         : [];
-      
       if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
         return callback(null, true);
       }
-      
-      return callback(new Error("Not allowed by CORS"));
+
+      console.warn(`⚠️ Blocked CORS origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST"],
     credentials: true,
@@ -42,7 +58,7 @@ const io = new Server(server, {
 const activeUsers = new Map();
 
 io.on("connection", (socket) => {
-  console.log("🔌 New client connected:", socket.id);
+  console.log(`🔌 New client connected: ${socket.id}`);
 
   socket.on("authenticate", (userId) => {
     if (userId) {
@@ -58,7 +74,7 @@ io.on("connection", (socket) => {
       activeUsers.delete(socket.id);
       console.log(`👋 User ${userId} disconnected`);
     }
-    console.log("🔌 Client disconnected:", socket.id);
+    console.log(`🔌 Client disconnected: ${socket.id}`);
   });
 });
 
@@ -74,29 +90,35 @@ app.use(cookieParser());
 /* =========================
    CORS CONFIGURATION
 ========================= */
-const devOriginRegex = /^http:\/\/(localhost|127\.0\.0\.1):517\d$/;
-
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    const normalizedOrigin = origin.replace(/\/$/, "");
+    const normalized = origin.replace(/\/$/, "");
 
     if (process.env.NODE_ENV !== "production") {
-      if (devOriginRegex.test(normalizedOrigin)) {
+      const devOrigins = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+      ];
+      if (devOrigins.includes(normalized)) {
         return callback(null, true);
       }
     } else {
       const allowed = process.env.FRONTEND_URL
         ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
         : [];
-      if (allowed.includes(normalizedOrigin)) {
+      if (allowed.includes(normalized)) {
         return callback(null, true);
       }
     }
 
-    console.error("❌ Blocked CORS:", normalizedOrigin);
-    return callback(null, false);
+    console.warn(`CORS blocked: ${origin}`);
+    callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -105,7 +127,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// ✅ ADD THIS LINE — Serve uploaded images
+// Serve static uploads
 app.use("/uploads", express.static("uploads"));
 
 /* =========================
@@ -121,9 +143,10 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const adminRoutes = require("./routes/admin"); // ← ADMIN ROUTES ADDED HERE
 
 /* =========================
-   BASE ROUTE
+   BASE & HEALTH CHECK
 ========================= */
 app.get("/", (req, res) => {
   res.json({
@@ -132,6 +155,16 @@ app.get("/", (req, res) => {
     version: "v1",
     environment: process.env.NODE_ENV || "development",
     realtime: "Socket.IO enabled",
+  });
+});
+
+// Health check endpoint (useful for monitoring)
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -149,8 +182,11 @@ app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/messages", messageRoutes);
 
+// Admin routes – THIS WAS MISSING!
+app.use("/api/v1/admin", adminRoutes);
+
 /* =========================
-   404 HANDLER
+   404 & GLOBAL ERROR HANDLER
 ========================= */
 app.use((req, res) => {
   res.status(404).json({
@@ -159,14 +195,13 @@ app.use((req, res) => {
   });
 });
 
-/* =========================
-   GLOBAL ERROR HANDLER
-========================= */
 app.use((err, req, res, next) => {
-  console.error("💥 Global error:", err.message);
-  res.status(err.status || 500).json({
+  console.error("💥 Global error:", err.stack || err.message);
+  const status = err.status || 500;
+  res.status(status).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message: status === 500 ? "Internal Server Error" : err.message,
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
 
@@ -178,6 +213,6 @@ server.listen(PORT, () => {
   console.log(`🚀 JustConnect API running on port ${PORT}`);
   console.log(`🔌 Socket.IO ready for real-time updates`);
   if (process.env.NODE_ENV !== "production") {
-    console.log(`🌐 Dev frontend: http://localhost:5173`);
+    console.log(`🌐 Dev frontend expected at: http://localhost:5173 / 5174`);
   }
 });
