@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { getProfessionals } from "../service/servicesService";
 import authAxios from "../api";
+import { Star, MapPin } from "lucide-react";
 
 const Explore = () => {
   const [professionals, setProfessionals] = useState([]);
@@ -32,21 +33,28 @@ const Explore = () => {
     }
   }, [location.search]);
 
-  // Fetch categories
+  // Fetch categories from database ONLY
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await authAxios.get("/services");
-        const services = Array.isArray(res.data) ? res.data : [];
+        let services = Array.isArray(res.data) ? res.data : [];
+
+        // Optional: remove duplicates by name (uncomment if needed)
+        // services = [...new Map(services.map(s => [s.name, s])).values()];
+
         setCategories([
           { name: "All Services" },
-          ...services.map((s) => ({ name: s.name || s.title || "Unnamed" })),
+          ...services.map((s) => ({
+            name: s.name || s.title || s.service_name || "Unnamed Service",
+          })),
         ]);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
         setCategories([{ name: "All Services" }]);
       }
     };
+
     fetchCategories();
   }, []);
 
@@ -169,34 +177,68 @@ const Explore = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {professionals.map((pro) => (
                 <div
                   key={pro.id}
-                  className="bg-white p-6 rounded-xl shadow-md border border-orange-200 hover:shadow-lg transition"
+                  className="group relative bg-white/90 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-orange-100/50 hover:border-orange-300/70 flex flex-col h-full transform hover:-translate-y-1"
                 >
-                  <img
-                    src={pro.avatar || `https://i.pravatar.cc/150?u=${pro.id}`}
-                    alt={pro.name}
-                    className="w-24 h-24 rounded-full mx-auto mb-4"
-                  />
-                  <h2 className="text-lg font-bold text-slate-800 text-center">
-                    {pro.name}
-                  </h2>
-                  {/* Show real profession instead of "All Services" */}
-                  <p className="text-sm text-slate-600 text-center font-medium">
-                    {pro.service_name || pro.service || pro.category || selectedCategoryName || "Professional"}
-                  </p>
-                  <p className="text-sm text-slate-500 text-center">
-                    {pro.location || "Location not available"}
-                  </p>
-                  <div className="mt-4 text-center">
-                    <button
-                      onClick={() => handleBook(pro.id)}
-                      className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
-                    >
-                      Book Now
-                    </button>
+                  {/* Image with badge */}
+                  <div className="relative">
+                    <img
+                      src={pro.avatar || `https://i.pravatar.cc/150?u=${pro.id}`}
+                      alt={pro.name}
+                      className="w-full h-56 object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    {/* Profession badge */}
+                    <span className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-semibold rounded-full shadow-md backdrop-blur-sm">
+                      {pro.service_name || pro.service || pro.category || selectedCategoryName || "Professional"}
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h2 className="text-xl font-bold text-slate-900 mb-2 line-clamp-1 group-hover:text-orange-600 transition-colors duration-300">
+                      {pro.name}
+                    </h2>
+
+                    {/* Rating stars */}
+                    <div className="flex items-center gap-1 mb-3">
+                      {[...Array(5)].map((_, i) => {
+                        const starValue = i + 1;
+                        const rating = Number(pro.rating) || 4.8;
+                        const filled = starValue <= Math.round(rating);
+                        return (
+                          <Star
+                            key={i}
+                            size={18}
+                            className={filled ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                          />
+                        );
+                      })}
+                      <span className="text-sm font-medium text-slate-600 ml-1">
+                        {Number(pro.rating) ? Number(pro.rating).toFixed(1) : "4.8"}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        ({pro.rating_count || 38})
+                      </span>
+                    </div>
+
+                    {/* Location */}
+                    <p className="text-sm text-slate-600 mb-4 flex items-center gap-1.5">
+                      <MapPin size={16} className="text-orange-500" />
+                      {pro.location || "Location not available"}
+                    </p>
+
+                    {/* Book button at bottom */}
+                    <div className="mt-auto">
+                      <button
+                        onClick={() => handleBook(pro.id)}
+                        className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-amber-700 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-[1.02]"
+                      >
+                        Book Now
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -208,17 +250,17 @@ const Explore = () => {
                 <button
                   disabled={page === 1}
                   onClick={() => setPage((p) => p - 1)}
-                  className="px-4 py-2 rounded bg-orange-500 text-white disabled:opacity-50"
+                  className="px-6 py-3 rounded-full bg-orange-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-600 transition"
                 >
                   Prev
                 </button>
-                <span className="text-slate-700 font-semibold">
+                <span className="text-slate-700 font-semibold px-4 py-3">
                   Page {page} of {totalPages}
                 </span>
                 <button
                   disabled={page === totalPages}
                   onClick={() => setPage((p) => p + 1)}
-                  className="px-4 py-2 rounded bg-orange-500 text-white disabled:opacity-50"
+                  className="px-6 py-3 rounded-full bg-orange-500 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-orange-600 transition"
                 >
                   Next
                 </button>

@@ -3,12 +3,26 @@
  *              Styled to match the light + orange system theme
  */
 
-const Button = ({ children, type = "button", disabled = false, ...props }) => {
+const Button = ({
+  children,
+  type = "button",   // can be "submit" when used in forms
+  disabled = false,
+  onClick,
+  ...props
+}) => {
+  const handleClick = (e) => {
+    console.log("🖱️ Button clicked:", { type, disabled });
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
   return (
     <button
-      tabIndex={1}
+      tabIndex={0}   // standard focusable index
       type={type}
       disabled={disabled}
+      onClick={handleClick}
       {...props}
       className={`
         w-full rounded-xl px-6 py-3 text-base font-semibold tracking-wide

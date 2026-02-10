@@ -1,6 +1,6 @@
 /**
  * @description Authentication store (Zustand)
- * - Persists user in localStorage
+ * - Persists user and token in localStorage
  * - Syncs with backend /auth/me
  * - Exposes clean helpers for components
  */
@@ -15,32 +15,59 @@ import {
   resetPasswordService,
 } from "../service/authService";
 
+// Load persisted state from localStorage
 const savedUser = localStorage.getItem("user");
+const savedToken = localStorage.getItem("accessToken");
 
 export const useAuthStore = create((set, get) => ({
   /* ---------------- State ---------------- */
   user: savedUser ? JSON.parse(savedUser) : null,
+  token: savedToken || null,
   error: null,
   isCheckingMe: false,
   hasCheckedMe: false,
 
   /* ---------------- Derived ---------------- */
-  isAuthenticated: () => Boolean(get().user),
+  isAuthenticated: () => Boolean(get().user && get().token),
 
   /* ---------------- Mutators ---------------- */
   setUser: (user) => {
-    if (!user) return;
-    localStorage.setItem("user", JSON.stringify(user));
-    set({ user, error: null });
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+      set({ user, error: null });
+    } else {
+      localStorage.removeItem("user");
+      set({ user: null });
+    }
+    console.log("🟢 setUser:", user);
+  },
+
+  setToken: (token) => {
+    if (token) {
+      localStorage.setItem("accessToken", token);
+      set({ token });
+    } else {
+      localStorage.removeItem("accessToken");
+      set({ token: null });
+    }
+    console.log("🟢 setToken:", token);
+  },
+
+  setIsCheckingMe: (value) => {
+    set({ isCheckingMe: value });
   },
 
   clearUser: () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     set({
       user: null,
+      token: null,
       error: null,
       hasCheckedMe: false,
     });
+    console.log("🟠 clearUser called");
   },
 
   /* ---------------- Actions ---------------- */
@@ -51,7 +78,10 @@ export const useAuthStore = create((set, get) => ({
       set({ isCheckingMe: true });
       try {
         const data = await checkMeService();
-        if (data?.user) get().setUser(data.user);
+        const { user } = data || {};
+        if (user) {
+          get().setUser(user);
+        }
         set({ hasCheckedMe: true });
         return data;
       } catch (err) {
@@ -63,14 +93,29 @@ export const useAuthStore = create((set, get) => ({
     },
 
     login: async (payload) => {
-      set({ error: null });
+      set({ error: null, isCheckingMe: true });
       try {
         const data = await loginService(payload);
-        if (data?.user) get().setUser(data.user);
+        const { user, accessToken, refreshToken } = data || {};
+
+        if (!user || !accessToken) {
+          throw new Error("Invalid login response");
+        }
+
+        get().setToken(accessToken);
+        get().setUser(user);
+
+        if (refreshToken) {
+          localStorage.setItem("refreshToken", refreshToken);
+        }
+
+        set({ hasCheckedMe: true, isCheckingMe: false });
+        console.log("✅ Login success:", { user, accessToken });
         return data;
       } catch (err) {
         get().clearUser();
-        set({ error: err.message });
+        set({ error: err.message, isCheckingMe: false, hasCheckedMe: true });
+        console.error("💥 Login failed:", err);
         throw err;
       }
     },
@@ -79,20 +124,28 @@ export const useAuthStore = create((set, get) => ({
       try {
         await logoutService();
         get().clearUser();
+        console.log("👋 Logged out");
       } catch (err) {
-        console.error("LOGOUT ERROR:", err.message);
         throw err;
       }
     },
 
     register: async (payload) => {
-      set({ error: null });
+      set({ error: null, isCheckingMe: true });
       try {
         const data = await registerService(payload);
-        if (data?.user) get().setUser(data.user);
+        const { user, accessToken, refreshToken } = data || {};
+
+        if (user) get().setUser(user);
+        if (accessToken) get().setToken(accessToken);
+        if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+
+        set({ hasCheckedMe: true, isCheckingMe: false });
+        console.log("✅ Register success:", { user, accessToken });
         return data;
       } catch (err) {
-        set({ error: err.message });
+        set({ error: err.message, isCheckingMe: false, hasCheckedMe: true });
+        console.error("💥 Register failed:", err);
         throw err;
       }
     },

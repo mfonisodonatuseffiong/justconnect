@@ -4,8 +4,8 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AuthLayout from "./components/authLayout";
-import FormWrapper from "./components/FormWrapper";
+import AuthLayout from "../components/AuthLayout";
+import FormWrapper from "../components/FormWrapper";
 import Input from "../components/commonUI/Input";
 import Button from "../components/commonUI/Button";
 import ButtonLoader from "../components/commonUI/ButtonLoader";
