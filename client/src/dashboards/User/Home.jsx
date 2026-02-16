@@ -1,14 +1,17 @@
 // src/dashboards/User/UserHome.jsx
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   CalendarCheck,
-  CheckCircle,
-  FileText,
-  MessageCircle,
+  CheckCircle2,
+  Clock,
+  MessageSquare,
   ArrowRight,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
+  LineChart,
+  Line,
   BarChart,
   Bar,
   XAxis,
@@ -17,204 +20,230 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  LineChart,
-  Line,
 } from "recharts";
 import useDashboard from "../../hooks/useDashboard";
 
-/* Warm Orange + Rose Palette */
+// Status color map (matches your brand)
 const STATUS_COLORS = {
-  pending: "#fb923c",
-  completed: "#fb7185",
-  cancelled: "#ef4444",
-  unknown: "#9ca3af",
+  pending: "#f59e0b",      // amber-500
+  completed: "#ec4899",    // rose-500
+  cancelled: "#ef4444",    // red-500
+  unknown: "#9ca3af",      // gray-400
 };
 
-/* =====================
-   KPI CARD
-===================== */
-const KnobCard = ({ title, value, Icon }) => (
+/**
+ * KPI Card – Elegant circular stat display
+ */
+const KpiCard = ({ title, value, Icon, color }) => (
   <motion.div
-    whileHover={{ scale: 1.1, y: -10 }}
-    transition={{ type: "spring", stiffness: 200 }}
+    whileHover={{ y: -6, scale: 1.03 }}
+    whileTap={{ scale: 0.98 }}
     className="relative group"
   >
-    <div className="w-40 h-40 rounded-full bg-gradient-to-br from-orange-100 via-white to-rose-100 shadow-2xl flex items-center justify-center border-4 border-orange-300">
-      <div className="w-28 h-28 rounded-full bg-white shadow-inner flex flex-col items-center justify-center">
-        <Icon size={30} className="text-orange-500 mb-2" />
-        <span className="text-3xl font-extrabold text-slate-800">
+    <div className="w-44 h-44 md:w-52 md:h-52 rounded-full bg-gradient-to-br from-white via-orange-50/50 to-rose-50/50 shadow-xl flex items-center justify-center border-4 border-white/80 backdrop-blur-sm">
+      <div className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-white shadow-inner flex flex-col items-center justify-center">
+        <Icon className={`w-10 h-10 md:w-12 md:h-12 mb-3 ${color}`} strokeWidth={2} />
+        <span className="text-3xl md:text-4xl font-extrabold text-slate-800">
           {value}
         </span>
       </div>
     </div>
-
-    <p className="mt-6 text-center text-sm uppercase tracking-widest font-semibold text-slate-600">
+    <p className="mt-5 text-center text-sm md:text-base font-medium uppercase tracking-wider text-slate-600 group-hover:text-orange-600 transition-colors">
       {title}
     </p>
   </motion.div>
 );
 
-const UserHome = () => {
+/**
+ * Chart Card Wrapper – Reusable for both line & bar charts
+ */
+const ChartCard = ({ title, children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6 }}
+    className="bg-white/90 backdrop-blur-xl rounded-3xl border border-orange-100/50 shadow-xl overflow-hidden"
+  >
+    <div className="px-6 py-5 border-b border-orange-100/50 bg-gradient-to-r from-orange-50/80 to-rose-50/80">
+      <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-orange-600 to-rose-600 bg-clip-text text-transparent">
+        {title}
+      </h2>
+    </div>
+    <div className="p-6">{children}</div>
+  </motion.div>
+);
+
+export default function UserHome() {
   const { dashboard, loading, error } = useDashboard();
 
-  const kpiCards = [
-    {
-      title: "Total Bookings",
-      value: dashboard.stats.totalBookings,
-      Icon: CalendarCheck,
-    },
-    {
-      title: "Completed",
-      value: dashboard.stats.completedBookings,
-      Icon: CheckCircle,
-    },
-    {
-      title: "Pending",
-      value: dashboard.stats.pendingBookings,
-      Icon: FileText,
-    },
-    {
-      title: "Messages",
-      value: dashboard.messages,
-      Icon: MessageCircle,
-    },
-  ];
-
-  const chartData = dashboard.bookingStatus.map((item) => ({
-    status: item.status,
+  // Prepare chart data
+  const bookingStatusData = (dashboard?.bookingStatus || []).map((item) => ({
+    status: item.status.charAt(0).toUpperCase() + item.status.slice(1),
     count: item.count,
     color: STATUS_COLORS[item.status] || STATUS_COLORS.unknown,
   }));
 
-  const weeklyData = dashboard.weeklyRequests;
+  const weeklyData = dashboard?.weeklyRequests || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 px-6 lg:px-12 py-10 space-y-20 text-slate-800">
-      {/* =====================
-          HEADER
-      ====================== */}
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 px-4 sm:px-6 lg:px-12 py-8 md:py-12 space-y-12 md:space-y-20">
+      {/* Hero Header */}
       <motion.section
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9 }}
+        transition={{ duration: 0.8 }}
         className="text-center max-w-4xl mx-auto"
       >
-        <h1 className="text-5xl lg:text-6xl font-extrabold bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent">
-          User Dashboard
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600 bg-clip-text text-transparent tracking-tight">
+          Your Dashboard
         </h1>
-        <p className="mt-6 text-lg lg:text-xl text-slate-600">
-          Track your bookings, monitor progress, and stay connected with
-          professionals effortlessly.
+        <p className="mt-5 text-lg sm:text-xl text-slate-700 max-w-3xl mx-auto">
+          Track your bookings, see your performance, and manage your services — all in one place.
         </p>
       </motion.section>
 
-      {/* =====================
-          KPI SECTION
-      ====================== */}
+      {/* KPI Cards */}
       <section className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-14 justify-items-center">
-          {kpiCards.map((card) => (
-            <KnobCard key={card.title} {...card} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 justify-items-center">
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="w-44 h-44 md:w-52 md:h-52 rounded-full bg-slate-100/80 animate-pulse" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-16 text-red-600 text-xl">
+            {error}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 md:gap-14 justify-items-center">
+            <KpiCard
+              title="Total Bookings"
+              value={dashboard?.stats?.totalBookings ?? 0}
+              Icon={CalendarCheck}
+              color="text-orange-600"
+            />
+            <KpiCard
+              title="Completed"
+              value={dashboard?.stats?.completedBookings ?? 0}
+              Icon={CheckCircle2}
+              color="text-rose-600"
+            />
+            <KpiCard
+              title="Pending"
+              value={dashboard?.stats?.pendingBookings ?? 0}
+              Icon={Clock}
+              color="text-amber-600"
+            />
+            <KpiCard
+              title="Messages"
+              value={dashboard?.messages ?? 0}
+              Icon={MessageSquare}
+              color="text-orange-600"
+            />
+          </div>
+        )}
       </section>
 
-      {/* =====================
-          CHARTS
-      ====================== */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-7xl mx-auto">
-        {/* Weekly Requests */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="bg-white/90 backdrop-blur border border-orange-200 rounded-3xl p-8 shadow-xl h-[420px]"
-        >
-          <h2 className="text-xl font-bold mb-6 text-orange-600">
-            Weekly Requests Trend
-          </h2>
-
+      {/* Charts Section */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-7xl mx-auto">
+        {/* Weekly Trend */}
+        <ChartCard title="Weekly Booking Trend">
           {weeklyData.length === 0 ? (
-            <p className="text-center text-slate-500 mt-32">
-              No requests this week yet
-            </p>
+            <div className="h-80 flex items-center justify-center text-slate-500">
+              No bookings this week yet
+            </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={weeklyData}>
+            <ResponsiveContainer width="100%" height={360}>
+              <LineChart data={weeklyData} margin={{ top: 20, right: 30, bottom: 20, left: 0 }}>
+                <defs>
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#fed7aa" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
+                <XAxis dataKey="day" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(255,255,255,0.98)",
+                    borderRadius: "12px",
+                    border: "1px solid #fed7aa",
+                    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+                  }}
+                />
                 <Line
                   type="monotone"
                   dataKey="count"
                   stroke="#f97316"
                   strokeWidth={4}
-                  dot={{ r: 5 }}
+                  dot={{ r: 6, strokeWidth: 2, fill: "#fff" }}
+                  activeDot={{ r: 10 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           )}
-        </motion.div>
+        </ChartCard>
 
-        {/* Booking Status */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="bg-white/90 backdrop-blur border border-orange-200 rounded-3xl p-8 shadow-xl h-[420px]"
-        >
-          <h2 className="text-xl font-bold mb-6 text-orange-600">
-            Booking Status Overview
-          </h2>
-
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#fed7aa" />
-              <XAxis dataKey="status" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="count" radius={[16, 16, 0, 0]}>
-                {chartData.map((entry) => (
-                  <Cell key={entry.status} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
+        {/* Status Breakdown */}
+        <ChartCard title="Booking Status Breakdown">
+          {bookingStatusData.length === 0 ? (
+            <div className="h-80 flex items-center justify-center text-slate-500">
+              No booking data yet
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={360}>
+              <BarChart data={bookingStatusData} margin={{ top: 20, right: 30, bottom: 20, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#fed7aa" />
+                <XAxis dataKey="status" stroke="#9ca3af" />
+                <YAxis allowDecimals={false} stroke="#9ca3af" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(255,255,255,0.98)",
+                    borderRadius: "12px",
+                    border: "1px solid #fed7aa",
+                    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+                  }}
+                />
+                <Bar dataKey="count" radius={[12, 12, 0, 0]} barSize={40}>
+                  {bookingStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </ChartCard>
       </section>
 
-      {/* =====================
-          ACTION BUTTONS
-      ====================== */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex justify-center pt-8"
+      {/* CTA Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.6 }}
+        className="flex justify-center pt-8 md:pt-12"
       >
         <Link
           to="/user-dashboard/bookings"
-          className="flex items-center gap-3 px-10 py-4 rounded-2xl font-bold text-lg
-                     border-4 border-orange-400 text-orange-600 bg-white
-                     hover:bg-orange-500 hover:text-white hover:border-orange-500
-                     shadow-xl hover:shadow-2xl hover:scale-105 transition"
+          className="group flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-lg bg-gradient-to-r from-orange-600 to-rose-600 text-white shadow-xl hover:shadow-2xl hover:from-orange-700 hover:to-rose-700 transition-all transform hover:-translate-y-1 active:scale-95"
         >
-          View All Bookings <ArrowRight />
+          View All Your Bookings
+          <ArrowRight className="group-hover:translate-x-1 transition-transform" />
         </Link>
-      </motion.section>
+      </motion.div>
 
-      {/* =====================
-          STATES
-      ====================== */}
+      {/* Loading / Error States */}
       {loading && (
-        <p className="text-center py-20 text-xl text-slate-600">
+        <div className="text-center py-20 text-xl text-slate-600">
           Loading your dashboard...
-        </p>
+        </div>
       )}
 
       {error && (
-        <p className="text-center py-20 text-xl text-red-600">
-          Error: {error}
-        </p>
+        <div className="text-center py-20 text-xl text-rose-600">
+          {error}
+        </div>
       )}
     </div>
   );
-};
-
-export default UserHome;
+}

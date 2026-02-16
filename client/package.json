@@ -20,7 +20,7 @@
     "aos": "^2.3.4",
     "autoprefixer": "^10.4.24",
     "axios": "^1.11.0",
-    "framer-motion": "^12.23.26",
+    "framer-motion": "^12.34.0",
     "joi": "^18.0.0",
     "lucide-react": "^0.540.0",
     "postcss": "^8.5.6",

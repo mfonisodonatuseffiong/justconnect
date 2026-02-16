@@ -1,13 +1,13 @@
 /**
- * @description A reusable button
+ * @description A reusable button styled with rose + amber brand colors
  */
 
 const base =
   "px-4 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2";
 
 const variants = {
-  primary: "bg-brand text-white hover:bg-brand/80",
-  outline: "border border-gray-300 text-gray-700 hover:bg-gray-100",
+  primary: "bg-rose-600 text-white hover:bg-rose-700",
+  outline: "border border-amber-500 text-amber-600 hover:bg-amber-50",
 };
 
 export default function Button({

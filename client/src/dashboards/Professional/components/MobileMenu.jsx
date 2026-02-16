@@ -1,6 +1,5 @@
 /**
- *
- * @returns Mobile menu + hamburger icon
+ * @returns Mobile menu + hamburger icon styled with orange, rose, and amber brand colors
  */
 
 import {
@@ -30,45 +29,48 @@ const MobileMenu = () => {
 
   return (
     <>
+      {/* Hamburger icon */}
       <button
         type="button"
         aria-label="Menu"
         onClick={() => setDisplay(!display)}
-        className="md:hidden"
+        className="md:hidden text-orange-600"
       >
         <MenuIcon />
       </button>
 
-      {/** display mobile menu on mobile screen  */}
+      {/* Mobile menu */}
       {display && (
         <div
-          className="absolute w-full top-0 left-0 py-10 px-4 bg-primary-gray"
+          className="absolute w-full top-0 left-0 py-10 px-4 bg-gradient-to-b from-rose-600 via-orange-500 to-amber-500 text-white rounded-b-2xl shadow-lg"
           data-aos="fade-down"
         >
-          {/** button to close menu */}
+          {/* Close button */}
           <button
             type="button"
             aria-label="close menu display"
             onClick={() => setDisplay(false)}
-            className="block mb-16 ml-auto text-white hover:bg-gray-500 rounded-full"
+            className="block mb-16 ml-auto text-white hover:bg-orange-600 rounded-full p-2 transition"
           >
-            <X size={36} />
+            <X size={28} />
           </button>
+
+          {/* Navigation links */}
           <ul>
             {navLinks.map((n) => (
-              <li
-                key={n.title}
-                className="my-6 cursor-pointer hover:bg-brand-bg/20 hover:rounded-l-xl duration-300 transition-all"
-              >
+              <li key={n.title} className="my-3 cursor-pointer transition-all">
                 <NavLink
                   to={n.link}
                   onClick={() => setDisplay(false)}
                   end
                   className={({ isActive }) =>
-                    `flex items-center gap-4 p-4 uppercase text-sm  ${isActive ? "bg-brand-bg text-primary-gray rounded-l-full" : "text-white"}`
+                    `flex items-center gap-3 p-3 rounded-xl text-sm uppercase transition-all duration-300 
+                     ${isActive 
+                       ? "bg-white text-rose-600 font-semibold shadow-md" 
+                       : "hover:bg-orange-500/20"}`
                   }
                 >
-                  <span className="text-accent"> {n.icon} </span>
+                  <span className="text-amber-200">{n.icon}</span>
                   {n.title}
                 </NavLink>
               </li>

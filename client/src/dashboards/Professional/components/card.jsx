@@ -1,11 +1,12 @@
 /**
- * @description A reuseable card component for the professional overview page
+ * @description A reusable card component for the professional overview page
  */
 
 export const Card = ({ children, className = "" }) => {
   return (
     <div
-      className={`bg-primary-gray border border-white rounded-2xl shadow-sm p-5 ${className}`}
+      className={`bg-white/90 rounded-2xl shadow-lg border border-rose-200 
+                  hover:shadow-xl transition-all duration-300 ${className}`}
     >
       {children}
     </div>
@@ -13,11 +14,13 @@ export const Card = ({ children, className = "" }) => {
 };
 
 export const CardHeader = ({ children }) => (
-  <div className="mb-3 text-white">{children}</div>
+  <div className="mb-3 border-b border-amber-200 pb-2">{children}</div>
 );
 
 export const CardTitle = ({ children }) => (
-  <h2 className="text-lg font-semibold">{children}</h2>
+  <h2 className="text-lg font-bold text-rose-600">{children}</h2>
 );
 
-export const CardContent = ({ children }) => <div>{children}</div>;
+export const CardContent = ({ children }) => (
+  <div className="text-amber-700">{children}</div>
+);

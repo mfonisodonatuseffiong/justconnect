@@ -1,5 +1,5 @@
 /**
- * @description This is the aside component of the professional bar
+ * @description Professional dashboard sidebar
  * @returns Aside component
  */
 
@@ -39,36 +39,37 @@ const AsideBar = () => {
   ];
 
   return (
-    <aside className="relative hidden md:block w-46 lg:w-64 bg-primary-gray rounded-2xl shadow-2xl shadow-black/50 pl-3 transition-all duration-500">
-      <ul className="mt-20">
+    <aside className="relative hidden md:block w-48 lg:w-64 bg-gradient-to-b from-orange-600 to-rose-600 rounded-2xl shadow-xl text-white transition-all duration-500">
+      <ul className="mt-20 space-y-2">
         {navLinks.map((n) => (
-          <li
-            key={n.title}
-            className="my-6 cursor-pointer hover:bg-brand-bg/20 hover:rounded-l-xl duration-300 transition-all"
-          >
+          <li key={n.title}>
             <NavLink
               to={n.link}
               title={n.name}
               end
               className={({ isActive }) =>
-                `flex items-center gap-4 p-3 first-letter:uppercase text-xs  ${isActive ? "bg-brand-bg text-primary-gray rounded-l-full" : "text-white"}`
+                `flex items-center gap-3 p-3 rounded-l-xl transition-all duration-300 
+                 ${isActive 
+                   ? "bg-white text-orange-600 font-semibold shadow-md" 
+                   : "hover:bg-orange-500/20"}`
               }
             >
-              <span className="text-accent"> {n.icon} </span>
-              {n.title}
+              <span className="text-white">{n.icon}</span>
+              <span>{n.title}</span>
             </NavLink>
           </li>
         ))}
       </ul>
-      {/** =============== App brand ============= */}
+
+      {/* App brand */}
       <div className="absolute bottom-10 left-0 w-full">
-        <p className="text-center mb-4 text-white text-sm"> Home </p>
+        <p className="text-center mb-4 text-sm text-white/80">Home</p>
         <Link to="/" title="Home">
           <img
             src="/logo.png"
             alt="brand logo"
             aria-label="App logo"
-            className="h-10 w-auto mx-auto opacity-75 object-cover hover:-translate-y-1 duration-300"
+            className="h-10 w-auto mx-auto opacity-90 object-cover hover:scale-105 transition-transform duration-300"
           />
         </Link>
       </div>

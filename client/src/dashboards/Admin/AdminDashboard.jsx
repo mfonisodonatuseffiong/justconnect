@@ -1,37 +1,59 @@
 import { useEffect, useState } from "react";
-import { Users, Wrench, Settings, Calendar, AlertCircle } from "lucide-react";
+import {
+  Users,
+  Wrench,
+  Settings,
+  Calendar,
+  AlertCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import authAxios from "@/api";
 
-// Reusable Stat Card component
-const StatCard = ({ title, value, icon: Icon, color, loading, error }) => (
-  <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-orange-100/50 hover:shadow-xl transition-all duration-300 overflow-hidden group">
-    <div className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-600 uppercase tracking-wide">
-            {title}
+/* =======================
+   Reusable Stat Card
+======================= */
+const StatCard = ({
+  title,
+  value,
+  icon: Icon,
+  gradient,
+  softBg,
+  loading,
+  error,
+}) => (
+  <div className="relative bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-orange-100/50 hover:shadow-xl transition-all duration-300 overflow-hidden group">
+    {/* Top Color Accent */}
+    <div className={`h-1.5 w-full bg-gradient-to-r ${gradient}`} />
+
+    <div className="p-6 flex items-center justify-between">
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+          {title}
+        </p>
+
+        {loading ? (
+          <div className="mt-2 h-8 w-20 bg-slate-200 rounded animate-pulse" />
+        ) : error ? (
+          <p className="mt-2 text-sm text-red-500">Error</p>
+        ) : (
+          <p className="mt-1 text-3xl font-extrabold text-slate-900">
+            {value}
           </p>
+        )}
+      </div>
 
-          {loading ? (
-            <div className="mt-2 h-8 w-16 bg-slate-200 rounded animate-pulse" />
-          ) : error ? (
-            <p className="mt-2 text-sm text-red-500">Error</p>
-          ) : (
-            <p className="mt-1 text-3xl font-bold text-slate-900">{value}</p>
-          )}
-        </div>
-
-        <div
-          className={`p-4 rounded-xl bg-gradient-to-br ${color} text-white shadow-md group-hover:scale-110 transition-transform duration-300`}
-        >
-          <Icon size={28} />
-        </div>
+      <div
+        className={`p-4 rounded-xl bg-gradient-to-br ${gradient} text-white shadow-md group-hover:scale-110 transition-transform`}
+      >
+        <Icon size={28} />
       </div>
     </div>
   </div>
 );
 
+/* =======================
+   Admin Dashboard
+======================= */
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
@@ -53,7 +75,6 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       setError(null);
-
       const res = await authAxios.get("/admin/stats");
       setStats(res.data.data);
     } catch (err) {
@@ -88,43 +109,44 @@ export default function AdminDashboard() {
       title: "Total Users",
       value: stats.totalUsers,
       icon: Users,
-      color: "from-orange-500 to-amber-600",
+      gradient: "from-orange-500 to-amber-600",
     },
     {
       title: "Total Professionals",
       value: stats.totalProfessionals,
       icon: Wrench,
-      color: "from-blue-500 to-indigo-600",
+      gradient: "from-blue-500 to-indigo-600",
     },
     {
       title: "Total Services",
       value: stats.totalServices,
       icon: Settings,
-      color: "from-purple-500 to-violet-600",
+      gradient: "from-purple-500 to-violet-600",
     },
     {
       title: "Total Bookings",
       value: stats.totalBookings,
       icon: Calendar,
-      color: "from-green-500 to-emerald-600",
+      gradient: "from-green-500 to-emerald-600",
     },
     {
       title: "Pending Bookings",
       value: stats.pendingBookings,
       icon: AlertCircle,
-      color: "from-red-500 to-rose-600",
+      gradient: "from-red-500 to-rose-600",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50/30 via-white to-rose-50/30 p-6 lg:p-10">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-white to-rose-50/40 p-6 lg:p-10">
       {/* Header */}
-      <div className="mb-10">
+      <div className="mb-12">
         <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-orange-600 to-rose-500 bg-clip-text text-transparent">
           Admin Dashboard
         </h1>
-        <p className="mt-3 text-lg text-slate-600">
-          Monitor platform activity, manage users & professionals, and oversee services.
+        <p className="mt-4 text-lg text-slate-600 max-w-2xl">
+          Monitor platform activity, manage users & professionals, and oversee
+          services.
         </p>
       </div>
 
@@ -135,7 +157,7 @@ export default function AdminDashboard() {
           <p className="font-medium">{error}</p>
           <button
             onClick={fetchDashboardStats}
-            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            className="mt-4 px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:opacity-90 transition"
           >
             Retry
           </button>
@@ -148,7 +170,7 @@ export default function AdminDashboard() {
               title={item.title}
               value={loading ? "—" : item.value}
               icon={item.icon}
-              color={item.color}
+              gradient={item.gradient}
               loading={loading}
               error={error}
             />
@@ -157,10 +179,10 @@ export default function AdminDashboard() {
       )}
 
       {/* Quick Actions + Recent Activity */}
-      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="mt-14 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Quick Actions */}
         <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-orange-100/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">
+          <h2 className="text-2xl font-extrabold bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent mb-6">
             Quick Actions
           </h2>
 
@@ -174,7 +196,7 @@ export default function AdminDashboard() {
               <button
                 key={i}
                 onClick={() => navigate(action.path)}
-                className="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl text-center font-medium text-orange-700 transition-all hover:shadow-md"
+                className="p-4 rounded-xl font-semibold text-orange-700 bg-gradient-to-br from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 transition-all hover:shadow-md"
               >
                 {action.label}
               </button>
@@ -184,7 +206,7 @@ export default function AdminDashboard() {
 
         {/* Recent Activity */}
         <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-orange-100/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">
+          <h2 className="text-2xl font-extrabold bg-gradient-to-r from-orange-600 to-rose-500 bg-clip-text text-transparent mb-6">
             Recent Activity
           </h2>
 
@@ -195,13 +217,13 @@ export default function AdminDashboard() {
               {recentActivity.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl"
+                  className="flex items-center gap-4 p-4 bg-orange-50/60 rounded-xl"
                 >
-                  <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                    <Users size={20} className="text-orange-600" />
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white">
+                    <Users size={18} />
                   </div>
                   <div>
-                    <p className="font-medium text-slate-800">
+                    <p className="font-semibold text-slate-800">
                       {item.name} registered
                     </p>
                     <p className="text-sm text-slate-500">
@@ -216,8 +238,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Bookings */}
-      <div className="mt-12 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-orange-100/50 p-8">
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">
+      <div className="mt-14 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-orange-100/50 p-8">
+        <h2 className="text-2xl font-extrabold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent mb-6">
           Recent Bookings
         </h2>
 
@@ -228,18 +250,17 @@ export default function AdminDashboard() {
             {recentBookings.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl"
+                className="flex items-center gap-4 p-4 bg-green-50/60 rounded-xl"
               >
-                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Calendar size={20} className="text-green-600" />
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white">
+                  <Calendar size={18} />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-800">
+                  <p className="font-semibold text-slate-800">
                     {b.user_name} booked {b.professional_name}
                   </p>
                   <p className="text-sm text-slate-500">
-                    {b.status} •{" "}
-                    {new Date(b.created_at).toLocaleString()}
+                    {b.status} • {new Date(b.created_at).toLocaleString()}
                   </p>
                 </div>
               </div>
