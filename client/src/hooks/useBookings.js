@@ -1,4 +1,3 @@
-// src/hooks/useBookings.js
 import { useEffect, useState } from "react";
 import authAxios from "../utils/authAxios";
 import { useAuthStore } from "../store/authStore";
@@ -28,10 +27,11 @@ const useBookings = (role = "user") => {
         setLoading(true);
         setError(null);
 
-        // ✅ CORRECT ENDPOINTS — no extra /api/v1 (authAxios already has it)
-        const endpoint = role === "professional"
-          ? `/bookings/pro/${user.id}`
-          : `/bookings/user/${user.id}`;
+        // ✅ Correct endpoints
+        const endpoint =
+          role === "professional"
+            ? `/bookings/professional/${user.id}`
+            : `/bookings/user/${user.id}`;
 
         const response = await authAxios.get(endpoint);
 
@@ -40,9 +40,17 @@ const useBookings = (role = "user") => {
         if (response.data?.success) {
           const enrichedBookings = (response.data.data || []).map((b) => ({
             id: b.id || b._id,
-            service_name: b.service_name || b.service_title || `Service #${b.service_id}`,
-            professional_name: b.professional_name || `Professional #${b.professional_id}`,
-            professional_location: b.professional_location || "Location not specified",
+            service_name:
+              b.service_name || b.service_title || `Service #${b.service_id}`,
+            // ✅ Role-aware mapping
+            client_name:
+              role === "professional"
+                ? b.user_name || `User #${b.user_id}`
+                : b.professional_name || `Professional #${b.professional_id}`,
+            location:
+              role === "professional"
+                ? b.user_location || "Client location not specified"
+                : b.professional_location || "Professional location not specified",
             date: b.date,
             time: b.time,
             status: b.status || "pending",
@@ -59,8 +67,8 @@ const useBookings = (role = "user") => {
         }
       } catch (err) {
         if (!isMounted) return;
-
-        const msg = err.response?.data?.message || err.message || "Network error";
+        const msg =
+          err.response?.data?.message || err.message || "Network error";
         setError(msg);
         console.error("Bookings fetch error:", err);
         setBookings([]);

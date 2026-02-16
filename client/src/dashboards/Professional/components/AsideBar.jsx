@@ -1,80 +1,121 @@
-/**
- * @description Professional dashboard sidebar
- * @returns Aside component
- */
-
+// src/dashboards/Professional/components/AsideBar.jsx
+import { NavLink } from "react-router-dom";
 import {
-  User,
-  Briefcase,
+  LayoutDashboard,
   CalendarCheck,
   Star,
+  MessageCircle,
+  User,
   Settings,
-  BarChart3,
 } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const AsideBar = () => {
-  const navLinks = [
-    { title: "Overview", icon: <BarChart3 />, link: ".", name: "Overview" },
-    {
-      title: "Services & Offers",
-      icon: <Briefcase />,
-      link: "services",
-      name: "Services",
-    },
-    {
-      title: "Bookings",
-      icon: <CalendarCheck />,
-      link: "bookings",
-      name: "Bookings",
-    },
-    { title: "Reviews", icon: <Star />, link: "reviews", name: "Reviews" },
-    { title: "Profile", icon: <User />, link: "profile", name: "Profile" },
-    {
-      title: "Settings",
-      icon: <Settings />,
-      link: "settings",
-      name: "Settings",
-    },
-  ];
+const navLinks = [
+  { title: "Overview", icon: LayoutDashboard, link: "." },
+  { title: "Bookings", icon: CalendarCheck, link: "bookings" },
+  { title: "Reviews", icon: Star, link: "reviews" },
+  { title: "Messages", icon: MessageCircle, link: "messages" },
+  { title: "Profile", icon: User, link: "profile" },
+  { title: "Settings", icon: Settings, link: "settings" },
+];
 
+const ProfessionalAsideBar = () => {
   return (
-    <aside className="relative hidden md:block w-48 lg:w-64 bg-gradient-to-b from-orange-600 to-rose-600 rounded-2xl shadow-xl text-white transition-all duration-500">
-      <ul className="mt-20 space-y-2">
-        {navLinks.map((n) => (
-          <li key={n.title}>
-            <NavLink
-              to={n.link}
-              title={n.name}
-              end
-              className={({ isActive }) =>
-                `flex items-center gap-3 p-3 rounded-l-xl transition-all duration-300 
-                 ${isActive 
-                   ? "bg-white text-orange-600 font-semibold shadow-md" 
-                   : "hover:bg-orange-500/20"}`
-              }
-            >
-              <span className="text-white">{n.icon}</span>
-              <span>{n.title}</span>
-            </NavLink>
-          </li>
-        ))}
-      </ul>
+    <aside
+      className="
+        hidden md:flex flex-col w-72 min-h-screen
+        bg-gradient-to-b from-white via-orange-50/50 to-orange-100/30
+        border-r-2 border-orange-200
+        shadow-2xl
+        px-6 py-10
+        relative overflow-hidden
+      "
+    >
+      {/* Subtle background glow */}
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-200/10 via-transparent to-rose-200/10 pointer-events-none" />
 
-      {/* App brand */}
-      <div className="absolute bottom-10 left-0 w-full">
-        <p className="text-center mb-4 text-sm text-white/80">Home</p>
-        <Link to="/" title="Home">
+      {/* Navigation Links */}
+      <nav className="flex-1 mt-8">
+        <ul className="space-y-3">
+          {navLinks.map(({ title, icon: Icon, link }) => (
+            <motion.li
+              key={title}
+              whileHover={{ x: 8 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              <NavLink
+                to={link}
+                end
+                className={({ isActive }) =>
+                  `
+                  group relative flex items-center gap-4 px-6 py-4 rounded-2xl
+                  font-semibold text-base tracking-wide transition-all duration-300
+                  overflow-hidden
+                  ${
+                    isActive
+                      ? "bg-gradient-to-r from-orange-400 to-rose-400 text-white shadow-xl"
+                      : "text-slate-700 hover:bg-orange-100/70 hover:text-orange-600"
+                  }
+                `
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeSidebarIndicator"
+                        className="absolute inset-0 bg-gradient-to-r from-orange-500 to-rose-500 rounded-2xl"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+
+                    <Icon
+                      size={22}
+                      className={`
+                        relative z-10 transition-colors duration-300
+                        ${isActive ? "text-white" : "text-slate-500 group-hover:text-orange-600"}
+                      `}
+                    />
+                    <span className="relative z-10">{title}</span>
+
+                    {!isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-300/20 to-rose-300/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            </motion.li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Footer Logo */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <motion.div
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-rose-400 rounded-full blur-xl opacity-40 scale-150" />
           <img
             src="/logo.png"
-            alt="brand logo"
-            aria-label="App logo"
-            className="h-10 w-auto mx-auto opacity-90 object-cover hover:scale-105 transition-transform duration-300"
+            alt="JustConnect Logo"
+            className="
+              relative h-14 w-auto
+              drop-shadow-lg
+              hover:drop-shadow-2xl
+              transition-all duration-300
+            "
           />
-        </Link>
+        </motion.div>
+
+        <p className="text-center mt-3 text-xs text-slate-500 font-medium">
+          © 2025 JustConnect
+        </p>
       </div>
     </aside>
   );
 };
 
-export default AsideBar;
+export default ProfessionalAsideBar;
