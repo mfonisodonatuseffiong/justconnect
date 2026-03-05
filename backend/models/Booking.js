@@ -1,16 +1,15 @@
+// models/Booking.js
 const pool = require("../config/db");
 
 /**
  * ==============================================
- * BOOKING MODEL (INDUSTRY STANDARD UPGRADE)
+ * BOOKING MODEL
  * Handles all database operations for bookings
  * ==============================================
  */
 
 /* ============================================================
-   🔹 Ensure the bookings table exists
-   — Includes UNIQUE constraint to prevent double-booking
-   — Prevents a professional from having two bookings same date/time
+   Ensure the bookings table exists
 ============================================================ */
 const ensureBookingTable = async () => {
   const query = `
@@ -37,54 +36,52 @@ const ensureBookingTable = async () => {
 };
 
 /* ============================================================
-   🔹 CHECK IF USER ALREADY BOOKED SAME TIME
+   CHECK IF USER ALREADY BOOKED SAME TIME
 ============================================================ */
 const userHasConflict = async (user_id, date, time) => {
   const q = `
-    SELECT * FROM bookings
+    SELECT 1 FROM bookings
     WHERE user_id = $1 AND date = $2 AND time = $3
+    LIMIT 1;
   `;
   const r = await pool.query(q, [user_id, date, time]);
   return r.rows.length > 0;
 };
 
 /* ============================================================
-   🔹 CHECK IF PROFESSIONAL ALREADY BOOKED AT SAME TIME
+   CHECK IF PROFESSIONAL ALREADY BOOKED AT SAME TIME
 ============================================================ */
 const professionalHasConflict = async (professional_id, date, time) => {
   const q = `
-    SELECT * FROM bookings
+    SELECT 1 FROM bookings
     WHERE professional_id = $1 AND date = $2 AND time = $3
+    LIMIT 1;
   `;
   const r = await pool.query(q, [professional_id, date, time]);
   return r.rows.length > 0;
 };
 
 /* ============================================================
-   🔹 Create a new booking (with full industry checks)
+   Create a new booking
 ============================================================ */
 const createBooking = async (data) => {
   const { user_id, professional_id, service_id, date, time, notes } = data;
 
-  // ❌ Cannot book past dates
   const nowDate = new Date().toISOString().split("T")[0];
   if (date < nowDate) {
     throw new Error("Cannot book for a past date");
   }
 
-  // ❌ Check if USER already has a booking at same time
   const userConflict = await userHasConflict(user_id, date, time);
   if (userConflict) {
     throw new Error("You already have a booking at this time");
   }
 
-  // ❌ Check if PROFESSIONAL is busy same time
   const proConflict = await professionalHasConflict(professional_id, date, time);
   if (proConflict) {
     throw new Error("Professional is not available at this time");
   }
 
-  // 💾 Insert booking
   const query = `
     INSERT INTO bookings (user_id, professional_id, service_id, date, time, notes, status)
     VALUES ($1, $2, $3, $4, $5, $6, 'pending')
@@ -103,39 +100,173 @@ const createBooking = async (data) => {
 };
 
 /* ============================================================
-   🔹 Get all bookings (ADMIN ONLY)
+   Get all bookings (ADMIN)
+   Joins users and professionals for contextual info
+   Select only columns that exist in both schemas to avoid errors
 ============================================================ */
 const getAllBookings = async () => {
-  const r = await pool.query(`
-    SELECT * FROM bookings ORDER BY created_at DESC;
-  `);
-  return r.rows;
+  try {
+    const r = await pool.query(`
+      SELECT 
+        b.*,
+
+        u.name AS client_name,
+        u.email AS client_email,
+        u.phone AS client_phone,
+        u.location AS client_location,
+        u.address AS client_address,
+        u.sex AS client_sex,
+        u.profile_picture AS client_profile_picture,
+
+        p.name AS professional_name,
+        p.email AS professional_email,
+        p.phone AS professional_phone,
+        p.location AS professional_location,
+        p.contact AS professional_contact,
+        p.photo AS professional_photo,
+        p.profile_photo_url AS professional_profile_photo_url
+
+      FROM bookings b
+      LEFT JOIN users u ON b.user_id = u.id
+      LEFT JOIN professionals p ON b.professional_id = p.id
+      ORDER BY b.created_at DESC;
+    `);
+
+    return r.rows;
+  } catch (err) {
+    console.error("getAllBookings ERROR:", err && err.stack ? err.stack : err);
+    throw err;
+  }
 };
 
 /* ============================================================
-   🔹 Get bookings by user
+   Get bookings by user
+   Join to professionals table for professional details
+   Wrapped with logging and error handling to reveal SQL/runtime errors
+   Select only safe columns present in professionals table
 ============================================================ */
 const getBookingsByUser = async (userId) => {
-  const r = await pool.query(
-    `SELECT * FROM bookings WHERE user_id = $1 ORDER BY created_at DESC;`,
-    [userId]
-  );
-  return r.rows;
+  try {
+    console.log("getBookingsByUser called with userId:", userId);
+    const r = await pool.query(
+      `
+      SELECT 
+        b.*,
+
+        p.name AS professional_name,
+        p.email AS professional_email,
+        p.phone AS professional_phone,
+        p.location AS professional_location,
+        p.contact AS professional_contact,
+        p.photo AS professional_photo,
+        p.profile_photo_url AS professional_profile_photo_url
+
+      FROM bookings b
+      LEFT JOIN professionals p ON b.professional_id = p.id
+      WHERE b.user_id = $1
+      ORDER BY b.created_at DESC;
+    `,
+      [userId]
+    );
+    console.log("getBookingsByUser returned rows:", r.rows?.length ?? 0);
+    return r.rows;
+  } catch (err) {
+    console.error("getBookingsByUser ERROR:", err && err.stack ? err.stack : err);
+    throw err;
+  }
 };
 
 /* ============================================================
-   🔹 Get bookings by professional
+   Get bookings by professional
+   Returns full client details
+   Select only safe user columns
 ============================================================ */
 const getBookingsByProfessional = async (professionalId) => {
-  const r = await pool.query(
-    `SELECT * FROM bookings WHERE professional_id = $1 ORDER BY created_at DESC;`,
-    [professionalId]
-  );
-  return r.rows;
+  try {
+    const r = await pool.query(
+      `
+      SELECT 
+        b.*,
+
+        u.id AS client_id,
+        u.name AS client_name,
+        u.email AS client_email,
+        u.phone AS client_phone,
+        u.location AS client_location,
+        u.address AS client_address,
+        u.sex AS client_sex,
+        u.profile_picture AS client_profile_picture
+
+      FROM bookings b
+      LEFT JOIN users u ON b.user_id = u.id
+      WHERE b.professional_id = $1
+        AND b.status IN ('pending', 'accepted', 'in_progress', 'completed', 'cancelled')
+      ORDER BY 
+        CASE 
+          WHEN b.status = 'pending' THEN 1
+          WHEN b.status = 'accepted' THEN 2
+          WHEN b.status = 'in_progress' THEN 3
+          WHEN b.status = 'completed' THEN 4
+          WHEN b.status = 'cancelled' THEN 5
+          ELSE 6
+        END,
+        b.created_at DESC;
+    `,
+      [professionalId]
+    );
+    return r.rows;
+  } catch (err) {
+    console.error("getBookingsByProfessional ERROR:", err && err.stack ? err.stack : err);
+    throw err;
+  }
 };
 
 /* ============================================================
-   🔹 Update booking status (admin or professional)
+   Get single booking by id (useful for confirmation page)
+   Joins both user and professional tables for consistent enrichment
+   Select only safe columns from professionals
+============================================================ */
+const getBookingById = async (bookingId) => {
+  try {
+    const r = await pool.query(
+      `
+      SELECT
+        b.*,
+        u.id AS client_id,
+        u.name AS client_name,
+        u.email AS client_email,
+        u.phone AS client_phone,
+        u.location AS client_location,
+        u.address AS client_address,
+        u.sex AS client_sex,
+        u.profile_picture AS client_profile_picture,
+
+        p.name AS professional_name,
+        p.email AS professional_email,
+        p.phone AS professional_phone,
+        p.location AS professional_location,
+        p.contact AS professional_contact,
+        p.photo AS professional_photo,
+        p.profile_photo_url AS professional_profile_photo_url
+
+      FROM bookings b
+      LEFT JOIN users u ON b.user_id = u.id
+      LEFT JOIN professionals p ON b.professional_id = p.id
+      WHERE b.id = $1
+      LIMIT 1;
+    `,
+      [bookingId]
+    );
+
+    return r.rows[0] || null;
+  } catch (err) {
+    console.error("getBookingById ERROR:", err && err.stack ? err.stack : err);
+    throw err;
+  }
+};
+
+/* ============================================================
+   Update booking status
 ============================================================ */
 const updateBookingStatus = async (bookingId, status) => {
   const r = await pool.query(
@@ -151,7 +282,7 @@ const updateBookingStatus = async (bookingId, status) => {
 };
 
 /* ============================================================
-   🔹 Delete booking (Admin or owner)
+   Delete booking
 ============================================================ */
 const deleteBooking = async (bookingId) => {
   await pool.query(`DELETE FROM bookings WHERE id = $1;`, [bookingId]);
@@ -164,6 +295,7 @@ module.exports = {
   getAllBookings,
   getBookingsByUser,
   getBookingsByProfessional,
+  getBookingById,
   updateBookingStatus,
   deleteBooking,
 };
