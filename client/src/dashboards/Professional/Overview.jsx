@@ -2,7 +2,7 @@
  * @description Professional dashboard overview page
  *              - Shows KPIs (bookings, pending, completed)
  *              - Displays weekly bookings graph
- *              - Lists recent bookings
+ *              - Lists active bookings with client details
  *              - Provides quick link to bookings
  */
 
@@ -27,7 +27,7 @@ import { Link } from "react-router-dom";
 import useBookings from "../../hooks/useBookings";
 
 const Overview = () => {
-  const { bookings, totalBookings, loading, error } = useBookings("professional");
+  const { bookings, totalBookings, loading, error, refresh } = useBookings("professional");
 
   // derive KPI counts
   const pending = bookings.filter(b => b.status === "pending").length;
@@ -43,6 +43,19 @@ const Overview = () => {
     { name: "Sat", bookings: 7 },
     { name: "Sun", bookings: 4 },
   ];
+
+  // helper to update booking status
+  const updateStatus = async (id, status) => {
+    await fetch(`/api/v1/bookings/${id}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // professional token
+      },
+      body: JSON.stringify({ status }),
+    });
+    refresh(); // refresh bookings without full reload
+  };
 
   return (
     <div className="md:p-6 space-y-6">
@@ -112,39 +125,83 @@ const Overview = () => {
         </CardContent>
       </Card>
 
-      {/* Recent Bookings */}
+      {/* Active Bookings */}
       <Card className="rounded-2xl shadow-sm border border-amber-200">
         <CardHeader>
-          <CardTitle className="text-orange-600">Recent Bookings</CardTitle>
+          <CardTitle className="text-orange-600">Active Bookings</CardTitle>
         </CardHeader>
         <CardContent>
           {loading && <p>Loading...</p>}
           {error && <p className="text-rose-600">{error}</p>}
           <div className="space-y-4">
-            {bookings.slice(0, 5).map((b) => (
-              <div
-                key={b.id}
-                className="flex items-center justify-between border-b border-rose-200 border-dashed pb-3"
-              >
-                <div>
-                  <p className="font-medium text-amber-700">{b.professional_name}</p>
-                  <p className="text-sm text-rose-600">
-                    {b.service_name} • {b.date}
-                  </p>
+            {bookings
+              .filter((b) => b.status === "pending" || b.status === "accepted") // ✅ only active
+              .slice(0, 5)
+              .map((b) => (
+                <div key={b.id} className="border-b border-rose-200 border-dashed pb-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-amber-700">{b.client_name}</p>
+                      <p className="text-sm text-rose-600">
+                        {b.service_name} • {new Date(b.date).toLocaleDateString()} at {b.time}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Email: {b.client_email || "Not provided"} | Phone: {b.client_phone || "Not provided"}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Location: {b.client_location || "Not provided"} | Address: {b.client_address || "Not provided"}
+                      </p>
+                      <p className="text-xs text-gray-600">Sex: {b.client_sex || "Not provided"}</p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        b.status === "completed"
+                          ? "bg-green-100 text-green-600"
+                          : b.status === "pending"
+                          ? "bg-amber-100 text-amber-600"
+                          : "bg-blue-100 text-blue-600"
+                      }`}
+                    >
+                      {b.status}
+                    </span>
+                  </div>
+
+                  {/* Action buttons */}
+                  {b.status === "pending" && (
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        className="bg-green-500 text-white rounded-lg px-3 py-1"
+                        onClick={() => updateStatus(b.id, "accepted")}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        className="bg-red-500 text-white rounded-lg px-3 py-1"
+                        onClick={() => updateStatus(b.id, "declined")}
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  )}
+
+                  {b.status === "accepted" && (
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        className="bg-blue-500 text-white rounded-lg px-3 py-1"
+                        onClick={() => updateStatus(b.id, "completed")}
+                      >
+                        Mark Completed
+                      </Button>
+                      <Button
+                        className="bg-red-500 text-white rounded-lg px-3 py-1"
+                        onClick={() => updateStatus(b.id, "declined")}
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    b.status === "completed"
-                      ? "bg-green-100 text-green-600"
-                      : b.status === "pending"
-                      ? "bg-amber-100 text-amber-600"
-                      : "bg-rose-100 text-rose-600"
-                  }`}
-                >
-                  {b.status}
-                </span>
-              </div>
-            ))}
+              ))}
           </div>
         </CardContent>
       </Card>

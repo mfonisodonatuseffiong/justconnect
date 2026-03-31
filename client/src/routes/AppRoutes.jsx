@@ -9,9 +9,9 @@ import { useAuthStore } from "../store/authStore";
 import DashboardLayoutPro from "../dashboards/Professional/DashboardLayout";
 import Overview from "../dashboards/Professional/Overview";
 import BookingsPro from "../dashboards/Professional/Bookings";
+import BookingHistory from "../dashboards/Professional/BookingHistory";
 import ProfilePro from "../dashboards/Professional/Profile";
 import Reviews from "../dashboards/Professional/Reviews";
-import SettingsPro from "../dashboards/Professional/Settings";
 import MessagesPro from "../dashboards/Professional/Messages";
 
 /** User Dashboard Pages */
@@ -96,10 +96,11 @@ const AppRoutes = () => {
       >
         <Route index element={<Overview />} />
         <Route path="bookings" element={<BookingsPro />} />
+        <Route path="bookings/history" element={<BookingHistory />} />
         <Route path="reviews" element={<Reviews />} />
         <Route path="messages" element={<MessagesPro />} />
         <Route path="profile" element={<ProfilePro />} />
-        <Route path="settings" element={<SettingsPro />} />
+        {/* ✅ Settings removed from professional side */}
       </Route>
 
       {/* User Dashboard */}
@@ -115,7 +116,7 @@ const AppRoutes = () => {
         <Route path="bookings" element={<BookingsPage />} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="profile" element={<ProfilePage />} />
-        <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings" element={<SettingsPage />} /> {/* ✅ User Settings remains */}
       </Route>
 
       {/* Admin Dashboard */}

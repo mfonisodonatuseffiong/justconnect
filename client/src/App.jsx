@@ -17,6 +17,7 @@ import BookingsPage from "./dashboards/User/BookingsPage";
 import MessagesPage from "./dashboards/User/MessagesPage";
 import ProfilePage from "./dashboards/User/ProfilePage";
 import SettingsPage from "./dashboards/User/SettingsPage";
+import UserBookingHistory from "./dashboards/User/UserBookingHistory"; // <-- import history component
 
 // Booking flow
 import BrowseProfessionals from "./dashboards/User/BrowseProfessionals.jsx";
@@ -83,7 +84,11 @@ const App = () => {
 
         <Route path="/user-dashboard" element={<DashboardLayout />}>
           <Route index element={<Home />} />
+
+          {/* Bookings: active vs history */}
           <Route path="bookings" element={<BookingsPage />} />
+          <Route path="bookings/history" element={<UserBookingHistory />} />
+
           <Route path="bookings/new" element={<BrowseProfessionals />} />
           <Route path="bookings/new/:id" element={<BookProfessional />} />
           <Route path="messages" element={<MessagesPage />} />

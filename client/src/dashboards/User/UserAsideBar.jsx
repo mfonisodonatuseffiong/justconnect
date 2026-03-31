@@ -7,12 +7,14 @@ import {
   MessageCircle,
   User,
   Settings,
+  Clock,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navLinks = [
   { title: "Home", icon: Home, link: "." },
   { title: "Bookings", icon: CalendarCheck, link: "bookings" },
+  { title: "Booking History", icon: Clock, link: "bookings/history" },
   { title: "Book a Professional", icon: Briefcase, link: "bookings/new" },
   { title: "Messages", icon: MessageCircle, link: "messages" },
   { title: "Profile", icon: User, link: "profile" },
@@ -30,12 +32,13 @@ const UserAsideBar = () => {
         px-6 py-10
         relative overflow-hidden
       "
+      aria-label="User navigation"
     >
       {/* Subtle background glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-orange-200/10 via-transparent to-rose-200/10 pointer-events-none" />
 
       {/* Navigation Links */}
-      <nav className="flex-1 mt-8">
+      <nav className="flex-1 mt-8" aria-label="Main">
         <ul className="space-y-3">
           {navLinks.map(({ title, icon: Icon, link }) => (
             <motion.li
@@ -45,7 +48,7 @@ const UserAsideBar = () => {
             >
               <NavLink
                 to={link}
-                end
+                end={link === "."}
                 className={({ isActive }) =>
                   `
                   group relative flex items-center gap-4 px-6 py-4 rounded-2xl
@@ -58,6 +61,7 @@ const UserAsideBar = () => {
                   }
                 `
                 }
+                aria-current={({ isActive }) => (isActive ? "page" : undefined)}
               >
                 {({ isActive }) => (
                   <>
@@ -76,6 +80,7 @@ const UserAsideBar = () => {
                         relative z-10 transition-colors duration-300
                         ${isActive ? "text-white" : "text-slate-500 group-hover:text-orange-600"}
                       `}
+                      aria-hidden="true"
                     />
                     <span className="relative z-10">{title}</span>
 

@@ -3,20 +3,21 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarCheck,
+  History,
   Star,
   MessageCircle,
   User,
-  Settings,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navLinks = [
   { title: "Overview", icon: LayoutDashboard, link: "." },
   { title: "Bookings", icon: CalendarCheck, link: "bookings" },
+  { title: "Booking History", icon: History, link: "bookings/history" }, // ✅ NEW
   { title: "Reviews", icon: Star, link: "reviews" },
   { title: "Messages", icon: MessageCircle, link: "messages" },
   { title: "Profile", icon: User, link: "profile" },
-  { title: "Settings", icon: Settings, link: "settings" },
+  // ✅ Settings removed
 ];
 
 const ProfessionalAsideBar = () => {
