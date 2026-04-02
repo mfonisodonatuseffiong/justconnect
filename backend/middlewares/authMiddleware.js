@@ -76,6 +76,22 @@ const authorizeRoles = (...allowedRoles) => (req, res, next) => {
   return next();
 };
 
+/**
+ * ==========================================================
+ * IS ADMIN MIDDLEWARE
+ * Blocks non-admins from accessing admin routes
+ * ==========================================================
+ */
+const isAdmin = (req, res, next) => {
+  if (req.user && req.user.role === "admin") {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: "Access denied. Admins only.",
+  });
+};
+
 // Backward compatibility for older code
 const roleAuthorization = (role) => authorizeRoles(role);
 
@@ -83,4 +99,5 @@ module.exports = {
   authenticateToken,
   authorizeRoles,
   roleAuthorization,
+  isAdmin, // ✅ added helper
 };

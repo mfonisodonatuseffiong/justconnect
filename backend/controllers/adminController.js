@@ -2,9 +2,7 @@
 const pool = require("../config/db");
 
 /**
- * Get dashboard statistics for admin overview
- * @route GET /api/v1/admin/stats
- * @access Private (Admin only)
+ * Dashboard statistics
  */
 const getDashboardStats = async (req, res) => {
   try {
@@ -36,25 +34,29 @@ const getDashboardStats = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Error fetching admin dashboard stats:", error);
+    console.error("❌ Error fetching dashboard stats:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to load dashboard statistics. Please try again later.",
+      message: "Server error fetching dashboard stats",
     });
   }
 };
 
+
 /**
- * Get all users (paginated, searchable, filter by role)
- * @route GET /api/v1/admin/users
+ * Get all users
  */
 const getAllUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", role = "" } = req.query;
-    const offset = (page - 1) * limit;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
 
     let query =
       "SELECT id, name, email, role, created_at FROM users WHERE 1=1";
+
     const values = [];
     let paramIndex = 1;
 
@@ -70,75 +72,111 @@ const getAllUsers = async (req, res) => {
       paramIndex++;
     }
 
-    query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${
-      paramIndex + 1
-    }`;
-    values.push(limit, offset);
+    query += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    values.push(limitNum, offset);
 
     const usersRes = await pool.query(query, values);
-    const countRes = await pool.query("SELECT COUNT(*) FROM users");
+
+
+    /* Count query */
+    let countQuery = "SELECT COUNT(*) FROM users WHERE 1=1";
+    const countValues = [];
+    let countIndex = 1;
+
+    if (search) {
+      countQuery += ` AND (name ILIKE $${countIndex} OR email ILIKE $${countIndex})`;
+      countValues.push(`%${search}%`);
+      countIndex++;
+    }
+
+    if (role) {
+      countQuery += ` AND role = $${countIndex}`;
+      countValues.push(role);
+      countIndex++;
+    }
+
+    const countRes = await pool.query(countQuery, countValues);
     const total = parseInt(countRes.rows[0].count, 10);
 
     res.status(200).json({
       success: true,
-      users: usersRes.rows,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / limit),
+      data: {
+        users: usersRes.rows,
+        total,
+        page: pageNum,
+        pages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
     console.error("❌ Error fetching users:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error fetching users" });
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching users",
+    });
   }
 };
 
+
 /**
- * Delete a user by ID
- * @route DELETE /api/v1/admin/users/:id
+ * Delete user (cannot delete admin)
  */
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
+
     const result = await pool.query(
-      "DELETE FROM users WHERE id = $1 RETURNING id",
+      "DELETE FROM users WHERE id = $1 AND role != 'admin' RETURNING id",
       [id]
     );
 
     if (result.rowCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found or cannot delete admin",
+      });
     }
 
-    res
-      .status(200)
-      .json({ success: true, message: "User deleted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
   } catch (error) {
     console.error("❌ Error deleting user:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error deleting user" });
+    res.status(500).json({
+      success: false,
+      message: "Server error deleting user",
+    });
   }
 };
 
+
 /**
- * Get all professionals
- * @route GET /api/v1/admin/professionals
+ * Get professionals
  */
 const getAllProfessionals = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", service = "" } = req.query;
-    const offset = (page - 1) * limit;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
 
     let query = `
-      SELECT p.id, p.name, p.email, s.name AS service_name,
-             p.location, p.experience, p.approved
+      SELECT 
+      p.id,
+      p.name,
+      p.email,
+      s.name AS service_name,
+      p.location,
+      p.experience,
+      p.approved,
+      p.created_at
       FROM professionals p
-      LEFT JOIN services s ON p.service_id = s.id
+      LEFT JOIN services s 
+      ON p.service_id = s.id
       WHERE 1=1
     `;
+
     const values = [];
     let paramIndex = 1;
 
@@ -154,21 +192,47 @@ const getAllProfessionals = async (req, res) => {
       paramIndex++;
     }
 
-    query += ` ORDER BY p.created_at DESC LIMIT $${paramIndex} OFFSET $${
-      paramIndex + 1
-    }`;
-    values.push(limit, offset);
+    query += ` ORDER BY p.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    values.push(limitNum, offset);
 
     const prosRes = await pool.query(query, values);
-    const countRes = await pool.query("SELECT COUNT(*) FROM professionals");
+
+
+    /* Count Query */
+    let countQuery = `
+      SELECT COUNT(*)
+      FROM professionals p
+      LEFT JOIN services s 
+      ON p.service_id = s.id
+      WHERE 1=1
+    `;
+
+    const countValues = [];
+    let countIndex = 1;
+
+    if (search) {
+      countQuery += ` AND (p.name ILIKE $${countIndex} OR p.email ILIKE $${countIndex})`;
+      countValues.push(`%${search}%`);
+      countIndex++;
+    }
+
+    if (service) {
+      countQuery += ` AND s.name ILIKE $${countIndex}`;
+      countValues.push(`%${service}%`);
+      countIndex++;
+    }
+
+    const countRes = await pool.query(countQuery, countValues);
     const total = parseInt(countRes.rows[0].count, 10);
 
     res.status(200).json({
       success: true,
-      professionals: prosRes.rows,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / limit),
+      data: {
+        professionals: prosRes.rows,
+        total,
+        page: pageNum,
+        pages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
     console.error("❌ Error fetching professionals:", error);
@@ -179,22 +243,24 @@ const getAllProfessionals = async (req, res) => {
   }
 };
 
+
 /**
- * Delete a professional by ID
- * @route DELETE /api/v1/admin/professionals/:id
+ * Delete professional
  */
 const deleteProfessional = async (req, res) => {
   try {
     const { id } = req.params;
+
     const result = await pool.query(
       "DELETE FROM professionals WHERE id = $1 RETURNING id",
       [id]
     );
 
     if (result.rowCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Professional not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Professional not found",
+      });
     }
 
     res.status(200).json({
@@ -210,28 +276,30 @@ const deleteProfessional = async (req, res) => {
   }
 };
 
+
 /**
- * Approve a professional by ID
- * @route PUT /api/v1/admin/professionals/:id/approve
+ * Approve professional
  */
 const approveProfessional = async (req, res) => {
   try {
     const { id } = req.params;
+
     const result = await pool.query(
       "UPDATE professionals SET approved = true WHERE id = $1 RETURNING id, approved",
       [id]
     );
 
     if (result.rowCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Professional not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Professional not found",
+      });
     }
 
     res.status(200).json({
       success: true,
       message: "Professional approved successfully",
-      professional: result.rows[0],
+      data: result.rows[0],
     });
   } catch (error) {
     console.error("❌ Error approving professional:", error);
@@ -242,16 +310,20 @@ const approveProfessional = async (req, res) => {
   }
 };
 
+
 /**
- * Get all services
- * @route GET /api/v1/admin/services
+ * Get services
  */
 const getAllServices = async (req, res) => {
   try {
     const { rows } = await pool.query(
       "SELECT * FROM services ORDER BY name ASC"
     );
-    res.status(200).json({ success: true, services: rows });
+
+    res.status(200).json({
+      success: true,
+      data: { services: rows },
+    });
   } catch (error) {
     console.error("❌ Error fetching services:", error);
     res.status(500).json({
@@ -261,22 +333,24 @@ const getAllServices = async (req, res) => {
   }
 };
 
+
 /**
- * Delete a service by ID
- * @route DELETE /api/v1/admin/services/:id
+ * Delete service
  */
 const deleteService = async (req, res) => {
   try {
     const { id } = req.params;
+
     const result = await pool.query(
       "DELETE FROM services WHERE id = $1 RETURNING id",
       [id]
     );
 
     if (result.rowCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Service not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Service not found",
+      });
     }
 
     res.status(200).json({
@@ -292,52 +366,71 @@ const deleteService = async (req, res) => {
   }
 };
 
+
 /**
- * Get recent bookings (latest 5)
- * @route GET /api/v1/admin/recent-bookings
+ * Recent bookings
  */
 const getRecentBookings = async (req, res) => {
-    try {
-      const { rows } = await pool.query(`
-        SELECT b.id, b.status, b.created_at, u.name AS user_name, p.name AS professional_name
-        FROM bookings b
-        JOIN users u ON b.user_id = u.id
-        JOIN professionals p ON b.professional_id = p.id
-        ORDER BY b.created_at DESC
-        LIMIT 5
-      `);
-  
-      res.status(200).json({ success: true, bookings: rows });
-    } catch (error) {
-      console.error("❌ Error fetching recent bookings:", error);
-      res.status(500).json({ success: false, message: "Server error fetching recent bookings" });
-    }
-  };
-  
-  /**
-   * Get recent user registrations (latest 5)
-   * @route GET /api/v1/admin/recent-activity
-   */
-  const getRecentActivity = async (req, res) => {
-    try {
-      const { rows } = await pool.query(`
-        SELECT id, name, email, role, created_at
-        FROM users
-        ORDER BY created_at DESC
-        LIMIT 5
-      `);
-  
-      res.status(200).json({ success: true, activity: rows });
-    } catch (error) {
-      console.error("❌ Error fetching recent activity:", error);
-      res.status(500).json({ success: false, message: "Server error fetching recent activity" });
-    }
-  };
-  
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+      b.id,
+      b.status,
+      b.created_at,
+      u.name AS user_name,
+      p.name AS professional_name
+      FROM bookings b
+      JOIN users u ON b.user_id = u.id
+      JOIN professionals p ON b.professional_id = p.id
+      ORDER BY b.created_at DESC
+      LIMIT 5
+    `);
 
-/* =====================================================
- * EXPORTS
- * ===================================================== */
+    res.status(200).json({
+      success: true,
+      data: { bookings: rows },
+    });
+  } catch (error) {
+    console.error("❌ Error fetching recent bookings:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching recent bookings",
+    });
+  }
+};
+
+
+/**
+ * Recent activity
+ */
+const getRecentActivity = async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+      id,
+      name,
+      email,
+      role,
+      created_at
+      FROM users
+      ORDER BY created_at DESC
+      LIMIT 5
+    `);
+
+    res.status(200).json({
+      success: true,
+      data: { activity: rows },
+    });
+  } catch (error) {
+    console.error("❌ Error fetching recent activity:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error fetching recent activity",
+    });
+  }
+};
+
+
 module.exports = {
   getDashboardStats,
   getAllUsers,

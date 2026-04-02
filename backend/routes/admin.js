@@ -3,11 +3,16 @@ const router = express.Router();
 
 // Import the whole controller object
 const adminController = require("../controllers/adminController");
-const { authenticateToken, authorizeRoles } = require("../middlewares/authMiddleware");
+const { authenticateToken, isAdmin } = require("../middlewares/authMiddleware");
 
-// All admin routes require authentication and admin role
+/**
+ * ==========================================================
+ * ADMIN ROUTES
+ * All admin routes require authentication and admin role
+ * ==========================================================
+ */
 router.use(authenticateToken);
-router.use(authorizeRoles("admin"));
+router.use(isAdmin);
 
 // Dashboard stats (counts)
 router.get("/stats", adminController.getDashboardStats);
@@ -25,9 +30,8 @@ router.put("/professionals/:id/approve", adminController.approveProfessional);
 router.get("/services", adminController.getAllServices);
 router.delete("/services/:id", adminController.deleteService);
 
+// Activity and bookings
 router.get("/recent-bookings", adminController.getRecentBookings);
 router.get("/recent-activity", adminController.getRecentActivity);
 
-
 module.exports = router;
-

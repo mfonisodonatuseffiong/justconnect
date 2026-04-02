@@ -81,7 +81,8 @@ const authController = {
         return res.status(400).json({ message: "name, email and password are required" });
       }
 
-      const allowedRoles = ["user", "professional", "admin"];
+      // ✅ Only allow "user" or "professional" at registration
+      const allowedRoles = ["user", "professional"];
       const finalRole = allowedRoles.includes(role) ? role : "user";
 
       const existing = await getUserByEmail(email);
@@ -273,8 +274,4 @@ const authController = {
   },
 };
 
-module.exports = authController;
-
-/* Dashboard compatibility */
-authController.getUserProfileBy
 module.exports = authController;
