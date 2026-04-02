@@ -1,56 +1,10 @@
 const pool = require("../config/db");
 
-const defaultServices = [
-  "Electrician",
-  "Plumber",
-  "Carpenter",
-  "Painter",
-  "Mechanic",
-  "Cleaner",
-  "Hair Stylist",
-  "Tailor",
-  "Driver",
-  "Chef",
-  "Technician",
-  "Mason",
-  "Gardener",
-  "Teacher",
-];
-
-/**
- * Ensure the services table exists and seed default services
- */
-const ensureServiceTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS services (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) UNIQUE NOT NULL
-      );
-    `);
-    console.log("📦 Services table ready.");
-
-    const { rows } = await pool.query("SELECT COUNT(*) FROM services");
-    const count = parseInt(rows[0].count, 10);
-
-    if (count === 0) {
-      for (const name of defaultServices) {
-        await pool.query("INSERT INTO services (name) VALUES ($1)", [name]);
-      }
-      console.log("🌱 Default services seeded successfully.");
-    } else {
-      console.log("✅ Services table already populated.");
-    }
-  } catch (err) {
-    console.error("❌ Error ensuring services table:", err.message);
-  }
-};
-
 /**
  * Service Model
  */
 const Service = {
-  // ✅ Get all services (no pagination, for dropdowns)
+  // Get all services (for dropdowns or listings)
   getAll: async () => {
     try {
       const { rows } = await pool.query("SELECT * FROM services ORDER BY id ASC");
@@ -61,48 +15,28 @@ const Service = {
     }
   },
 
-  // ✅ Optional: Get services with pagination
-  getPaginated: async (limit = 20, offset = 0) => {
+  // Get services by professional
+  getByProfessional: async (professionalId) => {
     try {
       const { rows } = await pool.query(
-        "SELECT * FROM services ORDER BY id ASC LIMIT $1 OFFSET $2",
-        [limit, offset]
+        "SELECT * FROM services WHERE professional_id = $1 ORDER BY id ASC",
+        [professionalId]
       );
       return rows;
     } catch (err) {
-      console.error("❌ Error fetching paginated services:", err.message);
+      console.error("❌ Error fetching services by professional:", err.message);
       throw err;
     }
   },
 
-  // Count total services
-  countAll: async () => {
-    try {
-      const { rows } = await pool.query("SELECT COUNT(*) FROM services");
-      return parseInt(rows[0].count, 10);
-    } catch (err) {
-      console.error("❌ Error counting services:", err.message);
-      throw err;
-    }
-  },
-
-  // Get a service by ID
-  getById: async (id) => {
-    try {
-      const { rows } = await pool.query("SELECT * FROM services WHERE id = $1", [id]);
-      return rows[0];
-    } catch (err) {
-      console.error("❌ Error fetching service by ID:", err.message);
-      throw err;
-    }
-  },
-
-  // Create a new service
-  create: async (name) => {
+  // Create a new service for a professional
+  create: async (professionalId, service_name, description = null, price = null) => {
     try {
       const { rows } = await pool.query(
-        "INSERT INTO services (name) VALUES ($1) RETURNING *",
-        [name]
+        `INSERT INTO services (professional_id, service_name, description, price, created_at)
+         VALUES ($1, $2, $3, $4, NOW())
+         RETURNING *`,
+        [professionalId, service_name, description, price]
       );
       return rows[0];
     } catch (err) {
@@ -111,12 +45,17 @@ const Service = {
     }
   },
 
-  // Update existing service
-  update: async (id, name) => {
+  // Update an existing service
+  update: async (id, { service_name, description, price }) => {
     try {
       const { rows } = await pool.query(
-        "UPDATE services SET name = $1 WHERE id = $2 RETURNING *",
-        [name, id]
+        `UPDATE services
+         SET service_name = COALESCE($1, service_name),
+             description  = COALESCE($2, description),
+             price        = COALESCE($3, price)
+         WHERE id = $4
+         RETURNING *`,
+        [service_name, description, price, id]
       );
       return rows[0];
     } catch (err) {
@@ -137,4 +76,4 @@ const Service = {
   },
 };
 
-module.exports = { Service, ensureServiceTable };
+module.exports = { Service };

@@ -1,7 +1,7 @@
 /**
  * User model helpers – NO REFRESH TOKEN VERSION
  * - Secure parameterized queries
- * - Clean + simplified without refresh token system
+ * - Clean + simplified
  */
 
 const pool = require("../config/db");
@@ -20,12 +20,17 @@ async function addUser(
   address = null
 ) {
   const query = `
-    INSERT INTO users (name, email, password, role, phone, address, sex, profile_picture, created_at, updated_at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8, NOW(), NOW())
-    RETURNING id, name, email, role, phone, address, sex, profile_picture;
+    INSERT INTO users (
+      name, email, password, role,
+      profile_picture, phone, sex, address,
+      created_at, updated_at
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())
+    RETURNING id, name, email, role,
+              profile_picture, phone, sex, address;
   `;
 
-  const values = [name, email, password, role, phone, address, sex, profile_picture];
+  const values = [name, email, password, role, profile_picture, phone, sex, address];
   const { rows } = await pool.query(query, values);
   return rows[0];
 }
@@ -36,13 +41,15 @@ async function addUser(
  */
 async function getUserByEmail(email) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, password, role, phone, address, sex, profile_picture,
+    `SELECT id, name, email, password, role,
+            profile_picture, phone, sex, address,
             reset_token, reset_token_expiry
      FROM users
      WHERE LOWER(email) = LOWER($1)
      LIMIT 1`,
     [email]
   );
+
   return rows[0] || null;
 }
 
@@ -52,12 +59,14 @@ async function getUserByEmail(email) {
  */
 async function getUserById(id) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, role, phone, address, sex, profile_picture
+    `SELECT id, name, email, role,
+            profile_picture, phone, sex, address
      FROM users
      WHERE id = $1
      LIMIT 1`,
     [id]
   );
+
   return rows[0] || null;
 }
 
@@ -100,6 +109,7 @@ async function findUserByResetToken(hashedToken) {
      LIMIT 1`,
     [hashedToken]
   );
+
   return rows[0] || null;
 }
 
@@ -123,9 +133,11 @@ async function clearResetToken(userId) {
 async function updateUserProfilePic(userId, url) {
   const { rows } = await pool.query(
     `UPDATE users
-     SET profile_picture = $1, updated_at = NOW()
+     SET profile_picture = $1,
+         updated_at = NOW()
      WHERE id = $2
-     RETURNING id, name, email, role, phone, address, sex, profile_picture`,
+     RETURNING id, name, email, role,
+               profile_picture, phone, sex, address`,
     [url, userId]
   );
 

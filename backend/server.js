@@ -181,6 +181,9 @@ app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/messages", messageRoutes);
+app.use("/reviews", require("./routes/reviews"));
+
+
 
 // Admin routes – THIS WAS MISSING!
 app.use("/api/v1/admin", adminRoutes);

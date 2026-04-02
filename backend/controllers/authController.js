@@ -7,7 +7,6 @@ dotenv.config();
 
 const pool = require("../config/db");
 const {
-  addUser,
   getUserByEmail,
   updateUserPassword,
   saveResetToken,
@@ -50,6 +49,7 @@ const safeUserPayload = (userRow) => {
     location: userRow.location || null,
     phone: userRow.phone || null,
     contact: userRow.contact || null,
+    address: userRow.address || null,   // ✅ Added
     updated_at: userRow.updated_at || null,
   };
 };
@@ -74,6 +74,7 @@ const authController = {
         location = null,
         phone = null,
         contact = null,
+        address = null,   // ✅ Added
       } = req.body;
 
       if (!name || !email || !password) {
@@ -88,7 +89,12 @@ const authController = {
 
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      await addUser(name, email, hashedPassword, finalRole, profile_picture, sex);
+      // ✅ Save all user details
+      await pool.query(
+        `INSERT INTO users (name, email, password, role, profile_picture, sex, category, location, phone, contact, address)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [name, email, hashedPassword, finalRole, profile_picture, sex, category, location, phone, contact, address]
+      );
 
       // Auto-create professional entry
       if (finalRole === "professional") {
@@ -99,7 +105,7 @@ const authController = {
            SET category = COALESCE(EXCLUDED.category, professionals.category),
                location = COALESCE(EXCLUDED.location, professionals.location),
                contact = COALESCE(EXCLUDED.contact, professionals.contact)`,
-          [name, email, category || "General Service", location || "Unknown", contact || null]
+          [name, email, category || "General Service", location || "Unknown", contact || phone]
         );
       }
 
@@ -144,7 +150,7 @@ const authController = {
             userRow.email,
             userRow.category || "General Service",
             userRow.location || "Unknown",
-            userRow.contact || null,
+            userRow.contact || userRow.phone,
           ]
         );
       }
@@ -167,19 +173,12 @@ const authController = {
   ============================ */
   logout: async (req, res) => {
     try {
-      // Clear JWT cookie if present
       res.clearCookie("token");
-
-      // Destroy session if using express-session
       if (req.session) {
         req.session.destroy(err => {
-          if (err) {
-            console.error("❌ Session destroy error:", err);
-          }
+          if (err) console.error("❌ Session destroy error:", err);
         });
       }
-
-      // Redirect to hero section (main page)
       return res.redirect("/");
     } catch (err) {
       console.error("❌ Logout error:", err);
@@ -193,7 +192,6 @@ const authController = {
   forgotPassword: async (req, res) => {
     try {
       const { email } = req.body;
-
       if (!email) return res.status(400).json({ message: "email is required" });
 
       const user = await getUserByEmail(email);
@@ -220,17 +218,14 @@ const authController = {
   resetPassword: async (req, res) => {
     try {
       const { token, password } = req.body;
-
       if (!token || !password)
         return res.status(400).json({ message: "token and password required" });
 
       const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
       const user = await findUserByResetToken(hashedToken);
-
       if (!user) return res.status(400).json({ message: "Invalid or expired token" });
 
       const hashedPassword = await bcrypt.hash(password, 12);
-
       await updateUserPassword(user.id, hashedPassword);
       await clearResetToken(user.id);
 
@@ -247,7 +242,7 @@ const authController = {
   getProfile: async (req, res) => {
     try {
       const result = await pool.query(
-        `SELECT id, name, email, role, profile_picture, sex, location, phone, updated_at
+        `SELECT id, name, email, role, profile_picture, sex, location, phone, address, updated_at
          FROM users WHERE id = $1`,
         [req.user.id]
       );
@@ -277,6 +272,8 @@ const authController = {
     }
   },
 };
+
+module.exports = authController;
 
 /* Dashboard compatibility */
 authController.getUserProfileBy

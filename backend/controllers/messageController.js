@@ -1,4 +1,3 @@
-// controllers/messageController.js
 const pool = require("../config/db");
 
 const messageController = {
@@ -15,18 +14,40 @@ const messageController = {
          LEFT JOIN users sender ON m.sender_id = sender.id
          LEFT JOIN users receiver ON m.receiver_id = receiver.id
          WHERE (m.sender_id = $1 OR m.receiver_id = $1)
-           AND (m.deleted IS NULL OR m.deleted = false) -- hide deleted from user
+           AND (m.deleted IS NULL OR m.deleted = false)
          ORDER BY m.created_at DESC`,
         [userId]
       );
 
-      res.status(200).json({
-        success: true,
-        data: result.rows,
-      });
+      res.status(200).json({ success: true, data: result.rows });
     } catch (err) {
       console.error("❌ Error fetching messages:", err.message);
       res.status(500).json({ success: false, message: "Server error fetching messages" });
+    }
+  },
+
+  // 📩 Get messages for a specific professional
+  getProfessionalMessages: async (req, res) => {
+    try {
+      const { professionalId } = req.params;
+
+      const result = await pool.query(
+        `SELECT m.*, 
+                sender.name AS sender_name,
+                receiver.name AS receiver_name
+         FROM messages m
+         LEFT JOIN users sender ON m.sender_id = sender.id
+         LEFT JOIN users receiver ON m.receiver_id = receiver.id
+         WHERE (m.sender_id = $1 OR m.receiver_id = $1)
+           AND (m.deleted IS NULL OR m.deleted = false)
+         ORDER BY m.created_at DESC`,
+        [professionalId]
+      );
+
+      res.status(200).json({ success: true, data: result.rows });
+    } catch (err) {
+      console.error("❌ Error fetching professional messages:", err.message);
+      res.status(500).json({ success: false, message: "Server error fetching professional messages" });
     }
   },
 
@@ -106,7 +127,7 @@ const messageController = {
     }
   },
 
-  // 🗑️ Soft Delete a message (mark as deleted, keep record for audit)
+  // 🗑️ Soft Delete a message
   deleteMessage: async (req, res) => {
     try {
       const { id } = req.params;
