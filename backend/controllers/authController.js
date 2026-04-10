@@ -1,126 +1,108 @@
 // controllers/authController.js
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
 dotenv.config();
+const { generateAccessToken } = require("../utils/token-generator");
+const { safeUserPayload } = require("../utils/authUserSafePayload");
 
-const {pool} = require("../config/db");
+const { pool } = require("../config/db");
 const {
   getUserByEmail,
   updateUserPassword,
   saveResetToken,
   findUserByResetToken,
   clearResetToken,
+  checkEmailExists,
+  createProfessional,
 } = require("../models/User");
 
-/* ======================================================
-   ACCESS TOKEN (24 HOURS)
-====================================================== */
-const generateAccessToken = (user) => {
-  if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET not set");
-
-  return jwt.sign(
-    { id: user.id, name: user.name, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "24h",
-      issuer: "justconnect.app",
-      audience: "justconnect-users",
-    }
-  );
-};
-
-/* ======================================================
-   SAFE USER DATA
-   Always return a consistent shape for the frontend
-====================================================== */
-const safeUserPayload = (userRow) => {
-  if (!userRow) return null;
-
-  return {
-    id: userRow.id,
-    name: userRow.name,
-    email: userRow.email,
-    role: userRow.role,
-    profile_picture: userRow.profile_picture || null,
-    sex: userRow.sex || null,
-    category: userRow.category || null,
-    location: userRow.location || null,
-    phone: userRow.phone || null,
-    contact: userRow.contact || null,
-    address: userRow.address || null,   // ✅ Added
-    updated_at: userRow.updated_at || null,
-  };
-};
-
-/* ======================================================
-   AUTH CONTROLLER
-====================================================== */
 const authController = {
   /* ===========================
      REGISTER
   ============================ */
   register: async (req, res) => {
     try {
-      const {
-        name,
-        email,
-        password,
-        role = "user",
-        profile_picture = null,
-        sex = null,
-        category = null,
-        location = null,
-        phone = null,
-        contact = null,
-        address = null,   // ✅ Added
-      } = req.body;
+      const { name, email, password, role, location, category_id } = req.body;
 
-      if (!name || !email || !password) {
-        return res.status(400).json({ message: "name, email and password are required" });
+      // Validate Input
+      if ((!name || !email || !password, !role)) {
+        return res
+          .status(400)
+          .json({ message: "Name, email, password, role are required" });
+      }
+      // Validate email address
+      const emailRegex = /\S+@\S+\.\S+/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid email format",
+        });
+      }
+      // Validate password length
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters",
+        });
       }
 
-      // ✅ Only allow "user" or "professional" at registration
+      // Validate role
       const allowedRoles = ["user", "professional"];
-      const finalRole = allowedRoles.includes(role) ? role : "user";
-
-      const existing = await getUserByEmail(email);
-      if (existing) return res.status(400).json({ message: "User already exists." });
-
-      const hashedPassword = await bcrypt.hash(password, 12);
-
-      // ✅ Save all user details
-      await pool.query(
-        `INSERT INTO users (name, email, password, role, profile_picture, sex, category, location, phone, contact, address)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [name, email, hashedPassword, finalRole, profile_picture, sex, category, location, phone, contact, address]
-      );
-
-      // Auto-create professional entry
-      if (finalRole === "professional") {
-        await pool.query(
-          `INSERT INTO professionals (name, email, category, location, contact)
-           VALUES ($1,$2,$3,$4,$5)
-           ON CONFLICT (email) DO UPDATE
-           SET category = COALESCE(EXCLUDED.category, professionals.category),
-               location = COALESCE(EXCLUDED.location, professionals.location),
-               contact = COALESCE(EXCLUDED.contact, professionals.contact)`,
-          [name, email, category || "General Service", location || "Unknown", contact || phone]
-        );
+      if (!allowedRoles.includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid role selected",
+        });
       }
 
-      const userRow = await getUserByEmail(email);
-      const accessToken = generateAccessToken(userRow);
+      // Validate the professionals filled their forms all
+      if (role === "professional") {
+        if (!category_id || !location) {
+          return res.status(400).json({
+            success: false,
+            message: "Category and location are required for professionals",
+          });
+        }
+      }
 
+      // Check if email already exist
+      const existingUser = await checkEmailExists(email);
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already registered",
+        });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Add the new user to database
+      const user = await addUser(name, email, hashedPassword, role);
+
+      // If professional, save extra details into professional table
+      let professional = null;
+
+      if (role === "professional") {
+        professional = await createProfessional({
+          user_id: user.id,
+          category_id,
+        });
+      }
+
+      // Return the response to forward
       return res.status(201).json({
-        message: "Registration successful",
-        user: safeUserPayload(userRow),
-        accessToken,
+        success: true,
+        message: "Account created successfully",
+        data: { user, professional },
       });
-    } catch (err) {
-      console.error("❌ Registration error:", err);
-      return res.status(500).json({ error: "Server error during registration." });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
     }
   },
 
@@ -135,10 +117,12 @@ const authController = {
         return res.status(400).json({ message: "email and password required" });
 
       const userRow = await getUserByEmail(email);
-      if (!userRow) return res.status(401).json({ message: "Invalid email or password." });
+      if (!userRow)
+        return res.status(401).json({ message: "Invalid email or password." });
 
       const validPassword = await bcrypt.compare(password, userRow.password);
-      if (!validPassword) return res.status(401).json({ message: "Invalid email or password." });
+      if (!validPassword)
+        return res.status(401).json({ message: "Invalid email or password." });
 
       // Ensure professional exists
       if (userRow.role === "professional") {
@@ -152,10 +136,9 @@ const authController = {
             userRow.category || "General Service",
             userRow.location || "Unknown",
             userRow.contact || userRow.phone,
-          ]
+          ],
         );
       }
-
       const accessToken = generateAccessToken(userRow);
 
       return res.json({
@@ -176,7 +159,7 @@ const authController = {
     try {
       res.clearCookie("token");
       if (req.session) {
-        req.session.destroy(err => {
+        req.session.destroy((err) => {
           if (err) console.error("❌ Session destroy error:", err);
         });
       }
@@ -199,7 +182,10 @@ const authController = {
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const resetToken = crypto.randomBytes(32).toString("hex");
-      const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
       const expiry = new Date(Date.now() + 10 * 60 * 1000);
 
       await saveResetToken(user.id, hashedToken, expiry);
@@ -209,7 +195,9 @@ const authController = {
       return res.json({ message: "Password reset link generated", resetUrl });
     } catch (err) {
       console.error("❌ Forgot password error:", err);
-      return res.status(500).json({ error: "Server error during forgot password." });
+      return res
+        .status(500)
+        .json({ error: "Server error during forgot password." });
     }
   },
 
@@ -222,9 +210,13 @@ const authController = {
       if (!token || !password)
         return res.status(400).json({ message: "token and password required" });
 
-      const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
       const user = await findUserByResetToken(hashedToken);
-      if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+      if (!user)
+        return res.status(400).json({ message: "Invalid or expired token" });
 
       const hashedPassword = await bcrypt.hash(password, 12);
       await updateUserPassword(user.id, hashedPassword);
@@ -233,7 +225,9 @@ const authController = {
       return res.json({ message: "Password reset successful" });
     } catch (err) {
       console.error("❌ Reset password error:", err);
-      return res.status(500).json({ error: "Server error during password reset." });
+      return res
+        .status(500)
+        .json({ error: "Server error during password reset." });
     }
   },
 
@@ -245,7 +239,7 @@ const authController = {
       const result = await pool.query(
         `SELECT id, name, email, role, profile_picture, sex, location, phone, address, updated_at
          FROM users WHERE id = $1`,
-        [req.user.id]
+        [req.user.id],
       );
       const userRow = result.rows[0];
       if (!userRow) return res.status(404).json({ message: "User not found" });
@@ -254,7 +248,7 @@ const authController = {
       if (userRow.role === "professional") {
         const proRes = await pool.query(
           "SELECT category, location, contact FROM professionals WHERE LOWER(email) = LOWER($1) LIMIT 1",
-          [userRow.email]
+          [userRow.email],
         );
         if (proRes.rows.length > 0) profData = proRes.rows[0];
       }
@@ -269,7 +263,9 @@ const authController = {
       return res.json({ success: true, user: payload });
     } catch (err) {
       console.error("❌ Get profile error:", err);
-      return res.status(500).json({ error: "Server error while fetching profile." });
+      return res
+        .status(500)
+        .json({ error: "Server error while fetching profile." });
     }
   },
 };

@@ -1,4 +1,4 @@
-const {pool} = require("../config/db");
+const { pool } = require("../config/db");
 
 const Professional = {
   /**
@@ -54,7 +54,7 @@ const Professional = {
         `SELECT *
          FROM professionals
          WHERE id = $1`,
-        [id]
+        [id],
       );
       return rows[0] || null;
     } catch (error) {
@@ -67,7 +67,14 @@ const Professional = {
    * Create professional (signup)
    */
   create: async (data) => {
-    const { name, email, password, role = "professional", category, location } = data;
+    const {
+      name,
+      email,
+      password,
+      role = "professional",
+      category,
+      location,
+    } = data;
 
     try {
       const { rows } = await pool.query(
@@ -75,7 +82,7 @@ const Professional = {
          (name, email, password, role, category, location, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
          RETURNING *`,
-        [name, email, password, role, category, location]
+        [name, email, password, role, category, location],
       );
       return rows[0];
     } catch (error) {
@@ -88,7 +95,8 @@ const Professional = {
    * Update professional (dashboard)
    */
   update: async (id, data) => {
-    const { profile_picture, phone, address, sex, about, category, location } = data;
+    const { profile_picture, phone, address, sex, about, category, location } =
+      data;
 
     try {
       const { rows } = await pool.query(
@@ -103,7 +111,7 @@ const Professional = {
              updated_at      = CURRENT_TIMESTAMP
          WHERE id = $8
          RETURNING *`,
-        [profile_picture, phone, address, sex, about, category, location, id]
+        [profile_picture, phone, address, sex, about, category, location, id],
       );
       return rows[0];
     } catch (error) {
@@ -119,7 +127,7 @@ const Professional = {
     try {
       const { rows } = await pool.query(
         "DELETE FROM professionals WHERE id = $1 RETURNING *",
-        [id]
+        [id],
       );
       return rows[0];
     } catch (error) {
@@ -140,7 +148,7 @@ const Professional = {
             OR category ILIKE $1
             OR location ILIKE $1
          ORDER BY id ASC`,
-        [`%${term}%`]
+        [`%${term}%`],
       );
       return rows;
     } catch (error) {

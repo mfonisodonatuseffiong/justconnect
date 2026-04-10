@@ -2,15 +2,19 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
-// Use a test user (adjust role to 'user' or 'professional')
-const user = {
-  id: 16,
-  name: "Test User",
-  email: "testuser@example.com",
-  role: "user",
+/* ======================================================
+   ACCESS TOKEN (24 HOURS)
+====================================================== */
+module.generateAccessToken = (user) => {
+  if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET not set");
+
+  return jwt.sign(
+    { id: user.id, name: user.name, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "24h",
+      issuer: "justconnect.app",
+      audience: "justconnect-users",
+    },
+  );
 };
-
-const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-console.log("Generated Token:");
-console.log(token);
