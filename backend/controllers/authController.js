@@ -5,7 +5,7 @@ const crypto = require("crypto");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const pool = require("../config/db");
+const {pool} = require("../config/db");
 const {
   getUserByEmail,
   updateUserPassword,

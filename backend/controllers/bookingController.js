@@ -1,6 +1,6 @@
 // controllers/bookingController.js
 const { DateTime } = require("luxon");
-const pool = require("../config/db");
+const {pool} = require("../config/db");
 const {
   createBooking,
   getBookingsByProfessional,

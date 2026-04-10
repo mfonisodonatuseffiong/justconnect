@@ -1,5 +1,5 @@
 // controllers/notificationController.js
-const pool = require("../config/db");
+const {pool} = require("../config/db");
 
 const notificationController = {
   // Get notifications for a specific user

@@ -1,5 +1,5 @@
 // controllers/reviewsController.js
-const pool = require("../config/db");
+const {pool} = require("../config/db");
 
 exports.addReview = async (req, res) => {
   try {

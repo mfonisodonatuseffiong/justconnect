@@ -8,6 +8,7 @@ const http = require("http");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const { connectDB } = require("./config/db"); // import db connection
 const { Server } = require("socket.io");
 
 // Load environment variables
@@ -86,64 +87,7 @@ app.set("activeUsers", activeUsers);
 ========================= */
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
-
-/* =========================
-   CORS CONFIGURATION
-========================= */
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-
-    const normalized = origin.replace(/\/$/, "");
-
-    if (process.env.NODE_ENV !== "production") {
-      const devOrigins = [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-      ];
-      if (devOrigins.includes(normalized)) {
-        return callback(null, true);
-      }
-    } else {
-      const allowed = process.env.FRONTEND_URL
-        ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
-        : [];
-      if (allowed.includes(normalized)) {
-        return callback(null, true);
-      }
-    }
-
-    console.warn(`CORS blocked: ${origin}`);
-    callback(null, false);
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-app.use(cors(corsOptions));
-
-// Serve static uploads
-app.use("/uploads", express.static("uploads"));
-
-/* =========================
-   ROUTES
-========================= */
-const authRoutes = require("./routes/authRoutes");
-const bookingRoutes = require("./routes/bookingRoutes");
-const professionalRoutes = require("./routes/professionalRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
-const serviceRoutes = require("./routes/serviceRoutes");
-const requestRoutes = require("./routes/requestRoutes");
-const uploadRoutes = require("./routes/uploadRoutes");
-const notificationRoutes = require("./routes/notificationRoutes");
-const userRoutes = require("./routes/userRoutes");
-const messageRoutes = require("./routes/messageRoutes");
-const adminRoutes = require("./routes/admin"); // ← ADMIN ROUTES ADDED HERE
+app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
 /* =========================
    BASE & HEALTH CHECK
@@ -171,22 +115,24 @@ app.get("/health", (req, res) => {
 /* =========================
    API ROUTES
 ========================= */
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/bookings", bookingRoutes);
-app.use("/api/v1/professionals", professionalRoutes);
-app.use("/api/v1/dashboard", dashboardRoutes);
-app.use("/api/v1/services", serviceRoutes);
-app.use("/api/v1/requests", requestRoutes);
-app.use("/api/v1/upload", uploadRoutes);
-app.use("/api/v1/notifications", notificationRoutes);
-app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/messages", messageRoutes);
-app.use("/reviews", require("./routes/reviews"));
+// Serve static uploads
+app.use("/api/v1/uploads", express.static("uploads"));
 
-
+app.use("/api/v1/auth", require("./routes/authRoutes"));
+app.use("/api/v1/bookings", require("./routes/bookingRoutes"));
+app.use("/api/v1/professionals", require("./routes/professionalRoutes"));
+app.use("/api/v1/dashboard", require("./routes/dashboardRoutes"));
+app.use("/api/v1/services", require("./routes/serviceRoutes"));
+app.use("/api/v1/requests", require("./routes/requestRoutes"));
+app.use("/api/v1/upload", require("./routes/uploadRoutes"));
+app.use("/api/v1/notifications", require("./routes/notificationRoutes"));
+app.use("/api/v1/users", require("./routes/userRoutes"));
+app.use("/api/v1/messages", require("./routes/messageRoutes"));
+app.use("/api/v1/reviews", require("./routes/reviews"));
+app.use("/api/v1/categories", require("./routes/categories"));
 
 // Admin routes – THIS WAS MISSING!
-app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/admin", require("./routes/admin"));
 
 /* =========================
    404 & GLOBAL ERROR HANDLER
@@ -212,10 +158,22 @@ app.use((err, req, res, next) => {
    START SERVER
 ========================= */
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`🚀 JustConnect API running on port ${PORT}`);
-  console.log(`🔌 Socket.IO ready for real-time updates`);
-  if (process.env.NODE_ENV !== "production") {
-    console.log(`🌐 Dev frontend expected at: http://localhost:5173 / 5174`);
+
+const startServer = async () => {
+  try {
+    // Connect to db first
+    console.log("⏳ Connecting to database...");
+    await connectDB();
+    console.log("✅ Database connected, starting server...");
+
+    // start server
+    server.listen(PORT, () => {
+      console.log(`🚀 Justconnect Api server is running live on ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Error starting up server", error.message);
+    process.exit(1);
   }
-});
+};
+
+startServer();

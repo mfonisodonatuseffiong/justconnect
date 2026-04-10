@@ -4,7 +4,7 @@
  * - Clean + simplified
  */
 
-const pool = require("../config/db");
+const {pool} = require("../config/db");
 
 /**
  * Create a new user

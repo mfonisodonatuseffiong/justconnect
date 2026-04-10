@@ -1,5 +1,5 @@
 // src/controllers/userController.js
-const pool = require("../config/db");
+const {pool} = require("../config/db");
 
 /* ======================================================
    Get user profile

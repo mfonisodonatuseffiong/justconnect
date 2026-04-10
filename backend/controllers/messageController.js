@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const {pool} = require("../config/db");
 
 const messageController = {
   // 📩 Get messages for a specific user

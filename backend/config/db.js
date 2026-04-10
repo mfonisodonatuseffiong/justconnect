@@ -1,3 +1,8 @@
+/**
+ * @description This is our database config file,
+ *              Made it exportable, to be start up in server.js
+ */
+
 const { Pool } = require("pg");
 require("dotenv").config();
 
@@ -11,8 +16,8 @@ const pool = new Pool({
   ssl: process.env.PG_SSL === "true" ? { rejectUnauthorized: false } : false,
 });
 
-// ✅ Test connection on startup (safe version)
-(async () => {
+// Function to test connection
+const connectDB = async () => {
   try {
     await pool.query("SELECT NOW()");
     console.log("✅ Connected to PostgreSQL database successfully");
@@ -20,6 +25,6 @@ const pool = new Pool({
     console.error("❌ PostgreSQL connection error:", err.message);
     process.exit(1);
   }
-})();
+};
 
-module.exports = pool;
+module.exports = { pool, connectDB };
