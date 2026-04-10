@@ -8,6 +8,7 @@ const { safeUserPayload } = require("../utils/authUserSafePayload");
 
 const { pool } = require("../config/db");
 const {
+  addUser,
   getUserByEmail,
   updateUserPassword,
   saveResetToken,
@@ -26,7 +27,7 @@ const authController = {
       const { name, email, password, role, location, category_id } = req.body;
 
       // Validate Input
-      if ((!name || !email || !password, !role)) {
+      if ((!name || !email || !password || !role)) {
         return res
           .status(400)
           .json({ message: "Name, email, password, role are required" });
@@ -79,7 +80,7 @@ const authController = {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Add the new user to database
-      const user = await addUser(name, email, hashedPassword, role);
+      const user = await addUser({name, email, password: hashedPassword, role});
 
       // If professional, save extra details into professional table
       let professional = null;
