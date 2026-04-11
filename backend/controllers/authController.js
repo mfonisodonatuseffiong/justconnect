@@ -25,7 +25,6 @@ const authController = {
   register: async (req, res) => {
     try {
       const { name, email, password, role, location, category_id } = req.body;
-
       // Validate Input
       if ((!name || !email || !password || !role)) {
         return res
@@ -80,7 +79,7 @@ const authController = {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Add the new user to database
-      const user = await addUser({name, email, password: hashedPassword, role});
+      const user = await addUser({name, email, password: hashedPassword, role, location});
 
       // If professional, save extra details into professional table
       let professional = null;
