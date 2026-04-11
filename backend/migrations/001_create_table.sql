@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
   sex VARCHAR(20),
   address TEXT,
   location TEXT,
+  reset_token VARCHAR(255),
+  reset_token_expiry TIMESTAMP WITH TIME ZONE,
   is_verified boolean DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()

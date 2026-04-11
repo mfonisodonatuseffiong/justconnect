@@ -58,18 +58,20 @@ async function checkEmailExists(email) {
 }
 
 /**
- * getUserByEmail(email)
- * Includes password (for login) + reset token fields
+ * @description This function fetches all details on the user and professional table combined.
+ * @access Used majourly during login request --
  */
+
 async function getUserByEmail(email) {
   const { rows } = await pool.query(
-    `SELECT id, name, email, password, role,
-            profile_picture, phone, sex, address,
-            reset_token, reset_token_expiry
-     FROM users
-     WHERE LOWER(email) = LOWER($1)
+    `SELECT u.id, u.name, u.email, u.password, u.role,
+            u.profile_picture, u.phone, u.sex, u.address, u.location, u.is_verified,
+            u.reset_token, u.reset_token_expiry, p.category_id, p.bio, p.rating, p.experience_years, p.service_area, p.is_available
+     FROM users u
+     LEFT JOIN professionals p ON p.user_id = u.id
+     WHERE LOWER(u.email) = LOWER($1)
      LIMIT 1`,
-    [email],
+     [email]
   );
 
   return rows[0] || null;

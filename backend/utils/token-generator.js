@@ -1,11 +1,10 @@
-#!/usr/bin/node
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
 /* ======================================================
    ACCESS TOKEN (24 HOURS)
 ====================================================== */
-module.generateAccessToken = (user) => {
+const generateAccessToken = (user) => {
   if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET not set");
 
   return jwt.sign(
@@ -17,4 +16,8 @@ module.generateAccessToken = (user) => {
       audience: "justconnect-users",
     },
   );
+};
+
+module.exports = {
+  generateAccessToken,
 };

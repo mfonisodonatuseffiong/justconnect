@@ -19,14 +19,12 @@ const {
 } = require("../models/User");
 
 const authController = {
-  /* ===========================
-     REGISTER
-  ============================ */
+  /* ====== REGISTER ======== */
   register: async (req, res) => {
     try {
       const { name, email, password, role, location, category_id } = req.body;
       // Validate Input
-      if ((!name || !email || !password || !role)) {
+      if (!name || !email || !password || !role) {
         return res
           .status(400)
           .json({ message: "Name, email, password, role are required" });
@@ -79,7 +77,13 @@ const authController = {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Add the new user to database
-      const user = await addUser({name, email, password: hashedPassword, role, location});
+      const user = await addUser({
+        name,
+        email,
+        password: hashedPassword,
+        role,
+        location,
+      });
 
       // If professional, save extra details into professional table
       let professional = null;
@@ -90,13 +94,14 @@ const authController = {
           category_id,
         });
       }
-      
+
       // TODO: Email function to send user a successful account creation and steps to verify their account.
 
       // Return the response to forward
       return res.status(201).json({
         success: true,
-        message: "Account created successfully. Please check your email for further steps to verify your account.",
+        message:
+          "Account created successfully. Please check your email for further steps to verify your account.",
         data: { user, professional },
       });
     } catch (error) {
@@ -108,45 +113,44 @@ const authController = {
     }
   },
 
-  /* ===========================
-     LOGIN
-  ============================ */
+  /* ======= LOGIN =========== */
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
 
       if (!email || !password)
-        return res.status(400).json({ message: "email and password required" });
+        return res
+          .status(400)
+          .json({ success: false, message: "email and password required" });
 
-      const userRow = await getUserByEmail(email);
-      if (!userRow)
-        return res.status(401).json({ message: "Invalid email or password." });
+      const user = await getUserByEmail(email);
+      if (!user)
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid email or password." });
 
-      const validPassword = await bcrypt.compare(password, userRow.password);
+      const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword)
-        return res.status(401).json({ message: "Invalid email or password." });
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid email or password." });
 
-      // Ensure professional exists
-      if (userRow.role === "professional") {
-        await pool.query(
-          `INSERT INTO professionals (name,email,category,location,contact)
-           VALUES ($1,$2,$3,$4,$5)
-           ON CONFLICT(email) DO NOTHING`,
-          [
-            userRow.name,
-            userRow.email,
-            userRow.category || "General Service",
-            userRow.location || "Unknown",
-            userRow.contact || userRow.phone,
-          ],
-        );
-      }
-      const accessToken = generateAccessToken(userRow);
+      // Generate Token password
+      const accessToken = generateAccessToken(user);
+
+      // send jwt to cookies (key name, the token, and the setup)
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 24 * 60 * 60 * 1000, // 24hrs
+        path: "/",
+      });
 
       return res.json({
+        success: true,
         message: "Login successful",
-        user: safeUserPayload(userRow),
-        accessToken,
+        user: safeUserPayload(user),
       });
     } catch (err) {
       console.error("❌ Login error:", err);
@@ -154,24 +158,52 @@ const authController = {
     }
   },
 
-  /* ===========================
-     LOGOUT
-  ============================ */
+  /* ====== LOGOUT ========= */
   logout: async (req, res) => {
     try {
-      res.clearCookie("token");
-      if (req.session) {
-        req.session.destroy((err) => {
-          if (err) console.error("❌ Session destroy error:", err);
-        });
-      }
-      return res.redirect("/");
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 24 * 60 * 60 * 1000, // 24hrs
+        path: "/",
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+      });
     } catch (err) {
       console.error("❌ Logout error:", err);
       return res.status(500).json({ error: "Server error during logout." });
     }
   },
 
+  /* ==== GET PROFILE (/auth/me) ========== */
+  getProfile: async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const result = await pool.query(
+        `SELECT u.id, u.name, u.email, u.role,
+                u.profile_picture, u.phone, u.sex, u.address, u.location, u.is_verified,
+                p.category_id, p.bio, p.rating, p.experience_years, p.service_area, p.is_available
+        FROM users u
+        LEFT JOIN professionals p ON p.user_id = u.id
+        WHERE u.id = $1
+        LIMIT 1`,
+        [userId],
+      );
+      const user = result.rows[0];
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      return res.json({ success: true, user: safeUserPayload(user) });
+    } catch (err) {
+      console.error("❌ Get profile error:", err);
+      return res
+        .status(500)
+        .json({ error: "Server error while fetching profile." });
+    }
+  },
   /* ===========================
      FORGOT PASSWORD
   ============================ */
@@ -230,44 +262,6 @@ const authController = {
       return res
         .status(500)
         .json({ error: "Server error during password reset." });
-    }
-  },
-
-  /* ===========================
-     GET PROFILE (/auth/me)
-  ============================ */
-  getProfile: async (req, res) => {
-    try {
-      const result = await pool.query(
-        `SELECT id, name, email, role, profile_picture, sex, location, phone, address, updated_at
-         FROM users WHERE id = $1`,
-        [req.user.id],
-      );
-      const userRow = result.rows[0];
-      if (!userRow) return res.status(404).json({ message: "User not found" });
-
-      let profData = null;
-      if (userRow.role === "professional") {
-        const proRes = await pool.query(
-          "SELECT category, location, contact FROM professionals WHERE LOWER(email) = LOWER($1) LIMIT 1",
-          [userRow.email],
-        );
-        if (proRes.rows.length > 0) profData = proRes.rows[0];
-      }
-
-      const payload = safeUserPayload({
-        ...userRow,
-        category: profData?.category,
-        location: profData?.location || userRow.location,
-        contact: profData?.contact || userRow.phone,
-      });
-
-      return res.json({ success: true, user: payload });
-    } catch (err) {
-      console.error("❌ Get profile error:", err);
-      return res
-        .status(500)
-        .json({ error: "Server error while fetching profile." });
     }
   },
 };
