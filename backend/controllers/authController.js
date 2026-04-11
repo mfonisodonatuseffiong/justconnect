@@ -90,11 +90,13 @@ const authController = {
           category_id,
         });
       }
+      
+      // TODO: Email function to send user a successful account creation and steps to verify their account.
 
       // Return the response to forward
       return res.status(201).json({
         success: true,
-        message: "Account created successfully",
+        message: "Account created successfully. Please check your email for further steps to verify your account.",
         data: { user, professional },
       });
     } catch (error) {
