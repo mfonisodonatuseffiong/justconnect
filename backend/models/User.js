@@ -66,7 +66,7 @@ async function getUserByEmail(email) {
   const { rows } = await pool.query(
     `SELECT u.id, u.name, u.email, u.password, u.role,
             u.profile_picture, u.phone, u.sex, u.address, u.location, u.is_verified,
-            u.reset_token, u.reset_token_expiry, p.category_id, p.bio, p.rating, p.experience_years, p.service_area, p.is_available
+            u.reset_token, u.reset_token_expiry, u.created_at, p.category_id, p.bio, p.rating, p.experience_years, p.service_area, p.is_available
      FROM users u
      LEFT JOIN professionals p ON p.user_id = u.id
      WHERE LOWER(u.email) = LOWER($1)

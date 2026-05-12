@@ -185,7 +185,7 @@ const authController = {
 
       const result = await pool.query(
         `SELECT u.id, u.name, u.email, u.role,
-                u.profile_picture, u.phone, u.sex, u.address, u.location, u.is_verified,
+                u.profile_picture, u.phone, u.sex, u.address, u.location, u.is_verified, u.created_at,
                 p.category_id, p.bio, p.rating, p.experience_years, p.service_area, p.is_available
         FROM users u
         LEFT JOIN professionals p ON p.user_id = u.id

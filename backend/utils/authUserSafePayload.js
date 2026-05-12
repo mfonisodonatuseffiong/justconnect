@@ -18,6 +18,7 @@ const safeUserPayload = (user) => {
     address: user.address || null,
     location: user.location || null,
     is_verified: user.is_verified,
+    dateJoined: user.created_at,
   };
 
   // ONLY attach professional if user is professional
