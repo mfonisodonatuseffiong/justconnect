@@ -8,10 +8,10 @@ const http = require("http");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
-const { connectDB } = require("./config/db"); // import db connection
+const { connectDB } = require("./config/db");
 const { Server } = require("socket.io");
 
-// Load environment variables
+// Environment variables
 dotenv.config();
 
 // Initialize Express + HTTP Server
@@ -19,13 +19,12 @@ const app = express();
 const server = http.createServer(app);
 
 // =========================
-// SOCKET.IO SETUP
+// SOCKET.IO
 // =========================
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
       if (process.env.NODE_ENV !== "production") {
-        // Allow all common dev ports
         const devOrigins = [
           "http://localhost:5173",
           "http://localhost:5174",
@@ -33,16 +32,19 @@ const io = new Server(server, {
           "http://127.0.0.1:5174",
           "http://localhost:3000",
           "http://127.0.0.1:3000",
+          "http://localhost:5175",
+          "http://127.0.0.1:5175",
         ];
+
         if (!origin || devOrigins.includes(origin.replace(/\/$/, ""))) {
           return callback(null, true);
         }
       }
 
-      // Production: only allow FRONTEND_URL
       const allowedOrigins = process.env.FRONTEND_URL
         ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
         : [];
+
       if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
         return callback(null, true);
       }
@@ -87,7 +89,18 @@ app.set("activeUsers", activeUsers);
 ========================= */
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+
+// FIXED CORS (this is the only important change)
+const allowedOrigins = [
+  "http://localhost:5175",
+  "http://127.0.0.1:5175",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 /* =========================
    BASE & HEALTH CHECK
@@ -102,7 +115,6 @@ app.get("/", (req, res) => {
   });
 });
 
-// Health check endpoint (useful for monitoring)
 app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -115,7 +127,6 @@ app.get("/health", (req, res) => {
 /* =========================
    API ROUTES
 ========================= */
-// Serve static uploads
 app.use("/api/v1/uploads", express.static("uploads"));
 
 app.use("/api/v1/auth", require("./routes/authRoutes"));
@@ -130,8 +141,6 @@ app.use("/api/v1/users", require("./routes/userRoutes"));
 app.use("/api/v1/messages", require("./routes/messageRoutes"));
 app.use("/api/v1/reviews", require("./routes/reviews"));
 app.use("/api/v1/categories", require("./routes/categories"));
-
-// Admin routes – THIS WAS MISSING!
 app.use("/api/v1/admin", require("./routes/admin"));
 
 /* =========================
@@ -146,7 +155,9 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error("💥 Global error:", err.stack || err.message);
+
   const status = err.status || 500;
+
   res.status(status).json({
     success: false,
     message: status === 500 ? "Internal Server Error" : err.message,
@@ -161,12 +172,10 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Connect to db first
     console.log("⏳ Connecting to database...");
     await connectDB();
     console.log("✅ Database connected, starting server...");
 
-    // start server
     server.listen(PORT, () => {
       console.log(`🚀 Justconnect Api server is running live on ${PORT}`);
     });
