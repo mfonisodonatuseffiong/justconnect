@@ -44,7 +44,7 @@ router.get("/", authenticateToken, getDashboard);
 // Professional dashboard overview
 router.get("/professional", authenticateToken, getProfessionalDashboard);
 
-// 🆕 User dashboard overview (with userId param)
+// User dashboard overview (with userId param)
 router.get(
   "/user/:userId",
   authenticateToken,
@@ -67,17 +67,11 @@ router.post(
 
       const imageUrl = req.file.path;
 
-      if (user.role === "professional") {
-        await pool.query(
-          "UPDATE professionals SET profile_photo = $1 WHERE email = $2",
-          [imageUrl, user.email]
-        );
-      } else if (user.role === "user") {
-        await pool.query(
-          "UPDATE users SET profile_pic = $1 WHERE email = $2",
-          [imageUrl, user.email]
-        );
-      }
+      // Update profile picture in users table (covers both users and professionals)
+      await pool.query(
+        "UPDATE users SET profile_picture = $1 WHERE id = $2",
+        [imageUrl, user.id]
+      );
 
       res.json({
         message: "Profile photo uploaded successfully!",
@@ -91,10 +85,10 @@ router.post(
   }
 );
 
-// Create a new service request (users only)
+// Create a new service request (users only) — placeholder
 router.post("/", authenticateToken, authorizeRoles("user"), createRequest);
 
-// Update a request’s status (professionals or admin)
+// Update a request’s status (professionals or admin) — placeholder
 router.patch("/:id/status", authenticateToken, updateRequestStatus);
 
 // ====================================================

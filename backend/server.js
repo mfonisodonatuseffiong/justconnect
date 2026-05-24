@@ -90,7 +90,7 @@ app.set("activeUsers", activeUsers);
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
-// FIXED CORS (this is the only important change)
+// FIXED CORS
 const allowedOrigins = [
   "http://localhost:5175",
   "http://127.0.0.1:5175",
@@ -134,14 +134,10 @@ app.use("/api/v1/bookings", require("./routes/bookingRoutes"));
 app.use("/api/v1/professionals", require("./routes/professionalRoutes"));
 app.use("/api/v1/dashboard", require("./routes/dashboardRoutes"));
 app.use("/api/v1/services", require("./routes/serviceRoutes"));
-app.use("/api/v1/requests", require("./routes/requestRoutes"));
-app.use("/api/v1/upload", require("./routes/uploadRoutes"));
-app.use("/api/v1/notifications", require("./routes/notificationRoutes"));
-app.use("/api/v1/users", require("./routes/userRoutes"));
-app.use("/api/v1/messages", require("./routes/messageRoutes"));
 app.use("/api/v1/reviews", require("./routes/reviews"));
 app.use("/api/v1/categories", require("./routes/categories"));
 app.use("/api/v1/admin", require("./routes/admin"));
+
 
 /* =========================
    404 & GLOBAL ERROR HANDLER
@@ -177,7 +173,7 @@ const startServer = async () => {
     console.log("✅ Database connected, starting server...");
 
     server.listen(PORT, () => {
-      console.log(`🚀 Justconnect Api server is running live on ${PORT}`);
+      console.log(`🚀 JustConnect API server is running live on ${PORT}`);
     });
   } catch (error) {
     console.error("Error starting up server", error.message);

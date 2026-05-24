@@ -1,4 +1,4 @@
-const {pool} = require("../config/db");
+const { pool } = require("../config/db");
 
 /**
  * ==========================================================
@@ -8,12 +8,52 @@ const {pool} = require("../config/db");
 
 // 🧭 Unified dashboard (auto-detect role: user/professional/admin)
 const getDashboard = async (req, res) => {
-  // Keep your existing unified logic here
+  // We can implement role-based logic here:
+  // - If admin: show global stats
+  // - If professional: show professional dashboard
+  // - If user: show user dashboard
+  res.json({ success: true, message: "Unified dashboard logic not yet implemented" });
 };
 
 // 🧰 Professional dashboard
 const getProfessionalDashboard = async (req, res) => {
-  // Keep your existing professional logic here
+  try {
+    const user = req.user;
+    if (user.role !== "professional") {
+      return res.status(403).json({ success: false, message: "Access denied. Professionals only." });
+    }
+
+    const professionalResult = await pool.query(
+      `SELECT p.id, u.name, u.email, p.bio, p.rating, p.experience_years, p.service_area, p.is_available
+       FROM professionals p
+       JOIN users u ON p.user_id = u.id
+       WHERE u.id = $1`,
+      [user.id]
+    );
+
+    const bookingsResult = await pool.query(
+      `SELECT COUNT(*) AS total,
+              COUNT(*) FILTER (WHERE status='incoming') AS incoming,
+              COUNT(*) FILTER (WHERE status='accepted') AS accepted,
+              COUNT(*) FILTER (WHERE status='on_going') AS on_going,
+              COUNT(*) FILTER (WHERE status='completed') AS completed,
+              COUNT(*) FILTER (WHERE status='cancelled') AS cancelled
+       FROM bookings
+       WHERE professional_id = $1`,
+      [professionalResult.rows[0].id]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        profile: professionalResult.rows[0],
+        stats: bookingsResult.rows[0],
+      },
+    });
+  } catch (error) {
+    console.error("Professional dashboard error:", error);
+    res.status(500).json({ success: false, message: "Server error fetching professional dashboard" });
+  }
 };
 
 // 🆕 User dashboard (with userId param)
@@ -29,127 +69,83 @@ const getUserDashboard = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid user ID" });
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
-
-    // Requests
-    const requestsResult = await pool.query(
-      `SELECT r.*, p.name AS professional_name, p.category AS professional_field
-       FROM requests r
-       LEFT JOIN professionals p ON r.professional_id = p.id
-       WHERE r.user_id = $1
-       ORDER BY r.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [userId, limit, offset]
-    );
-
-    // Request stats
-    const statsResult = await pool.query(
-      `SELECT 
-         COUNT(*) AS total,
-         COUNT(*) FILTER (WHERE status='pending') AS pending,
-         COUNT(*) FILTER (WHERE status='in_progress') AS in_progress,
-         COUNT(*) FILTER (WHERE status='completed') AS completed
-       FROM requests WHERE user_id = $1`,
-      [userId]
-    );
-
-    // Weekly requests
-    const weeklyRequestsResult = await pool.query(
-      `SELECT 
-         TO_CHAR(date_trunc('day', created_at), 'Dy') AS day,
-         COUNT(*) AS count
-       FROM requests
-       WHERE user_id = $1
-         AND created_at >= date_trunc('week', CURRENT_DATE)
-       GROUP BY day
-       ORDER BY day`,
-      [userId]
-    );
-
-    // Booking stats (for KPI card)
+    // Booking stats
     const bookingStatsResult = await pool.query(
       `SELECT 
-         COUNT(*) AS total_bookings,
-         COUNT(*) FILTER (WHERE status ILIKE 'pending' OR status ILIKE 'in_progress') AS pending_bookings,
-         COUNT(*) FILTER (WHERE status ILIKE 'completed' OR status ILIKE 'accepted') AS completed_bookings
+         COUNT(*) AS total,
+         COUNT(*) FILTER (WHERE status='incoming') AS incoming,
+         COUNT(*) FILTER (WHERE status='accepted') AS accepted,
+         COUNT(*) FILTER (WHERE status='on_going') AS on_going,
+         COUNT(*) FILTER (WHERE status='completed') AS completed,
+         COUNT(*) FILTER (WHERE status='cancelled') AS cancelled
        FROM bookings
-       WHERE user_id = $1`,
+       WHERE customer_id = $1`,
       [userId]
     );
 
-    // Booking status breakdown (for chart)
+    // Booking status breakdown
     const bookingStatusResult = await pool.query(
-      `SELECT 
-         CASE 
-           WHEN status ILIKE 'accepted' THEN 'completed'
-           WHEN status ILIKE 'in_progress' THEN 'pending'
-           WHEN status ILIKE 'cancelled' THEN 'cancelled'
-           ELSE status
-         END AS status,
-         COUNT(*) AS count
+      `SELECT status, COUNT(*) AS count
        FROM bookings
-       WHERE user_id = $1
+       WHERE customer_id = $1
        GROUP BY status`,
       [userId]
     );
 
     // Recent bookings (limit 5)
     const recentBookingsResult = await pool.query(
-      `SELECT b.id, s.name AS service_name, p.name AS professional_name, p.location AS professional_location,
-              b.status, b.date
+      `SELECT b.id, b.booking_date, b.status, b.address, b.note,
+              s.service_name, s.price,
+              u.name AS professional_name, p.rating AS professional_rating
        FROM bookings b
        LEFT JOIN services s ON b.service_id = s.id
        LEFT JOIN professionals p ON b.professional_id = p.id
-       WHERE b.user_id = $1
-       ORDER BY b.date DESC
+       LEFT JOIN users u ON p.user_id = u.id
+       WHERE b.customer_id = $1
+       ORDER BY b.booking_date DESC
        LIMIT 5`,
       [userId]
     );
 
-    // Messages count
-    const messagesResult = await pool.query(
-      `SELECT COUNT(*) AS total_messages
-       FROM messages
-       WHERE receiver_id = $1`,
+    // Reviews (limit 5)
+    const reviewsResult = await pool.query(
+      `SELECT r.id, r.booking_id, r.rating, r.review, r.created_at,
+              u.name AS professional_name
+       FROM reviews r
+       JOIN bookings b ON r.booking_id = b.id
+       JOIN professionals p ON b.professional_id = p.id
+       JOIN users u ON p.user_id = u.id
+       WHERE b.customer_id = $1
+       ORDER BY r.created_at DESC
+       LIMIT 5`,
       [userId]
     );
 
-    // Attach user name to requests
-    const requestsWithUserName = requestsResult.rows.map(r => ({
-      ...r,
-      user_name: user.name,
-    }));
-
-    // Format booking stats
-    const bookingStats = bookingStatsResult.rows[0] || {};
-    const stats = {
-      totalBookings: parseInt(bookingStats.total_bookings, 10) || 0,
-      pendingBookings: parseInt(bookingStats.pending_bookings, 10) || 0,
-      completedBookings: parseInt(bookingStats.completed_bookings, 10) || 0,
-    };
+    const stats = bookingStatsResult.rows[0] || {};
 
     res.json({
       success: true,
       data: {
         profile: {
-          id: userId,
+          id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
+          profile_picture: user.profile_picture,
+          phone: user.phone,
+          location: user.location,
         },
-        stats,
-        recentBookings: recentBookingsResult.rows,
-        requests: requestsWithUserName,
-        weeklyRequests: weeklyRequestsResult.rows,
+        stats: {
+          totalBookings: parseInt(stats.total, 10) || 0,
+          incomingBookings: parseInt(stats.incoming, 10) || 0,
+          acceptedBookings: parseInt(stats.accepted, 10) || 0,
+          onGoingBookings: parseInt(stats.on_going, 10) || 0,
+          completedBookings: parseInt(stats.completed, 10) || 0,
+          cancelledBookings: parseInt(stats.cancelled, 10) || 0,
+        },
         bookingStatus: bookingStatusResult.rows,
-        messages: parseInt(messagesResult.rows[0].total_messages, 10),
-        pagination: {
-          page,
-          limit,
-          total: parseInt(statsResult.rows[0].total, 10),
-        },
+        recentBookings: recentBookingsResult.rows,
+        reviews: reviewsResult.rows,
       },
     });
   } catch (error) {
@@ -158,14 +154,14 @@ const getUserDashboard = async (req, res) => {
   }
 };
 
-// 🆕 Create new service request
+// 🆕 Create new service request (if you want users to book services directly)
 const createRequest = async (req, res) => {
-  // Keep your existing request creation logic
+  res.json({ success: true, message: "Service request creation logic not yet implemented" });
 };
 
-// 🔄 Update request status
+// 🔄 Update request status (for professionals/admins)
 const updateRequestStatus = async (req, res) => {
-  // Keep your existing request update logic
+  res.json({ success: true, message: "Request status update logic not yet implemented" });
 };
 
 module.exports = {

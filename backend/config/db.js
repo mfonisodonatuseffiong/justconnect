@@ -1,6 +1,6 @@
 /**
- * @description This is our database config file,
- *              Made it exportable, to be start up in server.js
+ * @description PostgreSQL database configuration.
+ *              Exportable for use in server.js and controllers.
  */
 
 const { Pool } = require("pg");
@@ -8,12 +8,12 @@ require("dotenv").config();
 
 // ✅ Create connection pool
 const pool = new Pool({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT || 5432,
-  ssl: process.env.PG_SSL === "true" ? { rejectUnauthorized: false } : false,
+  user: process.env.PGUSER,        // matches .env (PGUSER=postgres)
+  host: process.env.PGHOST,        // matches .env (PGHOST=localhost)
+  database: process.env.PGDATABASE,// matches .env (PGDATABASE=justconnect)
+  password: process.env.PGPASSWORD,// matches .env (PGPASSWORD=effiong)
+  port: process.env.PGPORT || 5432,
+  ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: false } : false,
 });
 
 // Function to test connection

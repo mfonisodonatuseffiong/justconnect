@@ -31,6 +31,9 @@ const authenticateToken = (req, res, next) => {
       name: decoded.name || null,
       email: decoded.email || null,
       role: decoded.role || "user",
+      profile_picture: decoded.profile_picture || null,
+      phone: decoded.phone || null,
+      location: decoded.location || null,
     };
 
     return next();
@@ -99,5 +102,5 @@ module.exports = {
   authenticateToken,
   authorizeRoles,
   roleAuthorization,
-  isAdmin, // ✅ added helper
+  isAdmin,
 };

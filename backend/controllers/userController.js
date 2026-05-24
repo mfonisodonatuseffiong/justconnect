@@ -1,5 +1,108 @@
 // src/controllers/userController.js
-const {pool} = require("../config/db");
+const { pool } = require("../config/db");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+
+/* ======================================================
+   Generate JWT
+====================================================== */
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profile_picture: user.profile_picture,
+      phone: user.phone,
+      location: user.location,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+};
+
+/* ======================================================
+   Register new user
+====================================================== */
+const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, phone, location, sex } = req.body;
+
+    // Check if email exists
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ success: false, message: "Email already registered" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Insert user
+    const result = await pool.query(
+      `INSERT INTO users (name, email, password, role, phone, location, sex, created_at, updated_at)
+       VALUES ($1, $2, $3, 'user', $4, $5, $6, NOW(), NOW())
+       RETURNING id, name, email, role, profile_picture, phone, location, sex`,
+      [name, email, hashedPassword, phone, location, sex]
+    );
+
+    const user = result.rows[0];
+    const token = generateToken(user);
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      token,
+      user,
+    });
+  } catch (error) {
+    console.error("Error registering user:", error.message);
+    res.status(500).json({ success: false, message: "Server error registering user" });
+  }
+};
+
+/* ======================================================
+   Login user
+====================================================== */
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user
+    const result = await pool.query(
+      `SELECT id, name, email, role, password, profile_picture, phone, location, sex
+       FROM users WHERE email = $1`,
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const user = result.rows[0];
+
+    // Compare password
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    // Remove password before sending back
+    delete user.password;
+
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      user,
+    });
+  } catch (error) {
+    console.error("Error logging in:", error.message);
+    res.status(500).json({ success: false, message: "Server error logging in" });
+  }
+};
 
 /* ======================================================
    Get user profile
@@ -75,4 +178,9 @@ const updateUserSettings = async (req, res) => {
   }
 };
 
-module.exports = { getUserProfile, updateUserSettings };
+module.exports = {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserSettings,
+};
