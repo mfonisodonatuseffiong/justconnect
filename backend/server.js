@@ -19,39 +19,48 @@ const app = express();
 const server = http.createServer(app);
 
 // =========================
-// SOCKET.IO
+// CORE MIDDLEWARES
 // =========================
-const io = new Server(server, {
-  cors: {
-    origin: (origin, callback) => {
-      if (process.env.NODE_ENV !== "production") {
-        const devOrigins = [
-          "http://localhost:5173",
-          "http://localhost:5174",
-          "http://127.0.0.1:5173",
-          "http://127.0.0.1:5174",
-          "http://localhost:3000",
-          "http://127.0.0.1:3000",
-          "http://localhost:5175",
-          "http://127.0.0.1:5175",
-        ];
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
 
-        if (!origin || devOrigins.includes(origin.replace(/\/$/, ""))) {
-          return callback(null, true);
-        }
-      }
+// FIXED CORS (single source of truth)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  "http://localhost:5175",
+  "http://127.0.0.1:5175",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
-      const allowedOrigins = process.env.FRONTEND_URL
-        ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
-        : [];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
 
-      if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+      const normalizedOrigin = origin.replace(/\/$/, "");
+
+      if (allowedOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
 
       console.warn(`⚠️ Blocked CORS origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
+      return callback(new Error("Not allowed by CORS"));
     },
+    credentials: true,
+  })
+);
+
+// =========================
+// SOCKET.IO
+// =========================
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -83,24 +92,6 @@ io.on("connection", (socket) => {
 
 app.set("io", io);
 app.set("activeUsers", activeUsers);
-
-/* =========================
-   CORE MIDDLEWARES
-========================= */
-app.use(express.json({ limit: "10mb" }));
-app.use(cookieParser());
-
-// FIXED CORS
-const allowedOrigins = [
-  "http://localhost:5175",
-  "http://127.0.0.1:5175",
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
 
 /* =========================
    BASE & HEALTH CHECK
@@ -137,7 +128,6 @@ app.use("/api/v1/services", require("./routes/serviceRoutes"));
 app.use("/api/v1/reviews", require("./routes/reviews"));
 app.use("/api/v1/categories", require("./routes/categories"));
 app.use("/api/v1/admin", require("./routes/admin"));
-
 
 /* =========================
    404 & GLOBAL ERROR HANDLER

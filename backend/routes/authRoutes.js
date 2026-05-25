@@ -20,6 +20,14 @@ router.post("/register", registerUser);
 // Login user (no token required)
 router.post("/login", loginUser);
 
+// Logout user (added)
+router.post("/logout", (req, res) => {
+  res.json({
+    success: true,
+    message: "Logged out successfully",
+  });
+});
+
 // Get user profile (protected)
 router.get("/profile/:id", authenticateToken, getUserProfile);
 

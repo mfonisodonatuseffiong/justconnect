@@ -25,13 +25,9 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve uploaded files statically
-router.use("/uploads", express.static(uploadsDir));
-
 // Upload profile picture
 router.post("/profile", authenticateToken, async (req, res) => {
   try {
-    // Check if file was uploaded
     if (!req.files || !req.files.profile_picture) {
       return res.status(400).json({
         success: false,
@@ -50,17 +46,13 @@ router.post("/profile", authenticateToken, async (req, res) => {
       });
     }
 
-    // Generate unique filename
     const fileName = `profile-${req.user.id}-${Date.now()}${fileExt}`;
     const filePath = path.join(uploadsDir, fileName);
 
-    // Move file from temp to uploads folder
     await file.mv(filePath);
 
-    // ✅ CRITICAL FIX: Return FULL URL so frontend can load it correctly
     const profilePictureUrl = `${req.protocol}://${req.get("host")}/uploads/${fileName}`;
 
-    // Update user in database
     await pool.query(
       "UPDATE users SET profile_picture = $1 WHERE id = $2",
       [profilePictureUrl, req.user.id]
@@ -69,7 +61,7 @@ router.post("/profile", authenticateToken, async (req, res) => {
     return res.json({
       success: true,
       message: "Profile picture uploaded successfully",
-      profile_picture: profilePictureUrl, // Full URL: http://localhost:5000/uploads/...
+      profile_picture: profilePictureUrl,
     });
   } catch (err) {
     console.error("Upload error:", err);
