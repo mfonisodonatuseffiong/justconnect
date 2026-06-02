@@ -145,57 +145,60 @@ const createNewBooking = async (req, res) => {
       return res.status(403).json({ success: false, message: "Only users can create bookings" });
     }
 
-    const { professional_id, service_id, date, time, notes } = req.body;
-    if (!professional_id || !service_id || !date || !time) {
+    const { professional_id, service_id, booking_date, note } = req.body;
+    if (!professional_id || !service_id || !booking_date) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    // Prevent booking for past dates (compare YYYY-MM-DD)
-    const nowDate = new Date().toISOString().split("T")[0];
-    if (date < nowDate) {
+    // Prevent booking for past dates
+    if (new Date(booking_date) < new Date()) {
       return res.status(400).json({ success: false, message: "Cannot book for a past date" });
     }
 
-    // Only block if there's an active booking (pending or accepted)
-    const duplicateCheck = await pool.query(
-      `SELECT id FROM bookings
-       WHERE user_id = $1 
-         AND professional_id = $2 
-         AND status IN ('pending', 'accepted')`,
-      [req.user.id, professional_id]
-    );
-
-    if (duplicateCheck.rows.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "You already have an active booking with this professional.",
-      });
-    }
-
-    const bookingData = {
-      user_id: req.user.id,
+    // Insert booking
+    const booking = await createBooking({
+      customer_id: req.user.id,
       professional_id,
       service_id,
-      date,
-      time,
-      notes: notes || null,
-    };
-
-    const booking = await createBooking(bookingData);
+      booking_date,
+      note: note || null,
+    });
 
     // Enrich the created booking before returning
-    const response = await enrichBooking(booking);
+    const response = await pool.query(
+      `
+      SELECT 
+        b.id,
+        b.customer_id,
+        b.professional_id,
+        b.service_id,
+        b.booking_date,
+        b.status,
+        b.note,
+        u.name AS professional_name,
+        u.location AS professional_location,
+        s.service_name
+      FROM bookings b
+      LEFT JOIN professionals p ON b.professional_id = p.id
+      LEFT JOIN users u ON p.user_id = u.id
+      LEFT JOIN services s ON b.service_id = s.id
+      WHERE b.id = $1
+      `,
+      [booking.id]
+    );
 
     return res.status(201).json({
       success: true,
       message: "Booking created successfully",
-      data: response,
+      data: response.rows[0],
     });
   } catch (error) {
     console.error("Error creating booking:", error && error.stack ? error.stack : error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
-};
+}; // <-- closes the createNewBooking function
+
+
 
 // Get all bookings (Admin)
 const getAll = async (req, res) => {
@@ -328,6 +331,32 @@ const deleteBookingRecord = async (req, res) => {
   }
 };
 
+const hasActiveBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT b.id
+      FROM bookings b
+      WHERE b.customer_id = $1
+        AND b.status IN ('incoming','pending')
+      LIMIT 1
+      `,
+      [id]
+    );
+
+    if (result.rows.length > 0) {
+      return res.status(200).json({ success: true, active: true, booking_id: result.rows[0].id });
+    } else {
+      return res.status(200).json({ success: true, active: false });
+    }
+  } catch (error) {
+    console.error("Error checking active booking:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 module.exports = {
   createNewBooking,
   getAll,
@@ -336,4 +365,5 @@ module.exports = {
   cancelBooking,
   updateStatus,
   deleteBookingRecord,
+  hasActiveBooking,
 };

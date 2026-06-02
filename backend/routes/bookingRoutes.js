@@ -1,9 +1,9 @@
-// routes/bookingRoutes.js
 const express = require("express");
 const router = express.Router();
 
 const bookingController = require("../controllers/bookingController");
 const { authenticateToken, authorizeRoles } = require("../middlewares/authMiddleware");
+const { pool } = require("../config/db"); // ✅ correct import
 
 // ======================================================
 // BOOKING ROUTES
@@ -23,6 +23,38 @@ router.get(
   authenticateToken, 
   authorizeRoles("admin"), 
   bookingController.getAll
+);
+
+// ✅ API to check if user has any active booking (minimal response)
+router.get(
+  "/user/:id/active/check",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log("📊 Checking active bookings for user:", id);
+
+      const result = await pool.query(
+        `SELECT id 
+         FROM bookings 
+         WHERE customer_id = $1 
+           AND status IN ('incoming','accepted','on_going') 
+         LIMIT 1`,
+        [id]
+      );
+
+      console.log("📊 Query result:", result.rows);
+
+      if (result.rows.length > 0) {
+        res.json({ success: true, active: true, booking_id: result.rows[0].id });
+      } else {
+        res.json({ success: true, active: false });
+      }
+    } catch (err) {
+      console.error("❌ Error checking active booking:", err.message);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
 );
 
 // ✅ User - get their own bookings

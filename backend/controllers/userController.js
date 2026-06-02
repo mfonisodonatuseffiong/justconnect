@@ -1,4 +1,3 @@
-// src/controllers/userController.js
 const { pool } = require("../config/db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -7,6 +6,8 @@ const bcrypt = require("bcrypt");
    Generate JWT
 ====================================================== */
 const generateToken = (user) => {
+  console.log("🔑 generateToken: Signing JWT with secret:", process.env.JWT_SECRET);
+
   return jwt.sign(
     {
       id: user.id,
@@ -49,6 +50,9 @@ const registerUser = async (req, res) => {
     const user = result.rows[0];
     const token = generateToken(user);
 
+    console.log("✅ REGISTER: User created:", user.email);
+    console.log("📦 REGISTER: Token preview:", token.substring(0, 60) + "...");
+
     res.status(201).json({
       success: true,
       message: "User registered successfully",
@@ -56,7 +60,7 @@ const registerUser = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Error registering user:", error.message);
+    console.error("❌ Error registering user:", error.message);
     res.status(500).json({ success: false, message: "Server error registering user" });
   }
 };
@@ -68,6 +72,8 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("📥 LOGIN request received for:", email);
+
     // Find user
     const result = await pool.query(
       `SELECT id, name, email, role, password, profile_picture, phone, location, sex
@@ -76,6 +82,7 @@ const loginUser = async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      console.log("❌ LOGIN failed: no user found for", email);
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -84,13 +91,19 @@ const loginUser = async (req, res) => {
     // Compare password
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
+      console.log("❌ LOGIN failed: invalid password for", email);
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
     // Remove password before sending back
     delete user.password;
 
+    console.log("➡️ LOGIN: Generating token for:", user.email);
+
     const token = generateToken(user);
+
+    console.log("✅ LOGIN: Token generated successfully");
+    console.log("📦 LOGIN: Token preview:", token.substring(0, 60) + "...");
 
     res.json({
       success: true,
@@ -99,7 +112,7 @@ const loginUser = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Error logging in:", error.message);
+    console.error("❌ LOGIN error:", error.message);
     res.status(500).json({ success: false, message: "Server error logging in" });
   }
 };
@@ -122,7 +135,7 @@ const getUserProfile = async (req, res) => {
 
     res.json({ success: true, user: result.rows[0] });
   } catch (error) {
-    console.error("Error fetching profile:", error.message);
+    console.error("❌ Error fetching profile:", error.message);
     res.status(500).json({ success: false, message: "Server error fetching profile" });
   }
 };
@@ -167,13 +180,15 @@ const updateUserSettings = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    console.log("✅ SETTINGS updated for user:", id);
+
     res.json({
       success: true,
       message: "Settings updated successfully",
       user: result.rows[0],
     });
   } catch (error) {
-    console.error("Error updating settings:", error.message);
+    console.error("❌ Error updating settings:", error.message);
     res.status(500).json({ success: false, message: "Server error updating settings" });
   }
 };

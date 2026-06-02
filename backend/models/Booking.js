@@ -65,39 +65,24 @@ const professionalHasConflict = async (professional_id, date, time) => {
    Create a new booking
 ============================================================ */
 const createBooking = async (data) => {
-  const { user_id, professional_id, service_id, date, time, notes } = data;
-
-  const nowDate = new Date().toISOString().split("T")[0];
-  if (date < nowDate) {
-    throw new Error("Cannot book for a past date");
-  }
-
-  const userConflict = await userHasConflict(user_id, date, time);
-  if (userConflict) {
-    throw new Error("You already have a booking at this time");
-  }
-
-  const proConflict = await professionalHasConflict(professional_id, date, time);
-  if (proConflict) {
-    throw new Error("Professional is not available at this time");
-  }
+  const { customer_id, professional_id, service_id, booking_date, note } = data;
 
   const query = `
-    INSERT INTO bookings (user_id, professional_id, service_id, date, time, notes, status)
-    VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+    INSERT INTO bookings (customer_id, professional_id, service_id, booking_date, note, status)
+    VALUES ($1, $2, $3, $4, $5, 'incoming')
     RETURNING *;
   `;
   const result = await pool.query(query, [
-    user_id,
+    customer_id,
     professional_id,
     service_id,
-    date,
-    time,
-    notes,
+    booking_date,
+    note,
   ]);
 
   return result.rows[0];
 };
+
 
 /* ============================================================
    Get all bookings (ADMIN)
@@ -152,20 +137,16 @@ const getBookingsByUser = async (userId) => {
       `
       SELECT 
         b.*,
-
-        p.name AS professional_name,
-        p.email AS professional_email,
-        p.phone AS professional_phone,
-        p.location AS professional_location,
-        p.contact AS professional_contact,
-        p.photo AS professional_photo,
-        p.profile_photo_url AS professional_profile_photo_url
-
+        u.name AS professional_name,
+        u.email AS professional_email,
+        u.phone AS professional_phone,
+        u.location AS professional_location
       FROM bookings b
       LEFT JOIN professionals p ON b.professional_id = p.id
-      WHERE b.user_id = $1
+      LEFT JOIN users u ON p.user_id = u.id
+      WHERE b.customer_id = $1
       ORDER BY b.created_at DESC;
-    `,
+      `,
       [userId]
     );
     console.log("getBookingsByUser returned rows:", r.rows?.length ?? 0);
@@ -175,6 +156,7 @@ const getBookingsByUser = async (userId) => {
     throw err;
   }
 };
+
 
 /* ============================================================
    Get bookings by professional

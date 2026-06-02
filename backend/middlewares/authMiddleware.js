@@ -22,8 +22,14 @@ const authenticateToken = (req, res, next) => {
       });
     }
 
+    // Debug log
+    console.log("🛡️ AUTH: Verifying JWT with secret:", process.env.JWT_SECRET);
+
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Debug: show decoded payload
+    console.log("✅ AUTH: Decoded JWT payload:", decoded);
 
     // Attach user info for use in routes
     req.user = {
